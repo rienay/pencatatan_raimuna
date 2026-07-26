@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bendahara Raimuna Cabang Cilacap</title>
+  <!-- Google Fonts: Quicksand for a cute, soft, rounded font look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Chart.js CDN for visual charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Sidebar Navigasi -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <!-- Cute Pramuka/Raimuna representation icon -->
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="sidebar-title">
+        <h2>Raimuna</h2>
+        <p>Cilacap 2026</p>
+      </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <ul>
+        <li>
+          <a href="#" class="nav-link active" data-target="dashboard-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-target="pemasukan-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+            <span>Pemasukan</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-target="pengeluaran-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+            <span>Pengeluaran</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-target="kategori-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>Kategori</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-target="laporan-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Laporan</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-target="pengaturan-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Pengaturan</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <p>&copy; 2026 DKC Cilacap</p>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-content">
+    
+    <!-- Top Navbar -->
+    <header class="navbar">
+      <div class="navbar-left">
+        <button id="sidebar-toggle" class="btn-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 id="page-title">Dashboard Keuangan</h1>
+      </div>
+      
+      <div class="navbar-right">
+        <!-- Google Sheets sync indicator badge -->
+        <div id="sync-status-badge" class="sync-badge unsynced" title="Status Sinkronisasi Google Sheets">
+          <span class="indicator-dot"></span>
+          <span class="badge-text">Offline / Tidak Sinkron</span>
+        </div>
+        <div class="user-profile">
+          <div class="avatar">💼</div>
+          <div class="profile-info">
+            <span class="role">Bendahara</span>
+            <span class="name">Raimuna Cabang</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Sections Container -->
+    <div class="content-container">
+      
+      <!-- ================= DASHBOARD SECTION ================= -->
+      <section id="dashboard-section" class="content-section active">
+        <!-- Info Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card balance">
+            <div class="card-icon">💰</div>
+            <div class="card-details">
+              <h3>Total Saldo Kas</h3>
+              <p id="dashboard-total-saldo">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card income">
+            <div class="card-icon">📈</div>
+            <div class="card-details">
+              <h3>Total Pemasukan</h3>
+              <p id="dashboard-total-pemasukan">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card expense">
+            <div class="card-icon">📉</div>
+            <div class="card-details">
+              <h3>Total Pengeluaran</h3>
+              <p id="dashboard-total-pengeluaran">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card transactions">
+            <div class="card-icon">🗂️</div>
+            <div class="card-details">
+              <h3>Jumlah Transaksi</h3>
+              <p id="dashboard-total-transaksi">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Grafik Pemasukan vs Pengeluaran</h3>
+            <div class="chart-container">
+              <canvas id="flowChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Ringkasan Pengeluaran Kategori</h3>
+            <div class="chart-container">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions Table -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <h3>10 Transaksi Terbaru</h3>
+            <button class="btn btn-secondary nav-link-btn" data-target="laporan-section">Lihat Semua</button>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>ID Transaksi</th>
+                  <th>Tipe</th>
+                  <th>Kategori / Sumber</th>
+                  <th>Penanggung Jawab</th>
+                  <th>Nominal</th>
+                  <th>Sync</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="recent-transactions-tbody">
+                <!-- Will be populated dynamically by JS -->
+                <tr>
+                  <td colspan="8" class="text-center text-muted">Belum ada transaksi terdaftar.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PEMASUKAN SECTION ================= -->
+      <section id="pemasukan-section" class="content-section">
+        <div class="form-container-card">
+          <div class="form-header">
+            <h2>Tambah Transaksi Pemasukan</h2>
+            <p>Catat setiap pemasukan dana kegiatan Raimuna Cabang Cilacap secara teliti.</p>
+          </div>
+          
+          <form id="form-pemasukan" class="cute-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="in-tanggal">Tanggal <span class="required">*</span></label>
+                <input type="date" id="in-tanggal" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="in-sumber">Sumber Dana <span class="required">*</span></label>
+                <div class="input-with-button">
+                  <select id="in-sumber" required>
+                    <option value="" disabled selected>Pilih Sumber Dana</option>
+                    <!-- Populated dynamically and from Categories page -->
+                  </select>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-inline" title="Tambah sumber baru">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="in-pemberi">Nama Pemberi / Penanggung Jawab <span class="required">*</span></label>
+                <input type="text" id="in-pemberi" placeholder="Nama penanggung jawab dana" required>
+              </div>
+
+              <div class="form-group">
+                <label for="in-nominal">Nominal (Rp) <span class="required">*</span></label>
+                <input type="text" id="in-nominal" placeholder="Contoh: 1.500.000" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="in-keterangan">Keterangan / Deskripsi <span class="required">*</span></label>
+              <textarea id="in-keterangan" rows="3" placeholder="Tulis rincian informasi pemasukan..." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="in-bukti">Upload Bukti Transaksi <span class="text-muted">(Optional, PNG/JPG/PDF)</span></label>
+              <div class="file-dropzone" id="in-dropzone">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <p>Klik untuk memilih file atau seret file ke sini</p>
+                <input type="file" id="in-bukti" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden">
+                <div class="file-preview-indicator" id="in-file-indicator"></div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">Reset Formulir</button>
+              <button type="submit" class="btn btn-success">Simpan Pemasukan</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= PENGELUARAN SECTION ================= -->
+      <section id="pengeluaran-section" class="content-section">
+        <div class="form-container-card">
+          <div class="form-header">
+            <h2>Tambah Transaksi Pengeluaran</h2>
+            <p>Catat pengeluaran dana berdasarkan bidang kepanitiaan dengan melampirkan nota fisik.</p>
+          </div>
+
+          <form id="form-pengeluaran" class="cute-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="out-tanggal">Tanggal <span class="required">*</span></label>
+                <input type="date" id="out-tanggal" required>
+              </div>
+
+              <div class="form-group">
+                <label for="out-kategori">Kategori Pengeluaran <span class="required">*</span></label>
+                <div class="input-with-button">
+                  <select id="out-kategori" required>
+                    <option value="" disabled selected>Pilih Kategori Bidang</option>
+                    <!-- Populated dynamically -->
+                  </select>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-kategori-inline" title="Tambah kategori baru">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="out-pengambil">Nama Pengambil Dana <span class="required">*</span></label>
+                <input type="text" id="out-pengambil" placeholder="Nama pengambil/penanggung jawab pengeluaran" required>
+              </div>
+
+              <div class="form-group">
+                <label for="out-nominal">Nominal (Rp) <span class="required">*</span></label>
+                <input type="text" id="out-nominal" placeholder="Contoh: 350.000" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="out-keterangan">Keterangan / Keperluan <span class="required">*</span></label>
+              <textarea id="out-keterangan" rows="3" placeholder="Tulis deskripsi detail keperluan pengeluaran..." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="out-nota">Upload Nota / Bukti Pembayaran <span class="required">*</span> <span class="text-muted">(PNG/JPG/PDF)</span></label>
+              <div class="file-dropzone" id="out-dropzone">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <p>Klik untuk memilih file atau seret file ke sini</p>
+                <input type="file" id="out-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" required>
+                <div class="file-preview-indicator" id="out-file-indicator"></div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">Reset Formulir</button>
+              <button type="submit" class="btn btn-success">Simpan Pengeluaran</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= KATEGORI SECTION ================= -->
+      <section id="kategori-section" class="content-section">
+        <div class="kategori-grid">
+          <!-- Kategori Pengeluaran Card -->
+          <div class="form-container-card">
+            <div class="form-header">
+              <h2>Kategori Pengeluaran</h2>
+              <p>Kelola kategori bidang untuk pengelompokan pengeluaran dana Raimuna.</p>
+            </div>
+            
+            <form id="form-kategori-add" class="inline-add-form">
+              <div class="form-group flex-1">
+                <input type="text" id="kategori-nama" placeholder="Nama Kategori Baru (misal: Bidang Giat)" required>
+              </div>
+              <button type="submit" class="btn btn-success">Tambah</button>
+            </form>
+
+            <ul class="custom-list" id="list-kategori-pengeluaran">
+              <!-- Populated dynamically -->
+            </ul>
+          </div>
+
+          <!-- Sumber Dana Pemasukan Card -->
+          <div class="form-container-card">
+            <div class="form-header">
+              <h2>Sumber Dana Pemasukan</h2>
+              <p>Kelola sumber asal dana masuk untuk penyusunan laporan keuangan.</p>
+            </div>
+            
+            <form id="form-sumber-add" class="inline-add-form">
+              <div class="form-group flex-1">
+                <input type="text" id="sumber-nama" placeholder="Nama Sumber Dana Baru (misal: Sponsorship A)" required>
+              </div>
+              <button type="submit" class="btn btn-success">Tambah</button>
+            </form>
+
+            <ul class="custom-list" id="list-sumber-pemasukan">
+              <!-- Populated dynamically -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LAPORAN SECTION ================= -->
+      <section id="laporan-section" class="content-section">
+        <!-- Advanced Filter Widget -->
+        <div class="form-container-card filter-card no-print">
+          <div class="filter-header">
+            <h3>Filter & Pencarian Laporan</h3>
+            <button id="btn-reset-filters" class="btn btn-text">Reset Filter</button>
+          </div>
+          
+          <div class="filter-grid">
+            <div class="form-group">
+              <label for="filter-search">Cari Transaksi / PIC / Keterangan</label>
+              <input type="text" id="filter-search" placeholder="Cari nama, ID, deskripsi...">
+            </div>
+
+            <div class="form-group">
+              <label for="filter-tipe">Tipe Transaksi</label>
+              <select id="filter-tipe">
+                <option value="ALL">Semua Transaksi</option>
+                <option value="IN">Hanya Pemasukan</option>
+                <option value="OUT">Hanya Pengeluaran</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filter-bulan">Bulan</label>
+              <select id="filter-bulan">
+                <option value="ALL">Semua Bulan</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filter-tahun">Tahun</label>
+              <select id="filter-tahun">
+                <option value="ALL">Semua Tahun</option>
+                <!-- Populated dynamically based on data years -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filter-kategori-sumber">Kategori / Sumber Dana</label>
+              <select id="filter-kategori-sumber">
+                <option value="ALL">Semua Kategori/Sumber</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="filter-sync">Status Google Sheets</label>
+              <select id="filter-sync">
+                <option value="ALL">Semua Status</option>
+                <option value="SYNCED">Tersinkronisasi</option>
+                <option value="UNSYNCED">Belum Sinkron</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Table Widget -->
+        <div class="table-card print-container">
+          <div class="table-card-header no-print">
+            <div class="header-left">
+              <h2>Laporan Arus Kas Kegiatan</h2>
+              <span class="report-subtitle text-muted">Histori transaksi keuangan terperinci beserta saldo berjalan.</span>
+            </div>
+            <div class="header-actions">
+              <button id="btn-export-excel" class="btn btn-secondary btn-icon-text">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                <span>Excel</span>
+              </button>
+              <button id="btn-export-csv" class="btn btn-secondary btn-icon-text">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <span>CSV</span>
+              </button>
+              <button id="btn-print-report" class="btn btn-secondary btn-icon-text">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Print</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Report Header -->
+          <div class="print-only print-header-template">
+            <div class="print-logo-row">
+              <div class="print-coat-arms">⚜️</div>
+              <div class="print-brand-details">
+                <h2>GERAKAN PRAMUKA CILACAP</h2>
+                <h3>PANITIA RAIMUNA CABANG CILACAP 2026</h3>
+                <p>Website Pembukuan Resmi Keuangan Bendahara Raimuna</p>
+              </div>
+            </div>
+            <hr class="print-divider">
+            <h2 class="print-report-title">LAPORAN ARUS KAS KEUANGAN</h2>
+            <div class="print-filter-summary" id="print-filter-summary-info">
+              <!-- Dynamically populated report filters summary -->
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="modern-table" id="table-laporan-keuangan">
+              <thead>
+                <tr>
+                  <th class="cursor-pointer sortable" data-sort="no">No <span class="sort-icon"></span></th>
+                  <th class="cursor-pointer sortable" data-sort="tanggal">Tanggal <span class="sort-icon">▲</span></th>
+                  <th>ID Transaksi</th>
+                  <th>Tipe</th>
+                  <th>Kategori/Sumber</th>
+                  <th>Penanggung Jawab</th>
+                  <th>Keterangan</th>
+                  <th class="cursor-pointer sortable text-right" data-sort="nominal">Nominal <span class="sort-icon"></span></th>
+                  <th class="text-right">Saldo Kas</th>
+                  <th class="no-print">Sync</th>
+                  <th class="no-print">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="laporan-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+              <tfoot>
+                <tr class="report-totals-row">
+                  <td colspan="7" class="text-right font-bold">Total Terfilter:</td>
+                  <td id="report-filtered-nominal-sum" class="text-right font-bold">Rp 0</td>
+                  <td id="report-filtered-final-saldo" class="text-right font-bold text-success">Rp 0</td>
+                  <td class="no-print" colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <div class="print-only print-signatures">
+            <div class="signature-block">
+              <p>Mengetahui,</p>
+              <p class="signature-role">Ketua Dewan Kerja Cabang</p>
+              <div class="signature-space"></div>
+              <p class="signature-name">_______________________</p>
+            </div>
+            <div class="signature-block">
+              <p>Cilacap, <span id="print-current-date">-- Juli 2026</span></p>
+              <p class="signature-role">Bendahara Raimuna Cabang</p>
+              <div class="signature-space"></div>
+              <p class="signature-name">_______________________</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PENGATURAN SECTION ================= -->
+      <section id="pengaturan-section" class="content-section">
+        <div class="settings-grid">
+          
+          <!-- Integration Form -->
+          <div class="form-container-card">
+            <div class="form-header">
+              <h2>Integrasi Google Sheets</h2>
+              <p>Sinkronisasikan pembukuan lokal Anda langsung ke Google Sheets secara berkala.</p>
+            </div>
+            
+            <div class="cute-form">
+              <div class="form-group">
+                <label for="settings-sheet-url">URL Google Apps Script Web App <span class="required">*</span></label>
+                <input type="url" id="settings-sheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+                <span class="input-help-text">Masukkan URL Web App hasil deploy Apps Script pada Google Sheets Anda.</span>
+              </div>
+              
+              <div class="form-group flex-row-center gap-10">
+                <input type="checkbox" id="settings-auto-sync" class="cute-checkbox">
+                <label for="settings-auto-sync" class="cursor-pointer label-checkbox">Sinkronisasi otomatis saat menyimpan transaksi baru</label>
+              </div>
+
+              <div class="form-actions-row">
+                <button id="btn-save-settings" class="btn btn-success">Simpan Pengaturan</button>
+                <button id="btn-test-connection" class="btn btn-secondary">Tes Koneksi</button>
+              </div>
+              
+              <hr class="form-divider">
+              
+              <div class="danger-zone-card">
+                <h3>Sinkronisasi Massal</h3>
+                <p class="text-muted">Kirim semua data lokal ke Google Sheet atau unduh ulang data yang tersimpan di Google Sheet.</p>
+                <div class="flex-wrap gap-10 mt-10">
+                  <button id="btn-sync-push" class="btn btn-secondary btn-icon-text">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    <span>Kirim Semua Data Lokal ke Sheet</span>
+                  </button>
+                  <button id="btn-sync-pull" class="btn btn-danger btn-icon-text">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    <span>Tarik Semua Data dari Sheet (Overwrite)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documentation Card -->
+          <div class="form-container-card doc-card">
+            <div class="form-header">
+              <h2>Panduan Setup Google Sheets</h2>
+              <p>Ikuti langkah-langkah berikut untuk mengaktifkan sinkronisasi otomatis:</p>
+            </div>
+            
+            <div class="guide-steps">
+              <ol>
+                <li>Buat spreadsheet baru di Google Sheets Anda.</li>
+                <li>Buat tab lembar kerja dengan nama <strong>"Transaksi"</strong>, <strong>"Kategori"</strong>, dan <strong>"Sumber"</strong> (opsional).</li>
+                <li>Pada menu bar atas, klik <strong>Ekstensi</strong> &raquo; <strong>Apps Script</strong>.</li>
+                <li>Hapus kode bawaan, lalu salin dan tempelkan kode di bawah ini.</li>
+                <li>Klik tombol <strong>Terapkan (Deploy)</strong> di bagian kanan atas &raquo; <strong>Penerapan baru (New deployment)</strong>.</li>
+                <li>Pilih jenis <strong>Aplikasi Web (Web App)</strong>. Setel <em>"Akses"</em> ke **"Siapa saja" (Anyone)** agar website dapat mengaksesnya tanpa login.</li>
+                <li>Klik <strong>Terapkan</strong>, berikan izin akses Google, lalu salin **URL Aplikasi Web** yang diberikan.</li>
+                <li>Tempel URL tersebut ke kolom isian integrasi di sebelah kiri.</li>
+              </ol>
+
+              <div class="code-box-header">
+                <span>Kode Google Apps Script</span>
+                <button id="btn-copy-code" class="btn btn-small btn-secondary">Salin Kode</button>
+              </div>
+              <pre class="code-box" id="code-script-content"><code>// KODE APPS SCRIPT UNTUK GOOGLE SHEETS
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Transaksi");
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Sheet Transaksi tidak ditemukan" })).setMimeType(ContentService.MimeType.JSON);
+  }
+  var data = [];
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = row[j];
+    }
+    data.push(obj);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ success: true, data: data }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var action = payload.action;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // Pastikan sheet Transaksi ada
+    var sheet = ss.getSheetByName("Transaksi") || ss.insertSheet("Transaksi");
+    
+    if (sheet.getLastRow() === 0) {
+      // Inisialisasi header jika kosong
+      sheet.appendRow(["id", "tanggal", "tipe", "kategoriSumber", "pic", "nominal", "keterangan", "dateCreated"]);
+    }
+    
+    if (action === "test") {
+      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Koneksi Berhasil!" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "push_bulk") {
+      // Hapus baris lama kecuali header
+      var lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.deleteRows(2, lastRow - 1);
+      }
+      var txs = payload.transactions;
+      for (var i = 0; i < txs.length; i++) {
+        var tx = txs[i];
+        sheet.appendRow([
+          tx.id,
+          tx.tanggal,
+          tx.tipe,
+          tx.kategoriSumber,
+          tx.pic,
+          tx.nominal,
+          tx.keterangan,
+          tx.dateCreated
+        ]);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true, count: txs.length }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "sync_single") {
+      var tx = payload.transaction;
+      // Periksa apakah ID transaksi sudah ada untuk di-update, atau tambahkan baris baru
+      var rows = sheet.getDataRange().getValues();
+      var foundRow = -1;
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][0] === tx.id) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      
+      var rowData = [
+        tx.id,
+        tx.tanggal,
+        tx.tipe,
+        tx.kategoriSumber,
+        tx.pic,
+        tx.nominal,
+        tx.keterangan,
+        tx.dateCreated
+      ];
+      
+      if (foundRow !== -1) {
+        // Update baris yang ditemukan
+        sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
+      } else {
+        // Tambahkan baris baru
+        sheet.appendRow(rowData);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "delete_single") {
+      var txId = payload.id;
+      var rows = sheet.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][0] === txId) {
+          sheet.deleteRow(i + 1);
+          break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Action tidak dikenal" }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</code></pre>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= TRANSACTION DETAIL MODAL ================= -->
+  <div id="detail-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Detail Transaksi</h3>
+        <button id="btn-close-modal" class="btn-close">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="detail-badge-row">
+          <span id="detail-txn-id" class="txn-badge-id">TXN-XX-00000</span>
+          <span id="detail-txn-type" class="txn-badge-type">Pemasukan</span>
+        </div>
+        
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Tanggal Transaksi:</span>
+            <span id="detail-date" class="detail-value">--/--/----</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label" id="detail-cat-sumber-label">Sumber Dana:</span>
+            <span id="detail-cat-sumber-value" class="detail-value">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label" id="detail-pic-label">Penanggung Jawab:</span>
+            <span id="detail-pic-value" class="detail-value">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Nominal:</span>
+            <span id="detail-amount" class="detail-value font-bold text-primary">Rp 0</span>
+          </div>
+        </div>
+        
+        <div class="detail-item full-width mt-10">
+          <span class="detail-label">Keterangan / Keperluan:</span>
+          <p id="detail-description" class="detail-description-box">--</p>
+        </div>
+        
+        <div class="detail-item full-width mt-15" id="detail-attachment-container">
+          <span class="detail-label">Bukti Transaksi / Nota:</span>
+          <div class="attachment-preview-box">
+            <!-- Will contain image element or pdf download icon -->
+            <div id="attachment-preview-render" class="preview-render-area">
+              <span class="text-muted">Tidak ada bukti diunggah</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <div class="footer-left">
+          <button id="btn-delete-txn" class="btn btn-danger">Hapus Transaksi</button>
+        </div>
+        <div class="footer-right">
+          <button id="btn-sync-individual" class="btn btn-secondary btn-icon-text">
+            <span>Sinkronkan ke Sheet</span>
+          </button>
+          <button id="btn-close-modal-footer" class="btn btn-secondary">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= INLINE DIALOG FOR CUSTOM ADD ================= -->
+  <div id="custom-add-modal" class="modal-overlay">
+    <div class="modal-card modal-small">
+      <div class="modal-header">
+        <h3 id="custom-modal-title">Tambah Item Baru</h3>
+        <button id="btn-close-custom-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="custom-input-value" id="custom-modal-label">Nama Item</label>
+          <input type="text" id="custom-input-value" placeholder="Masukkan nama..." required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-custom-modal" class="btn btn-secondary">Batal</button>
+        <button id="btn-submit-custom-modal" class="btn btn-success">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App JavaScript -->
+  <script src="app.js"></script>
+
+</body>
+</html>
