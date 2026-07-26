@@ -575,9 +575,8 @@ async function syncTransactionToSheets(txn) {
   try {
     const response = await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      mode: 'no-cors', // Apps Script web app requests are usually cross-origin
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/plain'
       },
       body: JSON.stringify({
         action: 'sync_single',
@@ -609,9 +608,8 @@ async function syncDeleteToSheets(txnId) {
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/plain'
       },
       body: JSON.stringify({
         action: 'delete_single',
@@ -649,9 +647,8 @@ async function pushAllTransactionsToSheets() {
     // otherwise fallback to no-cors. For bulk push, let's use no-cors to be safe.
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'text/plain'
       },
       body: JSON.stringify({
         action: 'push_bulk',
@@ -755,7 +752,7 @@ async function testGoogleSheetsConnection(showSuccessToast = true) {
     // If it fails with CORS, we'll try a CORS-enabled get or just notify
     const res = await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'test' })
     });
     
