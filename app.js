@@ -560,10 +560,6 @@ function setupFormHandlers() {
       return;
     }
     
-    if (!state.currentUpload) {
-      showToast('Nota Wajib Diunggah', 'Harap lampirkan nota bukti pengeluaran.', 'error');
-      return;
-    }
     
     const newTxn = {
       id: generateUniqueId('TXN-OUT'),
