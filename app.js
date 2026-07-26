@@ -84,7 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auto test connection if URL exists
   if (state.settings.sheetUrl) {
     updateSyncBadge('unsynced', 'Menghubungkan...');
-    testGoogleSheetsConnection(false);
+    await testGoogleSheetsConnection(false);
+    await autoPullFromSheets();
   }
 });
 
@@ -723,6 +724,47 @@ async function pullAllTransactionsFromSheets() {
     }
   } catch (err) {
     showToast('Gagal Mengambil Data', 'Pastikan Apps Script telah di-deploy dan URL benar.', 'error');
+    updateSyncBadgeState();
+  }
+}
+
+// Auto-pull transactions from Google Sheets on start if local store is empty
+async function autoPullFromSheets() {
+  if (!state.settings.sheetUrl) return;
+  if (state.transactions.length > 0) return;
+  
+  updateSyncBadge('unsynced', 'Menarik data...');
+  try {
+    const response = await fetch(state.settings.sheetUrl);
+    const result = await response.json();
+    
+    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+      const newTxns = result.data.map(row => ({
+        id: row.id,
+        tanggal: formatDateString(row.tanggal),
+        tipe: row.tipe,
+        kategoriSumber: row.kategoriSumber,
+        pic: row.pic,
+        nominal: parseInt(row.nominal, 10) || 0,
+        keterangan: row.keterangan,
+        dateCreated: row.dateCreated || new Date().toISOString(),
+        attachment: null,
+        sync: true
+      }));
+      
+      for (const txn of newTxns) {
+        await saveToStore(STORE_TXNS, txn);
+      }
+      
+      state.transactions = newTxns;
+      updateSyncBadgeState();
+      renderApp();
+      showToast('Data Sinkron', `Otomatis mengunduh ${newTxns.length} transaksi dari Google Sheets.`, 'success');
+    } else {
+      updateSyncBadgeState();
+    }
+  } catch (err) {
+    console.error('Auto pull failed:', err);
     updateSyncBadgeState();
   }
 }
