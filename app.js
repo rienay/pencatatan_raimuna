@@ -138,13 +138,13 @@ function setupFileDropzone(dropzone, inputId, indicator) {
     dropzone.classList.remove('dragover');
     if (e.dataTransfer.files.length) {
       fileInput.files = e.dataTransfer.files;
-      handleFileSelected(fileInput.files[0], indicator);
+      handleMultipleFilesSelected(fileInput.files, indicator);
     }
   });
   
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length) {
-      handleFileSelected(fileInput.files[0], indicator);
+      handleMultipleFilesSelected(fileInput.files, indicator);
     } else {
       indicator.textContent = '';
       state.currentUpload = null;
@@ -152,28 +152,59 @@ function setupFileDropzone(dropzone, inputId, indicator) {
   });
 }
 
-// Convert uploaded file to Base64
-function handleFileSelected(file, indicator) {
-  if (!file) return;
-  const maxSize = 4 * 1024 * 1024; // 4MB limit to keep IndexedDB happy
-  if (file.size > maxSize) {
-    showToast('Ukuran File Terlalu Besar', 'Maksimal ukuran file adalah 4MB.', 'error');
-    state.currentUpload = null;
-    indicator.textContent = '';
-    return;
-  }
+// Convert uploaded files to array of Base64 objects
+function handleMultipleFilesSelected(files, indicator) {
+  if (!files || files.length === 0) return;
+  const maxIndividualSize = 4 * 1024 * 1024; // 4MB limit per file
   
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    state.currentUpload = {
-      name: file.name,
-      type: file.type,
-      base64: e.target.result
+  const filesArray = Array.from(files);
+  const uploads = [];
+  let completed = 0;
+  
+  indicator.textContent = `Memproses ${filesArray.length} file...`;
+  state.currentUpload = null;
+  
+  filesArray.forEach(file => {
+    if (file.size > maxIndividualSize) {
+      showToast('Ukuran File Terlalu Besar', `File "${file.name}" melebihi batas 4MB.`, 'error');
+      completed++;
+      if (completed === filesArray.length) {
+        finishUploadProcessing(uploads, indicator);
+      }
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploads.push({
+        name: file.name,
+        type: file.type,
+        base64: e.target.result
+      });
+      completed++;
+      if (completed === filesArray.length) {
+        finishUploadProcessing(uploads, indicator);
+      }
     };
-    indicator.textContent = `File terpilih: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-    showToast('File Berhasil Diunggah', `File ${file.name} siap dilampirkan.`, 'info');
-  };
-  reader.readAsDataURL(file);
+    reader.onerror = function() {
+      completed++;
+      if (completed === filesArray.length) {
+        finishUploadProcessing(uploads, indicator);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function finishUploadProcessing(uploads, indicator) {
+  if (uploads.length > 0) {
+    state.currentUpload = uploads; // Can be a single object or array of objects
+    indicator.textContent = `${uploads.length} file terpilih: ` + uploads.map(u => u.name).join(', ');
+    showToast('File Berhasil Diunggah', `${uploads.length} berkas siap dilampirkan.`, 'info');
+  } else {
+    state.currentUpload = null;
+    indicator.textContent = 'Tidak ada file valid yang terpilih.';
+  }
 }
 
 // Setup Rupiah inputs
@@ -1673,47 +1704,66 @@ function showTransactionDetail(txn) {
   const renderArea = document.getElementById('attachment-preview-render');
   renderArea.innerHTML = '';
   
-  if (txn.attachment && txn.attachment.base64) {
-    const att = txn.attachment;
+  if (txn.attachment) {
+    // Standardize attachments to an array
+    const attachments = Array.isArray(txn.attachment) ? txn.attachment : [txn.attachment];
+    const validAttachments = attachments.filter(att => att && att.base64);
     
-    if (att.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = att.base64;
-      img.alt = att.name;
-      img.title = 'Klik untuk memperbesar gambar bukti';
-      img.addEventListener('click', () => {
-        // Open in new tab window
-        const w = window.open();
-        w.document.write(`<title>${att.name}</title><img src="${att.base64}" style="max-width:100%; max-height:100vh; display:block; margin:auto;" />`);
-        w.document.close();
+    if (validAttachments.length > 0) {
+      validAttachments.forEach(att => {
+        if (att.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = att.base64;
+          img.alt = att.name;
+          img.style.maxWidth = '150px';
+          img.style.maxHeight = '150px';
+          img.style.margin = '5px';
+          img.style.cursor = 'pointer';
+          img.style.border = '1px solid #ddd';
+          img.style.borderRadius = '4px';
+          img.title = `Klik untuk memperbesar gambar: ${att.name}`;
+          img.addEventListener('click', () => {
+            const w = window.open();
+            w.document.write(`<title>${att.name}</title><img src="${att.base64}" style="max-width:100%; max-height:100vh; display:block; margin:auto;" />`);
+            w.document.close();
+          });
+          renderArea.appendChild(img);
+        } else if (att.type === 'application/pdf') {
+          const box = document.createElement('div');
+          box.className = 'pdf-preview-box';
+          box.style.display = 'inline-flex';
+          box.style.alignItems = 'center';
+          box.style.gap = '10px';
+          box.style.margin = '5px';
+          box.style.padding = '8px';
+          box.style.border = '1px solid #ddd';
+          box.style.borderRadius = '4px';
+          
+          const icon = document.createElement('div');
+          icon.className = 'pdf-icon';
+          icon.textContent = '📄';
+          
+          const nameText = document.createElement('span');
+          nameText.textContent = att.name.length > 20 ? att.name.substring(0, 17) + '...' : att.name;
+          nameText.className = 'font-bold text-muted';
+          
+          const link = document.createElement('button');
+          link.className = 'btn btn-secondary btn-small';
+          link.textContent = 'Lihat PDF';
+          link.addEventListener('click', () => {
+            const pdfWindow = window.open();
+            pdfWindow.document.write(`<title>${att.name}</title><iframe width='100%' height='100%' src='${att.base64}'></iframe>`);
+            pdfWindow.document.close();
+          });
+          
+          box.appendChild(icon);
+          box.appendChild(nameText);
+          box.appendChild(link);
+          renderArea.appendChild(box);
+        }
       });
-      renderArea.appendChild(img);
-    } else if (att.type === 'application/pdf') {
-      const box = document.createElement('div');
-      box.className = 'pdf-preview-box';
-      
-      const icon = document.createElement('div');
-      icon.className = 'pdf-icon';
-      icon.textContent = '📄';
-      
-      const nameText = document.createElement('span');
-      nameText.textContent = att.name;
-      nameText.className = 'font-bold text-muted';
-      
-      const link = document.createElement('button');
-      link.className = 'btn btn-secondary btn-small';
-      link.textContent = 'Lihat Berkas PDF / Nota';
-      link.addEventListener('click', () => {
-        // Open base64 pdf in new window
-        const pdfWindow = window.open();
-        pdfWindow.document.write(`<title>${att.name}</title><iframe width='100%' height='100%' src='${att.base64}'></iframe>`);
-        pdfWindow.document.close();
-      });
-      
-      box.appendChild(icon);
-      box.appendChild(nameText);
-      box.appendChild(link);
-      renderArea.appendChild(box);
+    } else {
+      renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
     }
   } else {
     renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';

@@ -282,11 +282,11 @@
             </div>
 
             <div class="form-group">
-              <label for="in-bukti">Upload Bukti Transaksi <span class="text-muted">(Optional, PNG/JPG/PDF)</span></label>
+              <label for="in-bukti">Upload Bukti Transaksi <span class="text-muted">(Optional, Bisa pilih lebih dari 1 file, PNG/JPG/PDF)</span></label>
               <div class="file-dropzone" id="in-dropzone">
                 <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                 <p>Klik untuk memilih file atau seret file ke sini</p>
-                <input type="file" id="in-bukti" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden">
+                <input type="file" id="in-bukti" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
                 <div class="file-preview-indicator" id="in-file-indicator"></div>
               </div>
             </div>
@@ -353,11 +353,11 @@
             </div>
 
             <div class="form-group">
-              <label for="out-nota">Upload Nota / Bukti Pembayaran <span class="required">*</span> <span class="text-muted">(PNG/JPG/PDF)</span></label>
+              <label for="out-nota">Upload Nota / Bukti Pembayaran <span class="text-muted">(Optional, Bisa pilih lebih dari 1 file, PNG/JPG/PDF)</span></label>
               <div class="file-dropzone" id="out-dropzone">
                 <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                 <p>Klik untuk memilih file atau seret file ke sini</p>
-                <input type="file" id="out-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" required>
+                <input type="file" id="out-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
                 <div class="file-preview-indicator" id="out-file-indicator"></div>
               </div>
             </div>
