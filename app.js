@@ -416,16 +416,21 @@ function setupNavigation() {
 function populateDropdowns() {
   const inSumberSelect = document.getElementById('in-sumber');
   const outKategoriSelect = document.getElementById('out-kategori');
+  const outSumberSelect = document.getElementById('out-sumber');
   const filterCatSumberSelect = document.getElementById('filter-kategori-sumber');
   
   // Keep selected values if any
   const selectedSumber = inSumberSelect.value;
   const selectedKategori = outKategoriSelect.value;
+  const selectedOutSumber = outSumberSelect ? outSumberSelect.value : '';
   const selectedFilter = filterCatSumberSelect.value;
   
   // Clear
   inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   outKategoriSelect.innerHTML = '<option value="" disabled selected>Pilih Kategori Bidang</option>';
+  if (outSumberSelect) {
+    outSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
+  }
   filterCatSumberSelect.innerHTML = '<option value="ALL">Semua Kategori/Sumber</option>';
   
   // Populate Sources
@@ -434,6 +439,13 @@ function populateDropdowns() {
     opt.value = src.nama;
     opt.textContent = src.nama;
     inSumberSelect.appendChild(opt);
+
+    if (outSumberSelect) {
+      const optOut = document.createElement('option');
+      optOut.value = src.nama;
+      optOut.textContent = src.nama;
+      outSumberSelect.appendChild(optOut);
+    }
     
     const filterOpt = document.createElement('option');
     filterOpt.value = src.nama;
@@ -457,6 +469,7 @@ function populateDropdowns() {
   // Restore selections
   if (selectedSumber) inSumberSelect.value = selectedSumber;
   if (selectedKategori) outKategoriSelect.value = selectedKategori;
+  if (selectedOutSumber && outSumberSelect) outSumberSelect.value = selectedOutSumber;
   if (selectedFilter) filterCatSumberSelect.value = selectedFilter;
 }
 
@@ -506,6 +519,7 @@ function setupFormHandlers() {
     
     const tanggal = document.getElementById('out-tanggal').value;
     const kategori = document.getElementById('out-kategori').value;
+    const sumberDana = document.getElementById('out-sumber').value;
     const pengambil = document.getElementById('out-pengambil').value;
     const nominal = parseRupiah(document.getElementById('out-nominal').value);
     const keterangan = document.getElementById('out-keterangan').value;
@@ -525,6 +539,7 @@ function setupFormHandlers() {
       tanggal,
       tipe: 'OUT',
       kategoriSumber: kategori,
+      sumberDana: sumberDana, // New field linking back to source of funds
       pic: pengambil,
       nominal,
       keterangan,
@@ -569,6 +584,7 @@ async function syncTransactionToSheets(txn) {
     tanggal: txn.tanggal,
     tipe: txn.tipe,
     kategoriSumber: txn.kategoriSumber,
+    sumberDana: txn.sumberDana || '', // Include in sheet sync
     pic: txn.pic,
     nominal: txn.nominal,
     keterangan: txn.keterangan,
@@ -639,6 +655,7 @@ async function pushAllTransactionsToSheets() {
     tanggal: txn.tanggal,
     tipe: txn.tipe,
     kategoriSumber: txn.kategoriSumber,
+    sumberDana: txn.sumberDana || '',
     pic: txn.pic,
     nominal: txn.nominal,
     keterangan: txn.keterangan,
@@ -703,6 +720,7 @@ async function pullAllTransactionsFromSheets() {
         tanggal: formatDateString(row.tanggal),
         tipe: row.tipe,
         kategoriSumber: row.kategoriSumber,
+        sumberDana: row.sumberDana || '',
         pic: row.pic,
         nominal: parseInt(row.nominal, 10) || 0,
         keterangan: row.keterangan,
@@ -746,6 +764,7 @@ async function autoPullFromSheets() {
         tanggal: formatDateString(row.tanggal),
         tipe: row.tipe,
         kategoriSumber: row.kategoriSumber,
+        sumberDana: row.sumberDana || '',
         pic: row.pic,
         nominal: parseInt(row.nominal, 10) || 0,
         keterangan: row.keterangan,
@@ -874,6 +893,63 @@ function renderDashboard() {
   document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalIn);
   document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOut);
   document.getElementById('dashboard-total-transaksi').textContent = txnCount;
+  
+  // 1b. Render Ringkasan Saldo per Sumber Dana
+  const summaryTbody = document.getElementById('dashboard-sumber-summary-tbody');
+  if (summaryTbody) {
+    summaryTbody.innerHTML = '';
+    
+    // Group transactions by Sumber Dana
+    const sourceSummaries = {};
+    // Seed with all current sources in state
+    state.sources.forEach(src => {
+      sourceSummaries[src.nama] = { pemasukan: 0, pengeluaran: 0 };
+    });
+    
+    // Process transactions
+    state.transactions.forEach(t => {
+      if (t.tipe === 'IN') {
+        const src = t.kategoriSumber;
+        if (!sourceSummaries[src]) {
+          sourceSummaries[src] = { pemasukan: 0, pengeluaran: 0 };
+        }
+        sourceSummaries[src].pemasukan += t.nominal;
+      } else if (t.tipe === 'OUT') {
+        const src = t.sumberDana || 'Lainnya'; // Fallback to 'Lainnya' if not set
+        if (!sourceSummaries[src]) {
+          sourceSummaries[src] = { pemasukan: 0, pengeluaran: 0 };
+        }
+        sourceSummaries[src].pengeluaran += t.nominal;
+      }
+    });
+    
+    const summaryKeys = Object.keys(sourceSummaries).sort();
+    if (summaryKeys.length === 0) {
+      summaryTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada data sumber dana terdaftar.</td></tr>';
+    } else {
+      summaryKeys.forEach(srcName => {
+        const data = sourceSummaries[srcName];
+        const sisa = data.pemasukan - data.pengeluaran;
+        
+        // Only show if there's any transaction or it's a default source to keep UI clean
+        if (data.pemasukan > 0 || data.pengeluaran > 0) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="font-bold">${srcName}</td>
+            <td class="text-right text-success font-bold">${formatRupiah(data.pemasukan)}</td>
+            <td class="text-right text-danger font-bold">${formatRupiah(data.pengeluaran)}</td>
+            <td class="text-right font-bold ${sisa >= 0 ? 'text-success' : 'text-danger'}">${formatRupiah(sisa)}</td>
+          `;
+          summaryTbody.appendChild(tr);
+        }
+      });
+      
+      // If no active rows were appended (all are zero), show a message
+      if (summaryTbody.innerHTML === '') {
+        summaryTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada transaksi pada sumber dana yang terdaftar.</td></tr>';
+      }
+    }
+  }
   
   // 2. Render 10 Latest Transactions
   const sortedTxns = [...state.transactions].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
@@ -1476,15 +1552,30 @@ function setupCustomModals() {
   const customInput = document.getElementById('custom-input-value');
   
   let inlineAddTargetType = ''; // 'SUMBER' or 'KATEGORI'
+  let triggeredFrom = ''; // 'IN-FORM' or 'OUT-FORM'
   
   document.getElementById('btn-add-sumber-inline').addEventListener('click', () => {
     inlineAddTargetType = 'SUMBER';
+    triggeredFrom = 'IN-FORM';
     customTitle.textContent = 'Tambah Sumber Dana';
     customLabel.textContent = 'Nama Sumber Dana Baru';
     customInput.value = '';
     customInput.placeholder = 'Misal: Sponsorship Eksternal';
     customModal.classList.add('open');
   });
+
+  const btnAddSumberOutInline = document.getElementById('btn-add-sumber-out-inline');
+  if (btnAddSumberOutInline) {
+    btnAddSumberOutInline.addEventListener('click', () => {
+      inlineAddTargetType = 'SUMBER';
+      triggeredFrom = 'OUT-FORM';
+      customTitle.textContent = 'Tambah Sumber Dana';
+      customLabel.textContent = 'Nama Sumber Dana Baru';
+      customInput.value = '';
+      customInput.placeholder = 'Misal: Sponsorship Eksternal';
+      customModal.classList.add('open');
+    });
+  }
   
   document.getElementById('btn-add-kategori-inline').addEventListener('click', () => {
     inlineAddTargetType = 'KATEGORI';
@@ -1517,7 +1608,13 @@ function setupCustomModals() {
       state.sources.push(item);
       await saveToStore(STORE_SRCS, item);
       populateDropdowns();
-      document.getElementById('in-sumber').value = val;
+      
+      if (triggeredFrom === 'OUT-FORM') {
+        const outSumber = document.getElementById('out-sumber');
+        if (outSumber) outSumber.value = val;
+      } else {
+        document.getElementById('in-sumber').value = val;
+      }
     } else if (inlineAddTargetType === 'KATEGORI') {
       if (state.categories.some(c => c.nama.toLowerCase() === val.toLowerCase())) {
         showToast('Duplikat', 'Kategori ini sudah terdaftar.', 'error');
@@ -1549,12 +1646,21 @@ function showTransactionDetail(txn) {
     document.getElementById('detail-cat-sumber-label').textContent = 'Sumber Dana:';
     document.getElementById('detail-pic-label').textContent = 'Penanggung Jawab / Pemberi:';
     document.getElementById('detail-amount').className = 'detail-value font-bold text-success';
+    
+    const srcFundContainer = document.getElementById('detail-source-fund-container');
+    if (srcFundContainer) srcFundContainer.style.display = 'none';
   } else {
     typeEl.textContent = 'Pengeluaran';
     typeEl.className = 'txn-badge-type pengeluaran';
     document.getElementById('detail-cat-sumber-label').textContent = 'Kategori Bidang:';
     document.getElementById('detail-pic-label').textContent = 'Pengambil Dana:';
     document.getElementById('detail-amount').className = 'detail-value font-bold text-danger';
+    
+    const srcFundContainer = document.getElementById('detail-source-fund-container');
+    if (srcFundContainer) {
+      srcFundContainer.style.display = 'block';
+      document.getElementById('detail-source-fund-value').textContent = txn.sumberDana || 'Tidak dispesifikasi';
+    }
   }
   
   document.getElementById('detail-date').textContent = formatIndonesianDate(txn.tanggal);

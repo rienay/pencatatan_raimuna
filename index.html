@@ -184,6 +184,30 @@
           </div>
         </div>
 
+        <!-- Ringkasan Saldo per Kategori / Sumber Dana -->
+        <div class="table-card" style="margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+          <div class="table-card-header">
+            <h3>Ringkasan Saldo per Sumber Dana</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Sumber Dana</th>
+                  <th class="text-right">Total Pemasukan</th>
+                  <th class="text-right">Total Pengeluaran (Diambil)</th>
+                  <th class="text-right">Sisa Saldo</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-sumber-summary-tbody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Menghitung ringkasan data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Recent Transactions Table -->
         <div class="table-card">
           <div class="table-card-header">
@@ -298,6 +322,17 @@
                     <!-- Populated dynamically -->
                   </select>
                   <button type="button" class="btn btn-small btn-add-custom" id="btn-add-kategori-inline" title="Tambah kategori baru">+</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="out-sumber">Sumber Dana (Diambil dari) <span class="required">*</span></label>
+                <div class="input-with-button">
+                  <select id="out-sumber" required>
+                    <option value="" disabled selected>Pilih Sumber Dana</option>
+                    <!-- Populated dynamically -->
+                  </select>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-out-inline" title="Tambah sumber baru">+</button>
                 </div>
               </div>
 
@@ -756,6 +791,10 @@ function doPost(e) {
           <div class="detail-item">
             <span class="detail-label" id="detail-cat-sumber-label">Sumber Dana:</span>
             <span id="detail-cat-sumber-value" class="detail-value">--</span>
+          </div>
+          <div class="detail-item" id="detail-source-fund-container">
+            <span class="detail-label">Diambil Dari:</span>
+            <span id="detail-source-fund-value" class="detail-value">--</span>
           </div>
           <div class="detail-item">
             <span class="detail-label" id="detail-pic-label">Penanggung Jawab:</span>
