@@ -17,6 +17,31 @@
 </head>
 <body>
 
+  <!-- Login Overlay Screen -->
+  <div id="login-container" class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-circle">💼</div>
+        <h2>Bendahara Raimuna</h2>
+        <p>Cabang Cilacap 2026</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" required placeholder="bendahara@raimuna.org">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Kata Sandi</label>
+          <input type="password" id="login-password" required placeholder="Masukkan kata sandi...">
+        </div>
+        <div id="login-error-message" class="login-error hidden">
+          Email atau kata sandi salah. Silakan coba lagi!
+        </div>
+        <button type="submit" class="btn-login">Masuk</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Sidebar Navigasi -->
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -73,6 +98,7 @@
       </ul>
     </nav>
     <div class="sidebar-footer">
+      <button id="btn-logout" class="btn btn-small btn-danger" style="width: 100%; margin-bottom: 10px; border-radius: var(--border-radius-sm); font-weight: 600; padding: 8px;">Keluar Aplikasi</button>
       <p>&copy; 2026 DKC Cilacap</p>
     </div>
   </aside>

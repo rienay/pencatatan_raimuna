@@ -61,6 +61,8 @@ let fileIndicatorIn, fileIndicatorOut;
 
 // Initialize Application on Page Load
 document.addEventListener('DOMContentLoaded', async () => {
+  await checkLoginState();
+  setupLoginHandler();
   setupDomReferences();
   await initIndexedDB();
   await loadStateFromDB();
@@ -1880,4 +1882,71 @@ function showToast(title, message, type = 'success') {
       container.removeChild(toast);
     }, 300);
   }, 4000);
+}
+
+// ================= LOGIN & SECURITY LOGIC =================
+// Helper function to hash a string to SHA-256 hex
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+async function checkLoginState() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const loginContainer = document.getElementById('login-container');
+  if (isLoggedIn) {
+    loginContainer.classList.add('hidden');
+  } else {
+    loginContainer.classList.remove('hidden');
+  }
+}
+
+function setupLoginHandler() {
+  const loginForm = document.getElementById('login-form');
+  const errorMsg = document.getElementById('login-error-message');
+  
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      
+      // Hash input credentials
+      const emailHash = await sha256(email.toLowerCase());
+      const passwordHash = await sha256(password);
+      
+      // Hardcoded hashes (securely hidden as SHA-256)
+      const targetEmailHash = "a587a2cdb7a744a1096976ba46b775bed6da431b3fa75c1902b8fe093dabba09";
+      const targetPasswordHash = "dff9cd137cab8b96431ccd81f8bb433fc71f0329eefb54bd4380b3fc3a9fc5d1";
+      
+      if (emailHash === targetEmailHash && passwordHash === targetPasswordHash) {
+        localStorage.setItem('isLoggedIn', 'true');
+        errorMsg.classList.add('hidden');
+        document.getElementById('login-container').classList.add('hidden');
+        showToast('Login Berhasil', 'Selamat datang di Aplikasi Bendahara Raimuna.', 'success');
+        
+        // Clear form inputs
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+      } else {
+        errorMsg.classList.remove('hidden');
+        showToast('Login Gagal', 'Email atau kata sandi Anda salah.', 'error');
+      }
+    });
+  }
+  
+  // Logout handler
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      if (confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
+        localStorage.removeItem('isLoggedIn');
+        checkLoginState();
+        showToast('Logged Out', 'Anda berhasil keluar dari aplikasi.', 'info');
+      }
+    });
+  }
 }
