@@ -648,12 +648,22 @@
               </div>
               <pre class="code-box" id="code-script-content"><code>// KODE APPS SCRIPT UNTUK GOOGLE SHEETS
 function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Transaksi");
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Transaksi");
   if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Sheet Transaksi tidak ditemukan" })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Sheet Transaksi tidak ditemukan" }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
+  
+  // Otomatis memisahkan kolom 'kategoriSumber' jika Google Sheet masih format lama
+  autoMigrateColumns(sheet);
+  
   var data = [];
   var rows = sheet.getDataRange().getValues();
+  if (rows.length === 0) {
+    return ContentService.createTextOutput(JSON.stringify({ success: true, data: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   var headers = rows[0];
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
@@ -673,12 +683,12 @@ function doPost(e) {
     var action = payload.action;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
-    // Pastikan sheet Transaksi ada
     var sheet = ss.getSheetByName("Transaksi") || ss.insertSheet("Transaksi");
     
     if (sheet.getLastRow() === 0) {
-      // Inisialisasi header jika kosong
       sheet.appendRow(["id", "tanggal", "tipe", "kategori", "sumberDana", "pic", "nominal", "keterangan", "dateCreated"]);
+    } else {
+      autoMigrateColumns(sheet);
     }
     
     if (action === "test") {
@@ -687,7 +697,6 @@ function doPost(e) {
     }
     
     if (action === "push_bulk") {
-      // Hapus baris lama kecuali header
       var lastRow = sheet.getLastRow();
       if (lastRow > 1) {
         sheet.deleteRows(2, lastRow - 1);
@@ -713,7 +722,6 @@ function doPost(e) {
     
     if (action === "sync_single") {
       var tx = payload.transaction;
-      // Periksa apakah ID transaksi sudah ada untuk di-update, atau tambahkan baris baru
       var rows = sheet.getDataRange().getValues();
       var foundRow = -1;
       for (var i = 1; i < rows.length; i++) {
@@ -736,10 +744,8 @@ function doPost(e) {
       ];
       
       if (foundRow !== -1) {
-        // Update baris yang ditemukan
         sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
       } else {
-        // Tambahkan baris baru
         sheet.appendRow(rowData);
       }
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
@@ -765,6 +771,48 @@ function doPost(e) {
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Otomatis memisahkan kolom 'kategoriSumber' di Google Sheet menjadi 'kategori' & 'sumberDana'
+ */
+function autoMigrateColumns(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow === 0) return;
+  
+  var range = sheet.getRange(1, 1, lastRow, sheet.getLastColumn());
+  var values = range.getValues();
+  var headers = values[0];
+  
+  var catIndex = headers.indexOf("kategoriSumber");
+  if (catIndex === -1) return; // Sudah versi baru
+  
+  // Sisipkan 1 kolom baru setelah kategoriSumber
+  sheet.insertColumnAfter(catIndex + 1);
+  
+  // Update nama header
+  sheet.getRange(1, catIndex + 1).setValue("kategori");
+  sheet.getRange(1, catIndex + 2).setValue("sumberDana");
+  
+  // Konversi isi baris
+  for (var i = 1; i < values.length; i++) {
+    var tipe = values[i][2]; // Kolom tipe (IN / OUT)
+    var val = values[i][catIndex];
+    
+    var kategoriVal = "-";
+    var sumberVal = "-";
+    
+    if (tipe === "IN") {
+      kategoriVal = "-";
+      sumberVal = val || "-";
+    } else {
+      kategoriVal = val || "-";
+      sumberVal = "-";
+    }
+    
+    sheet.getRange(i + 1, catIndex + 1).setValue(kategoriVal);
+    sheet.getRange(i + 1, catIndex + 2).setValue(sumberVal);
   }
 }</code></pre>
             </div>

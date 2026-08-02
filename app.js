@@ -9,7 +9,7 @@ const state = {
   categories: [],
   sources: [],
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbwqHFpWGfSWbkiSxmjqkC4bcRP1UxobTNxgxFle1vblkl7EWqGIlCjkWbrqD_TVAi0s5w/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbx1fS7Pa5w3sHHxuCBYM4K4-ns53dp-N6JXRP3_2fHzJfFu-_vDCbIcFThnJKD5giNgQg/exec',
     autoSync: true
   },
   filters: {
@@ -356,14 +356,9 @@ async function loadStateFromDB() {
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
-  if (!sheetUrlSetting || !sheetUrlSetting.value || 
-      sheetUrlSetting.value === 'https://script.google.com/macros/s/AKfycbwu0tiHWD_Yt_z5M2J8fqmjf29gGvMiPp1a8V9hdSV-cGgBFvPr82xchE8HAF069weTJg/exec' ||
-      sheetUrlSetting.value === 'https://script.google.com/macros/s/AKfycbyWD04xOruxI3QedBqtpYC0gyFve1UnvqBekCvo0OVhD2prQB9HKrU89AjOyZOwgvprzg/exec') {
-    state.settings.sheetUrl = 'https://script.google.com/macros/s/AKfycbwqHFpWGfSWbkiSxmjqkC4bcRP1UxobTNxgxFle1vblkl7EWqGIlCjkWbrqD_TVAi0s5w/exec';
-    await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: state.settings.sheetUrl });
-  } else {
-    state.settings.sheetUrl = sheetUrlSetting.value;
-  }
+  const defaultUrl = 'https://script.google.com/macros/s/AKfycbx1fS7Pa5w3sHHxuCBYM4K4-ns53dp-N6JXRP3_2fHzJfFu-_vDCbIcFThnJKD5giNgQg/exec';
+  state.settings.sheetUrl = defaultUrl;
+  await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
   
   if (autoSyncSetting === null || autoSyncSetting === undefined) {
     state.settings.autoSync = true;
