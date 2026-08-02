@@ -494,6 +494,8 @@ function populateDropdowns() {
   const outSumberSelect = document.getElementById('out-sumber');
   const filterKategoriSelect = document.getElementById('filter-kategori');
   const filterSumberSelect = document.getElementById('filter-sumber');
+  const editKategoriSelect = document.getElementById('edit-kategori');
+  const editSumberSelect = document.getElementById('edit-sumber');
   
   // Keep selected values if any
   const selectedSumber = inSumberSelect ? inSumberSelect.value : '';
@@ -501,6 +503,8 @@ function populateDropdowns() {
   const selectedOutSumber = outSumberSelect ? outSumberSelect.value : '';
   const selectedFilterKategori = filterKategoriSelect ? filterKategoriSelect.value : 'ALL';
   const selectedFilterSumber = filterSumberSelect ? filterSumberSelect.value : 'ALL';
+  const selectedEditKat = editKategoriSelect ? editKategoriSelect.value : '';
+  const selectedEditSumber = editSumberSelect ? editSumberSelect.value : '';
   
   // Clear
   if (inSumberSelect) inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
@@ -508,6 +512,8 @@ function populateDropdowns() {
   if (outSumberSelect) outSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   if (filterKategoriSelect) filterKategoriSelect.innerHTML = '<option value="ALL">Semua Kategori</option>';
   if (filterSumberSelect) filterSumberSelect.innerHTML = '<option value="ALL">Semua Sumber Dana</option>';
+  if (editKategoriSelect) editKategoriSelect.innerHTML = '<option value="-">Tanpa Kategori (-)</option>';
+  if (editSumberSelect) editSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   
   // Populate Sources
   state.sources.forEach(src => {
@@ -531,6 +537,13 @@ function populateDropdowns() {
       filterOpt.textContent = src.nama;
       filterSumberSelect.appendChild(filterOpt);
     }
+
+    if (editSumberSelect) {
+      const optEdit = document.createElement('option');
+      optEdit.value = src.nama;
+      optEdit.textContent = src.nama;
+      editSumberSelect.appendChild(optEdit);
+    }
   });
   
   // Populate Categories
@@ -548,6 +561,13 @@ function populateDropdowns() {
       filterOpt.textContent = cat.nama;
       filterKategoriSelect.appendChild(filterOpt);
     }
+
+    if (editKategoriSelect) {
+      const optEdit = document.createElement('option');
+      optEdit.value = cat.nama;
+      optEdit.textContent = cat.nama;
+      editKategoriSelect.appendChild(optEdit);
+    }
   });
   
   // Restore selections
@@ -556,6 +576,8 @@ function populateDropdowns() {
   if (selectedOutSumber && outSumberSelect) outSumberSelect.value = selectedOutSumber;
   if (selectedFilterKategori && filterKategoriSelect) filterKategoriSelect.value = selectedFilterKategori;
   if (selectedFilterSumber && filterSumberSelect) filterSumberSelect.value = selectedFilterSumber;
+  if (selectedEditKat && editKategoriSelect) editKategoriSelect.value = selectedEditKat;
+  if (selectedEditSumber && editSumberSelect) editSumberSelect.value = selectedEditSumber;
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -1056,10 +1078,26 @@ function renderDashboard() {
         <td>${tx.pic}</td>
         <td class="text-right font-bold ${tx.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(tx.nominal)}</td>
         <td class="no-print text-center">${syncBadge}</td>
-        <td class="no-print">
-          <button class="btn-icon" title="Lihat Detail">🔍</button>
+        <td class="no-print text-center" style="white-space: nowrap;">
+          <button class="btn-icon btn-edit-action" title="Edit Transaksi" style="margin-right: 4px;">✏️</button>
+          <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
         </td>
       `;
+      
+      const editBtn = tr.querySelector('.btn-edit-action');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditModal(tx);
+        });
+      }
+      const viewBtn = tr.querySelector('.btn-view-action');
+      if (viewBtn) {
+        viewBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showTransactionDetail(tx);
+        });
+      }
       tbody.appendChild(tr);
     });
   }
@@ -1292,10 +1330,26 @@ function renderLaporan() {
         <td class="text-right font-bold ${tx.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(tx.nominal)}</td>
         <td class="text-right font-bold">${formatRupiah(balAtTx)}</td>
         <td class="no-print text-center">${syncBadge}</td>
-        <td class="no-print text-center">
-          <button class="btn-icon" title="Lihat Detail">🔍</button>
+        <td class="no-print text-center" style="white-space: nowrap;">
+          <button class="btn-icon btn-edit-action" title="Edit Transaksi" style="margin-right: 4px;">✏️</button>
+          <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
         </td>
       `;
+      
+      const editBtn = tr.querySelector('.btn-edit-action');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditModal(tx);
+        });
+      }
+      const viewBtn = tr.querySelector('.btn-view-action');
+      if (viewBtn) {
+        viewBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showTransactionDetail(tx);
+        });
+      }
       tbody.appendChild(tr);
     });
     
@@ -1907,6 +1961,139 @@ function setupCustomModalsClose() {
       renderApp();
     }
   });
+  
+  // Modal Edit Transaction Action
+  const btnEditTxn = document.getElementById('btn-edit-txn');
+  if (btnEditTxn) {
+    btnEditTxn.addEventListener('click', () => {
+      const id = modal.dataset.activeTxnId;
+      const match = state.transactions.find(t => t.id === id);
+      if (match) {
+        closeModal();
+        openEditModal(match);
+      }
+    });
+  }
+
+  // Setup Edit Modal Closing Events
+  const editModal = document.getElementById('edit-modal');
+  const closeEditModal = () => {
+    if (editModal) editModal.classList.remove('open');
+  };
+  
+  const btnCloseEdit = document.getElementById('btn-close-edit-modal');
+  if (btnCloseEdit) btnCloseEdit.addEventListener('click', closeEditModal);
+  
+  const btnCancelEdit = document.getElementById('btn-cancel-edit-modal');
+  if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeEditModal);
+  
+  if (editModal) {
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) closeEditModal();
+    });
+  }
+
+  // Format Rupiah on edit-nominal
+  const inputEditNominal = document.getElementById('edit-nominal');
+  if (inputEditNominal) {
+    inputEditNominal.addEventListener('keyup', (e) => {
+      inputEditNominal.value = formatRupiahInput(e.target.value);
+    });
+  }
+
+  // Toggle kategori group on edit-tipe change
+  const editTipeSelect = document.getElementById('edit-tipe');
+  if (editTipeSelect) {
+    editTipeSelect.addEventListener('change', (e) => {
+      const editKategoriGroup = document.getElementById('edit-kategori-group');
+      if (e.target.value === 'IN') {
+        if (editKategoriGroup) editKategoriGroup.style.display = 'none';
+        document.getElementById('edit-kategori').value = '-';
+      } else {
+        if (editKategoriGroup) editKategoriGroup.style.display = 'block';
+      }
+    });
+  }
+
+  // Edit Transaction Form Submit
+  const formEdit = document.getElementById('form-edit-transaction');
+  if (formEdit) {
+    formEdit.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('edit-txn-id').value;
+      const tanggal = document.getElementById('edit-tanggal').value;
+      const tipe = document.getElementById('edit-tipe').value;
+      const kategori = tipe === 'IN' ? '-' : document.getElementById('edit-kategori').value;
+      const sumber = document.getElementById('edit-sumber').value;
+      const pic = document.getElementById('edit-pic').value;
+      const nominal = parseRupiah(document.getElementById('edit-nominal').value);
+      const keterangan = document.getElementById('edit-keterangan').value;
+      
+      if (nominal <= 0) {
+        showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
+        return;
+      }
+      
+      const index = state.transactions.findIndex(t => t.id === id);
+      if (index !== -1) {
+        const updatedTxn = {
+          ...state.transactions[index],
+          tanggal,
+          tipe,
+          kategori,
+          sumberDana: sumber,
+          kategoriSumber: tipe === 'IN' ? sumber : kategori,
+          pic,
+          nominal,
+          keterangan,
+          sync: false
+        };
+        
+        state.transactions[index] = updatedTxn;
+        await saveToStore(STORE_TXNS, updatedTxn);
+        
+        if (state.settings.autoSync && state.settings.sheetUrl) {
+          syncTransactionToSheets(updatedTxn);
+        }
+        
+        closeEditModal();
+        showToast('Berhasil Diperbarui', `Transaksi ${id} berhasil diperbarui.`, 'success');
+        renderApp();
+      }
+    });
+  }
+}
+
+// Function to open & populate Edit Modal
+function openEditModal(txn) {
+  populateDropdowns();
+  
+  const editModal = document.getElementById('edit-modal');
+  document.getElementById('edit-txn-id').value = txn.id;
+  document.getElementById('edit-tanggal').value = txn.tanggal;
+  document.getElementById('edit-tipe').value = txn.tipe;
+  document.getElementById('edit-pic').value = txn.pic;
+  document.getElementById('edit-nominal').value = formatRupiah(txn.nominal).replace('Rp ', '');
+  document.getElementById('edit-keterangan').value = txn.keterangan;
+  
+  const editKategoriGroup = document.getElementById('edit-kategori-group');
+  const editKategoriSelect = document.getElementById('edit-kategori');
+  const editSumberSelect = document.getElementById('edit-sumber');
+  
+  if (txn.tipe === 'IN') {
+    if (editKategoriGroup) editKategoriGroup.style.display = 'none';
+    if (editKategoriSelect) editKategoriSelect.value = '-';
+  } else {
+    if (editKategoriGroup) editKategoriGroup.style.display = 'block';
+    if (editKategoriSelect) editKategoriSelect.value = getTxCategory(txn);
+  }
+  
+  if (editSumberSelect) {
+    editSumberSelect.value = getTxSumber(txn) !== '-' ? getTxSumber(txn) : '';
+  }
+  
+  editModal.classList.add('open');
 }
 // Run the closing events attachment
 setupCustomModalsClose();

@@ -882,12 +882,83 @@ function autoMigrateColumns(sheet) {
           <button id="btn-delete-txn" class="btn btn-danger">Hapus Transaksi</button>
         </div>
         <div class="footer-right">
+          <button id="btn-edit-txn" class="btn btn-warning btn-icon-text" style="background-color: #f59e0b; color: white;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Edit Transaksi</span>
+          </button>
           <button id="btn-sync-individual" class="btn btn-secondary btn-icon-text">
             <span>Sinkronkan ke Sheet</span>
           </button>
           <button id="btn-close-modal-footer" class="btn btn-secondary">Tutup</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= EDIT TRANSACTION MODAL ================= -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="edit-modal-title">Edit Transaksi</h3>
+        <button id="btn-close-edit-modal" class="btn-close">&times;</button>
+      </div>
+      
+      <form id="form-edit-transaction" class="cute-form">
+        <div class="modal-body">
+          <input type="hidden" id="edit-txn-id">
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-tanggal">Tanggal Transaksi <span class="required">*</span></label>
+              <input type="date" id="edit-tanggal" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-tipe">Tipe Transaksi <span class="required">*</span></label>
+              <select id="edit-tipe" required>
+                <option value="IN">Pemasukan</option>
+                <option value="OUT">Pengeluaran</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="edit-kategori-group">
+              <label for="edit-kategori">Kategori Pengeluaran</label>
+              <select id="edit-kategori">
+                <option value="-">Tanpa Kategori (-)</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="form-group" id="edit-sumber-group">
+              <label for="edit-sumber">Sumber Dana <span class="required">*</span></label>
+              <select id="edit-sumber" required>
+                <option value="">Pilih Sumber Dana</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-pic">Penanggung Jawab / PIC <span class="required">*</span></label>
+              <input type="text" id="edit-pic" placeholder="Nama penanggung jawab" required>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-nominal">Nominal (Rp) <span class="required">*</span></label>
+              <input type="text" id="edit-nominal" placeholder="Contoh: 500.000" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-keterangan">Keterangan / Deskripsi <span class="required">*</span></label>
+            <textarea id="edit-keterangan" rows="3" placeholder="Deskripsi transaksi..." required></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-edit-modal" class="btn btn-secondary">Batal</button>
+          <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+        </div>
+      </form>
     </div>
   </div>
 
