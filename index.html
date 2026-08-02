@@ -221,7 +221,8 @@
                   <th>Tanggal</th>
                   <th>ID Transaksi</th>
                   <th>Tipe</th>
-                  <th>Kategori / Sumber</th>
+                  <th>Kategori</th>
+                  <th>Sumber Dana</th>
                   <th>Penanggung Jawab</th>
                   <th>Nominal</th>
                   <th>Sync</th>
@@ -231,7 +232,7 @@
               <tbody id="recent-transactions-tbody">
                 <!-- Will be populated dynamically by JS -->
                 <tr>
-                  <td colspan="8" class="text-center text-muted">Belum ada transaksi terdaftar.</td>
+                  <td colspan="9" class="text-center text-muted">Belum ada transaksi terdaftar.</td>
                 </tr>
               </tbody>
             </table>
@@ -465,9 +466,17 @@
             </div>
 
             <div class="form-group">
-              <label for="filter-kategori-sumber">Kategori / Sumber Dana</label>
-              <select id="filter-kategori-sumber">
-                <option value="ALL">Semua Kategori/Sumber</option>
+              <label for="filter-kategori">Kategori Pengeluaran</label>
+              <select id="filter-kategori">
+                <option value="ALL">Semua Kategori</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filter-sumber">Sumber Dana</label>
+              <select id="filter-sumber">
+                <option value="ALL">Semua Sumber Dana</option>
                 <!-- Populated dynamically -->
               </select>
             </div>
@@ -531,7 +540,8 @@
                   <th class="cursor-pointer sortable" data-sort="tanggal">Tanggal <span class="sort-icon">▲</span></th>
                   <th>ID Transaksi</th>
                   <th>Tipe</th>
-                  <th>Kategori/Sumber</th>
+                  <th>Kategori</th>
+                  <th>Sumber Dana</th>
                   <th>Penanggung Jawab</th>
                   <th>Keterangan</th>
                   <th class="cursor-pointer sortable text-right" data-sort="nominal">Nominal <span class="sort-icon"></span></th>
@@ -545,7 +555,7 @@
               </tbody>
               <tfoot>
                 <tr class="report-totals-row">
-                  <td colspan="7" class="text-right font-bold">Total Terfilter:</td>
+                  <td colspan="8" class="text-right font-bold">Total Terfilter:</td>
                   <td id="report-filtered-nominal-sum" class="text-right font-bold">Rp 0</td>
                   <td id="report-filtered-final-saldo" class="text-right font-bold text-success">Rp 0</td>
                   <td class="no-print" colspan="2"></td>
@@ -673,7 +683,7 @@ function doPost(e) {
     
     if (sheet.getLastRow() === 0) {
       // Inisialisasi header jika kosong
-      sheet.appendRow(["id", "tanggal", "tipe", "kategoriSumber", "pic", "nominal", "keterangan", "dateCreated"]);
+      sheet.appendRow(["id", "tanggal", "tipe", "kategori", "sumberDana", "pic", "nominal", "keterangan", "dateCreated"]);
     }
     
     if (action === "test") {
@@ -694,7 +704,8 @@ function doPost(e) {
           tx.id,
           tx.tanggal,
           tx.tipe,
-          tx.kategoriSumber,
+          tx.kategori || "-",
+          tx.sumberDana || "-",
           tx.pic,
           tx.nominal,
           tx.keterangan,
@@ -721,7 +732,8 @@ function doPost(e) {
         tx.id,
         tx.tanggal,
         tx.tipe,
-        tx.kategoriSumber,
+        tx.kategori || "-",
+        tx.sumberDana || "-",
         tx.pic,
         tx.nominal,
         tx.keterangan,
@@ -789,12 +801,12 @@ function doPost(e) {
             <span id="detail-date" class="detail-value">--/--/----</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label" id="detail-cat-sumber-label">Sumber Dana:</span>
-            <span id="detail-cat-sumber-value" class="detail-value">--</span>
+            <span class="detail-label">Kategori Pengeluaran:</span>
+            <span id="detail-cat-value" class="detail-value">--</span>
           </div>
-          <div class="detail-item" id="detail-source-fund-container">
-            <span class="detail-label">Diambil Dari:</span>
-            <span id="detail-source-fund-value" class="detail-value">--</span>
+          <div class="detail-item">
+            <span class="detail-label">Sumber Dana:</span>
+            <span id="detail-sumber-value" class="detail-value">--</span>
           </div>
           <div class="detail-item">
             <span class="detail-label" id="detail-pic-label">Penanggung Jawab:</span>

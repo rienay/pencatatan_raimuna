@@ -17,7 +17,8 @@ const state = {
     tipe: 'ALL',
     bulan: 'ALL',
     tahun: 'ALL',
-    kategoriSumber: 'ALL',
+    kategori: 'ALL',
+    sumberDana: 'ALL',
     sync: 'ALL'
   },
   sort: {
@@ -39,6 +40,22 @@ const STORE_TXNS = 'transactions';
 const STORE_CATS = 'categories';
 const STORE_SRCS = 'sources';
 const STORE_SETTINGS = 'settings';
+
+// Helper functions for Kategori & Sumber Dana
+function getTxCategory(tx) {
+  if (!tx) return '-';
+  if (tx.kategori && tx.kategori !== '' && tx.kategori !== 'ALL') return tx.kategori;
+  if (tx.tipe === 'OUT') return tx.kategoriSumber || '-';
+  return '-';
+}
+
+function getTxSumber(tx) {
+  if (!tx) return '-';
+  if (tx.sumberDana && tx.sumberDana !== '' && tx.sumberDana !== 'ALL') return tx.sumberDana;
+  if (tx.sumber && tx.sumber !== '' && tx.sumber !== 'ALL') return tx.sumber;
+  if (tx.tipe === 'IN') return tx.kategoriSumber || '-';
+  return '-';
+}
 
 // Default Data Seed arrays
 const DEFAULT_SOURCES = [
@@ -448,28 +465,31 @@ function populateDropdowns() {
   const inSumberSelect = document.getElementById('in-sumber');
   const outKategoriSelect = document.getElementById('out-kategori');
   const outSumberSelect = document.getElementById('out-sumber');
-  const filterCatSumberSelect = document.getElementById('filter-kategori-sumber');
+  const filterKategoriSelect = document.getElementById('filter-kategori');
+  const filterSumberSelect = document.getElementById('filter-sumber');
   
   // Keep selected values if any
-  const selectedSumber = inSumberSelect.value;
-  const selectedKategori = outKategoriSelect.value;
+  const selectedSumber = inSumberSelect ? inSumberSelect.value : '';
+  const selectedKategori = outKategoriSelect ? outKategoriSelect.value : '';
   const selectedOutSumber = outSumberSelect ? outSumberSelect.value : '';
-  const selectedFilter = filterCatSumberSelect.value;
+  const selectedFilterKategori = filterKategoriSelect ? filterKategoriSelect.value : 'ALL';
+  const selectedFilterSumber = filterSumberSelect ? filterSumberSelect.value : 'ALL';
   
   // Clear
-  inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
-  outKategoriSelect.innerHTML = '<option value="" disabled selected>Pilih Kategori Bidang</option>';
-  if (outSumberSelect) {
-    outSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
-  }
-  filterCatSumberSelect.innerHTML = '<option value="ALL">Semua Kategori/Sumber</option>';
+  if (inSumberSelect) inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
+  if (outKategoriSelect) outKategoriSelect.innerHTML = '<option value="" disabled selected>Pilih Kategori Bidang</option>';
+  if (outSumberSelect) outSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
+  if (filterKategoriSelect) filterKategoriSelect.innerHTML = '<option value="ALL">Semua Kategori</option>';
+  if (filterSumberSelect) filterSumberSelect.innerHTML = '<option value="ALL">Semua Sumber Dana</option>';
   
   // Populate Sources
   state.sources.forEach(src => {
-    const opt = document.createElement('option');
-    opt.value = src.nama;
-    opt.textContent = src.nama;
-    inSumberSelect.appendChild(opt);
+    if (inSumberSelect) {
+      const opt = document.createElement('option');
+      opt.value = src.nama;
+      opt.textContent = src.nama;
+      inSumberSelect.appendChild(opt);
+    }
 
     if (outSumberSelect) {
       const optOut = document.createElement('option');
@@ -478,30 +498,37 @@ function populateDropdowns() {
       outSumberSelect.appendChild(optOut);
     }
     
-    const filterOpt = document.createElement('option');
-    filterOpt.value = src.nama;
-    filterOpt.textContent = `Pemasukan: ${src.nama}`;
-    filterCatSumberSelect.appendChild(filterOpt);
+    if (filterSumberSelect) {
+      const filterOpt = document.createElement('option');
+      filterOpt.value = src.nama;
+      filterOpt.textContent = src.nama;
+      filterSumberSelect.appendChild(filterOpt);
+    }
   });
   
   // Populate Categories
   state.categories.forEach(cat => {
-    const opt = document.createElement('option');
-    opt.value = cat.nama;
-    opt.textContent = cat.nama;
-    outKategoriSelect.appendChild(opt);
+    if (outKategoriSelect) {
+      const opt = document.createElement('option');
+      opt.value = cat.nama;
+      opt.textContent = cat.nama;
+      outKategoriSelect.appendChild(opt);
+    }
     
-    const filterOpt = document.createElement('option');
-    filterOpt.value = cat.nama;
-    filterOpt.textContent = `Pengeluaran: ${cat.nama}`;
-    filterCatSumberSelect.appendChild(filterOpt);
+    if (filterKategoriSelect) {
+      const filterOpt = document.createElement('option');
+      filterOpt.value = cat.nama;
+      filterOpt.textContent = cat.nama;
+      filterKategoriSelect.appendChild(filterOpt);
+    }
   });
   
   // Restore selections
-  if (selectedSumber) inSumberSelect.value = selectedSumber;
-  if (selectedKategori) outKategoriSelect.value = selectedKategori;
+  if (selectedSumber && inSumberSelect) inSumberSelect.value = selectedSumber;
+  if (selectedKategori && outKategoriSelect) outKategoriSelect.value = selectedKategori;
   if (selectedOutSumber && outSumberSelect) outSumberSelect.value = selectedOutSumber;
-  if (selectedFilter) filterCatSumberSelect.value = selectedFilter;
+  if (selectedFilterKategori && filterKategoriSelect) filterKategoriSelect.value = selectedFilterKategori;
+  if (selectedFilterSumber && filterSumberSelect) filterSumberSelect.value = selectedFilterSumber;
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -526,6 +553,8 @@ function setupFormHandlers() {
       id: generateUniqueId('TXN-IN'),
       tanggal,
       tipe: 'IN',
+      kategori: '-',
+      sumberDana: sumber,
       kategoriSumber: sumber,
       pic: pemberi,
       nominal,
@@ -565,8 +594,9 @@ function setupFormHandlers() {
       id: generateUniqueId('TXN-OUT'),
       tanggal,
       tipe: 'OUT',
+      kategori: kategori,
+      sumberDana: sumberDana,
       kategoriSumber: kategori,
-      sumberDana: sumberDana, // New field linking back to source of funds
       pic: pengambil,
       nominal,
       keterangan,
@@ -610,8 +640,9 @@ async function syncTransactionToSheets(txn) {
     id: txn.id,
     tanggal: txn.tanggal,
     tipe: txn.tipe,
-    kategoriSumber: txn.kategoriSumber,
-    sumberDana: txn.sumberDana || '', // Include in sheet sync
+    kategori: getTxCategory(txn),
+    sumberDana: getTxSumber(txn),
+    kategoriSumber: txn.kategoriSumber || getTxCategory(txn),
     pic: txn.pic,
     nominal: txn.nominal,
     keterangan: txn.keterangan,
@@ -681,8 +712,9 @@ async function pushAllTransactionsToSheets() {
     id: txn.id,
     tanggal: txn.tanggal,
     tipe: txn.tipe,
-    kategoriSumber: txn.kategoriSumber,
-    sumberDana: txn.sumberDana || '',
+    kategori: getTxCategory(txn),
+    sumberDana: getTxSumber(txn),
+    kategoriSumber: txn.kategoriSumber || getTxCategory(txn),
     pic: txn.pic,
     nominal: txn.nominal,
     keterangan: txn.keterangan,
@@ -1003,7 +1035,8 @@ function renderDashboard() {
         <td>${formatIndonesianDate(tx.tanggal)}</td>
         <td class="font-bold">${tx.id}</td>
         <td>${typeBadge}</td>
-        <td>${tx.kategoriSumber}</td>
+        <td>${getTxCategory(tx)}</td>
+        <td>${getTxSumber(tx)}</td>
         <td>${tx.pic}</td>
         <td class="text-right font-bold ${tx.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(tx.nominal)}</td>
         <td class="no-print text-center">${syncBadge}</td>
@@ -1210,7 +1243,7 @@ function renderLaporan() {
   let filteredNominalSum = 0;
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr class="row-empty"><td colspan="11" class="text-center text-muted">Tidak ditemukan transaksi yang cocok dengan filter.</td></tr>';
+    tbody.innerHTML = '<tr class="row-empty"><td colspan="12" class="text-center text-muted">Tidak ditemukan transaksi yang cocok dengan filter.</td></tr>';
     document.getElementById('report-filtered-nominal-sum').textContent = formatRupiah(0);
     document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(0);
   } else {
@@ -1236,7 +1269,8 @@ function renderLaporan() {
         <td>${formatIndonesianDate(tx.tanggal)}</td>
         <td class="font-bold">${tx.id}</td>
         <td>${typeBadge}</td>
-        <td>${tx.kategoriSumber}</td>
+        <td>${getTxCategory(tx)}</td>
+        <td>${getTxSumber(tx)}</td>
         <td>${tx.pic}</td>
         <td class="text-muted">${tx.keterangan}</td>
         <td class="text-right font-bold ${tx.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(tx.nominal)}</td>
@@ -1314,8 +1348,13 @@ function filterTransactions() {
     if (state.filters.bulan !== 'ALL' && tm !== state.filters.bulan) return false;
     if (state.filters.tahun !== 'ALL' && ty !== state.filters.tahun) return false;
     
-    // 4. Kategori / Sumber Dana
-    if (state.filters.kategoriSumber !== 'ALL' && tx.kategoriSumber !== state.filters.kategoriSumber) {
+    // 4. Kategori Pengeluaran
+    if (state.filters.kategori !== 'ALL' && getTxCategory(tx) !== state.filters.kategori) {
+      return false;
+    }
+
+    // 5. Sumber Dana
+    if (state.filters.sumberDana !== 'ALL' && getTxSumber(tx) !== state.filters.sumberDana) {
       return false;
     }
     
@@ -1395,10 +1434,21 @@ function setupFilterHandlers() {
     renderLaporan();
   });
   
-  document.getElementById('filter-kategori-sumber').addEventListener('change', (e) => {
-    state.filters.kategoriSumber = e.target.value;
-    renderLaporan();
-  });
+  const filterKat = document.getElementById('filter-kategori');
+  if (filterKat) {
+    filterKat.addEventListener('change', (e) => {
+      state.filters.kategori = e.target.value;
+      renderLaporan();
+    });
+  }
+
+  const filterSrc = document.getElementById('filter-sumber');
+  if (filterSrc) {
+    filterSrc.addEventListener('change', (e) => {
+      state.filters.sumberDana = e.target.value;
+      renderLaporan();
+    });
+  }
   
   document.getElementById('filter-sync').addEventListener('change', (e) => {
     state.filters.sync = e.target.value;
@@ -1410,7 +1460,8 @@ function setupFilterHandlers() {
     document.getElementById('filter-tipe').value = 'ALL';
     document.getElementById('filter-bulan').value = 'ALL';
     document.getElementById('filter-tahun').value = 'ALL';
-    document.getElementById('filter-kategori-sumber').value = 'ALL';
+    if (document.getElementById('filter-kategori')) document.getElementById('filter-kategori').value = 'ALL';
+    if (document.getElementById('filter-sumber')) document.getElementById('filter-sumber').value = 'ALL';
     document.getElementById('filter-sync').value = 'ALL';
     
     state.filters = {
@@ -1418,7 +1469,8 @@ function setupFilterHandlers() {
       tipe: 'ALL',
       bulan: 'ALL',
       tahun: 'ALL',
-      kategoriSumber: 'ALL',
+      kategori: 'ALL',
+      sumberDana: 'ALL',
       sync: 'ALL'
     };
     
@@ -1691,7 +1743,10 @@ function showTransactionDetail(txn) {
   }
   
   document.getElementById('detail-date').textContent = formatIndonesianDate(txn.tanggal);
-  document.getElementById('detail-cat-sumber-value').textContent = txn.kategoriSumber;
+  const catEl = document.getElementById('detail-cat-value');
+  if (catEl) catEl.textContent = getTxCategory(txn);
+  const sumberEl = document.getElementById('detail-sumber-value');
+  if (sumberEl) sumberEl.textContent = getTxSumber(txn);
   document.getElementById('detail-pic-value').textContent = txn.pic;
   document.getElementById('detail-amount').textContent = formatRupiah(txn.nominal);
   document.getElementById('detail-description').textContent = txn.keterangan;
@@ -1898,11 +1953,11 @@ function setupExportHandlers() {
     
     // Generate CSV contents
     // Separator semicolon (;) is friendly with Indonesian region Excel default separator
-    let csv = '\ufeffNo;Tanggal;ID Transaksi;Tipe;Kategori / Sumber;Penanggung Jawab;Keterangan;Nominal;Sync\n';
+    let csv = '\ufeffNo;Tanggal;ID Transaksi;Tipe;Kategori;Sumber Dana;Penanggung Jawab;Keterangan;Nominal;Sync\n';
     
     filtered.forEach((t, i) => {
       const cleanDesc = t.keterangan.replace(/[\n\r;]/g, ' ');
-      csv += `${i+1};${t.tanggal};${t.id};${t.tipe};${t.kategoriSumber};${t.pic};${cleanDesc};${t.nominal};${t.sync ? 'YA' : 'BELUM'}\n`;
+      csv += `${i+1};${t.tanggal};${t.id};${t.tipe};${getTxCategory(t)};${getTxSumber(t)};${t.pic};${cleanDesc};${t.nominal};${t.sync ? 'YA' : 'BELUM'}\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1964,7 +2019,8 @@ function setupExportHandlers() {
               <th>Tanggal</th>
               <th>ID Transaksi</th>
               <th>Tipe</th>
-              <th>Kategori / Sumber</th>
+              <th>Kategori</th>
+              <th>Sumber Dana</th>
               <th>Penanggung Jawab</th>
               <th>Keterangan</th>
               <th>Nominal (Rp)</th>
@@ -1981,7 +2037,8 @@ function setupExportHandlers() {
           <td class="date">${t.tanggal}</td>
           <td>${t.id}</td>
           <td>${t.tipe === 'IN' ? 'Pemasukan' : 'Pengeluaran'}</td>
-          <td>${t.kategoriSumber}</td>
+          <td>${getTxCategory(t)}</td>
+          <td>${getTxSumber(t)}</td>
           <td>${t.pic}</td>
           <td>${t.keterangan}</td>
           <td class="number">${t.nominal}</td>
