@@ -986,7 +986,7 @@ function renderDashboard() {
     else if (t.tipe === 'OUT') totalOut += t.nominal;
   });
   
-  let saldo = totalIn - totalOut;
+  let saldo = Math.max(0, totalIn - totalOut);
   
   // Update fields
   document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldo);
@@ -1026,7 +1026,8 @@ function renderDashboard() {
     } else {
       summaryKeys.forEach(srcName => {
         const data = sourceSummaries[srcName];
-        const sisa = data.pemasukan - data.pengeluaran;
+        const rawSisa = data.pemasukan - data.pengeluaran;
+        const sisa = Math.max(0, rawSisa);
         
         // Only show if there's any transaction or it's a default source to keep UI clean
         if (data.pemasukan > 0 || data.pengeluaran > 0) {
@@ -1035,7 +1036,7 @@ function renderDashboard() {
             <td class="font-bold">${srcName}</td>
             <td class="text-right text-success font-bold">${formatRupiah(data.pemasukan)}</td>
             <td class="text-right text-danger font-bold">${formatRupiah(data.pengeluaran)}</td>
-            <td class="text-right font-bold ${sisa >= 0 ? 'text-success' : 'text-danger'}">${formatRupiah(sisa)}</td>
+            <td class="text-right font-bold ${sisa > 0 ? 'text-success' : 'text-muted'}">${formatRupiah(sisa)}</td>
           `;
           summaryTbody.appendChild(tr);
         }
@@ -1287,7 +1288,7 @@ function renderLaporan() {
   chronological.forEach(tx => {
     if (tx.tipe === 'IN') runningTotal += tx.nominal;
     else runningTotal -= tx.nominal;
-    runningBalancesMap[tx.id] = runningTotal;
+    runningBalancesMap[tx.id] = Math.max(0, runningTotal);
   });
   
   // Render report rows
@@ -1364,7 +1365,7 @@ function renderLaporan() {
     });
     
     document.getElementById('report-filtered-nominal-sum').textContent = formatRupiah(filteredNominalSum);
-    document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(overallIn - overallOut);
+    document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(Math.max(0, overallIn - overallOut));
   }
 }
 
