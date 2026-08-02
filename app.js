@@ -844,27 +844,43 @@ async function pullAllTransactionsFromSheets() {
   }
 }
 
-// Auto-pull transactions from Google Sheets on start if local store is empty
+// Auto-pull & merge transactions from Google Sheets on start for multi-device sync (HP & Laptop)
 async function autoPullFromSheets() {
   if (!state.settings.sheetUrl) return;
-  if (state.transactions.length > 0) return;
   
   updateSyncBadge('unsynced', 'Menarik data...');
   try {
     const response = await fetch(state.settings.sheetUrl);
     const result = await response.json();
     
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-      const newTxns = result.data.map(parseSheetRow);
+    if (result.success && Array.isArray(result.data)) {
+      const remoteTxns = result.data.map(parseSheetRow);
       
-      for (const txn of newTxns) {
+      // Preserve any pending unsynced local transactions
+      const unsyncedLocal = state.transactions.filter(t => !t.sync);
+      
+      // Map remote transactions into a combined dictionary
+      const combinedMap = {};
+      remoteTxns.forEach(tx => {
+        combinedMap[tx.id] = tx;
+      });
+      
+      // Merge unsynced local transactions
+      unsyncedLocal.forEach(tx => {
+        combinedMap[tx.id] = tx;
+      });
+      
+      const mergedTxns = Object.values(combinedMap);
+      
+      // Clear and rewrite local store with merged data
+      await clearStore(STORE_TXNS);
+      for (const txn of mergedTxns) {
         await saveToStore(STORE_TXNS, txn);
       }
       
-      state.transactions = newTxns;
+      state.transactions = mergedTxns;
       updateSyncBadgeState();
       renderApp();
-      showToast('Data Sinkron', `Otomatis mengunduh ${newTxns.length} transaksi dari Google Sheets.`, 'success');
     } else {
       updateSyncBadgeState();
     }
