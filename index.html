@@ -600,8 +600,8 @@
               </div>
               
               <div class="form-group flex-row-center gap-10">
-                <input type="checkbox" id="settings-auto-sync" class="cute-checkbox">
-                <label for="settings-auto-sync" class="cursor-pointer label-checkbox">Sinkronisasi otomatis saat menyimpan transaksi baru</label>
+                <input type="checkbox" id="settings-auto-sync" class="cute-checkbox" checked>
+                <label for="settings-auto-sync" class="cursor-pointer label-checkbox">Aktifkan Sinkronisasi Otomatis Real-Time</label>
               </div>
 
               <div class="form-actions-row">
@@ -611,18 +611,13 @@
               
               <hr class="form-divider">
               
-              <div class="danger-zone-card">
-                <h3>Sinkronisasi Massal</h3>
-                <p class="text-muted">Kirim semua data lokal ke Google Sheet atau unduh ulang data yang tersimpan di Google Sheet.</p>
-                <div class="flex-wrap gap-10 mt-10">
-                  <button id="btn-sync-push" class="btn btn-secondary btn-icon-text">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                    <span>Kirim Semua Data Lokal ke Sheet</span>
-                  </button>
-                  <button id="btn-sync-pull" class="btn btn-danger btn-icon-text">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                    <span>Tarik Semua Data dari Sheet (Overwrite)</span>
-                  </button>
+              <div class="auto-sync-card">
+                <div class="sync-icon-badge">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                </div>
+                <div>
+                  <h3>Sinkronisasi Otomatis Real-Time</h3>
+                  <p>Setiap transaksi baru, perubahan, atau penghapusan data akan otomatis terhubung secara langsung ke Google Sheets tanpa perlu proses manual.</p>
                 </div>
               </div>
             </div>

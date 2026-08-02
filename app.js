@@ -98,11 +98,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Render application
   renderApp();
   
-  // Auto test connection if URL exists
+  // Auto test connection and background sync if URL exists
   if (state.settings.sheetUrl) {
     updateSyncBadge('unsynced', 'Menghubungkan...');
     await testGoogleSheetsConnection(false);
     await autoPullFromSheets();
+    await autoSyncPendingTransactions();
   }
 });
 
@@ -848,6 +849,22 @@ async function autoPullFromSheets() {
     updateSyncBadgeState();
   }
 }
+
+// Automatically sync any pending unsynced transactions in background
+async function autoSyncPendingTransactions() {
+  if (!state.settings.sheetUrl || !state.settings.autoSync) return;
+  const unsynced = state.transactions.filter(t => !t.sync);
+  if (unsynced.length === 0) return;
+  
+  for (const txn of unsynced) {
+    await syncTransactionToSheets(txn);
+  }
+}
+
+// Automatically sync when back online
+window.addEventListener('online', () => {
+  autoSyncPendingTransactions();
+});
 
 // Formats spreadsheet dates cleanly
 function formatDateString(val) {
@@ -1910,9 +1927,10 @@ function setupSettingsHandlers() {
     showToast('Pengaturan Disimpan', 'Konfigurasi integrasi Google Sheets berhasil diperbarui.', 'success');
     updateSyncBadgeState();
     
-    // Automatically trigger test connection if URL saved
+    // Automatically trigger test connection and auto sync if URL saved
     if (url) {
       testGoogleSheetsConnection(false);
+      autoSyncPendingTransactions();
     }
   });
   
@@ -1920,15 +1938,19 @@ function setupSettingsHandlers() {
     testGoogleSheetsConnection(true);
   });
   
-  document.getElementById('btn-sync-push').addEventListener('click', () => {
-    if (confirm('Kirim semua transaksi lokal Anda ke Google Sheet? Ini akan menimpa baris-baris data transaksi di Sheet Anda.')) {
+  const btnPush = document.getElementById('btn-sync-push');
+  if (btnPush) {
+    btnPush.addEventListener('click', () => {
       pushAllTransactionsToSheets();
-    }
-  });
+    });
+  }
   
-  document.getElementById('btn-sync-pull').addEventListener('click', () => {
-    pullAllTransactionsFromSheets();
-  });
+  const btnPull = document.getElementById('btn-sync-pull');
+  if (btnPull) {
+    btnPull.addEventListener('click', () => {
+      pullAllTransactionsFromSheets();
+    });
+  }
   
   // Copy Apps Script code button
   document.getElementById('btn-copy-code').addEventListener('click', () => {
