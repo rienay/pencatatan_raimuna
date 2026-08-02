@@ -57,6 +57,37 @@ function getTxSumber(tx) {
   return '-';
 }
 
+function parseSheetRow(row) {
+  const tipe = row.tipe;
+  let kategori = row.kategori;
+  let sumberDana = row.sumberDana;
+  
+  if (!kategori || kategori === '' || kategori === '-') {
+    if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
+    else kategori = '-';
+  }
+  
+  if (!sumberDana || sumberDana === '' || sumberDana === '-') {
+    if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
+    else sumberDana = '';
+  }
+  
+  return {
+    id: row.id,
+    tanggal: formatDateString(row.tanggal),
+    tipe: tipe,
+    kategori: kategori,
+    sumberDana: sumberDana,
+    kategoriSumber: row.kategoriSumber || (tipe === 'IN' ? sumberDana : kategori),
+    pic: row.pic,
+    nominal: parseInt(row.nominal, 10) || 0,
+    keterangan: row.keterangan,
+    dateCreated: row.dateCreated || new Date().toISOString(),
+    attachment: null,
+    sync: true
+  };
+}
+
 // Default Data Seed arrays
 const DEFAULT_SOURCES = [
   'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Stand', 'Donatur', 'Iuran Panitia', 'Lainnya'
@@ -775,19 +806,7 @@ async function pullAllTransactionsFromSheets() {
       // Clear local txns store
       await clearStore(STORE_TXNS);
       
-      const newTxns = result.data.map(row => ({
-        id: row.id,
-        tanggal: formatDateString(row.tanggal),
-        tipe: row.tipe,
-        kategoriSumber: row.kategoriSumber,
-        sumberDana: row.sumberDana || '',
-        pic: row.pic,
-        nominal: parseInt(row.nominal, 10) || 0,
-        keterangan: row.keterangan,
-        dateCreated: row.dateCreated || new Date().toISOString(),
-        attachment: null, // Attachments are not synced to Google Sheets due to size, kept empty
-        sync: true
-      }));
+      const newTxns = result.data.map(parseSheetRow);
       
       // Save all to local DB
       for (const txn of newTxns) {
@@ -819,19 +838,7 @@ async function autoPullFromSheets() {
     const result = await response.json();
     
     if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-      const newTxns = result.data.map(row => ({
-        id: row.id,
-        tanggal: formatDateString(row.tanggal),
-        tipe: row.tipe,
-        kategoriSumber: row.kategoriSumber,
-        sumberDana: row.sumberDana || '',
-        pic: row.pic,
-        nominal: parseInt(row.nominal, 10) || 0,
-        keterangan: row.keterangan,
-        dateCreated: row.dateCreated || new Date().toISOString(),
-        attachment: null,
-        sync: true
-      }));
+      const newTxns = result.data.map(parseSheetRow);
       
       for (const txn of newTxns) {
         await saveToStore(STORE_TXNS, txn);
@@ -984,18 +991,15 @@ function renderDashboard() {
     
     // Process transactions
     state.transactions.forEach(t => {
+      const src = getTxSumber(t);
+      const targetSrc = (src && src !== '-') ? src : 'Tanpa Sumber Dana';
+      if (!sourceSummaries[targetSrc]) {
+        sourceSummaries[targetSrc] = { pemasukan: 0, pengeluaran: 0 };
+      }
       if (t.tipe === 'IN') {
-        const src = t.kategoriSumber;
-        if (!sourceSummaries[src]) {
-          sourceSummaries[src] = { pemasukan: 0, pengeluaran: 0 };
-        }
-        sourceSummaries[src].pemasukan += t.nominal;
+        sourceSummaries[targetSrc].pemasukan += t.nominal;
       } else if (t.tipe === 'OUT') {
-        const src = t.sumberDana || 'Lainnya'; // Fallback to 'Lainnya' if not set
-        if (!sourceSummaries[src]) {
-          sourceSummaries[src] = { pemasukan: 0, pengeluaran: 0 };
-        }
-        sourceSummaries[src].pengeluaran += t.nominal;
+        sourceSummaries[targetSrc].pengeluaran += t.nominal;
       }
     });
     
@@ -1162,7 +1166,7 @@ function renderDashboardCharts() {
   const categoryTotals = {};
   state.transactions.forEach(t => {
     if (t.tipe === 'OUT') {
-      const cat = t.kategoriSumber;
+      const cat = getTxCategory(t);
       categoryTotals[cat] = (categoryTotals[cat] || 0) + t.nominal;
     }
   });
