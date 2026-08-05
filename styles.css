@@ -1569,3 +1569,193 @@ body {
 .login-error.hidden {
   display: none !important;
 }
+
+/* ================= SPONSORSHIP KWITANSI STYLES ================= */
+.sponsorship-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .sponsorship-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sponsorship-live-preview-container {
+  background-color: var(--bg-app);
+  padding: 20px;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+/* Paper Sheet Layout */
+.kwitansi-paper-sheet {
+  background: #ffffff;
+  width: 100%;
+  max-width: 650px;
+  padding: 24px;
+  border-radius: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000000;
+  box-sizing: border-box;
+}
+
+.kwitansi-box-frame {
+  border: 3px double #000000;
+  padding: 20px;
+  position: relative;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.kwitansi-title-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.kwitansi-title-header h2 {
+  font-family: 'Cataneo BT', 'Georgia', 'Times New Roman', serif;
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0 0 4px 0;
+  text-decoration: underline;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.kwitansi-no-line {
+  font-size: 11pt;
+  font-weight: 600;
+  margin-bottom: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.kwitansi-body-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 11pt;
+  line-height: 1.6;
+}
+
+.kwitansi-body-table td {
+  padding: 5px 0;
+  vertical-align: top;
+}
+
+.kwitansi-label-col {
+  width: 160px;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.kwitansi-sep-col {
+  width: 15px;
+  text-align: center;
+}
+
+.kwitansi-val-col {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.kwitansi-val-terbilang {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-style: italic;
+  background-color: #f9f9f9;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Bottom Row: Nominal Box & Signature */
+.kwitansi-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 25px;
+  padding-top: 10px;
+}
+
+.kwitansi-amount-box-container {
+  width: 55%;
+}
+
+.kwitansi-amount-box {
+  border: 3px double #000000;
+  padding: 10px 18px;
+  display: inline-block;
+  font-size: 14pt;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: #ffffff;
+}
+
+.kwitansi-sig-container {
+  width: 40%;
+  text-align: center;
+  font-size: 11pt;
+}
+
+.kwitansi-sig-date {
+  margin-bottom: 4px;
+}
+
+.kwitansi-sig-role {
+  margin-bottom: 60px;
+}
+
+.kwitansi-sig-name {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.kwitansi-sig-nta {
+  font-size: 10pt;
+  color: #333333;
+}
+
+/* Print Only Specifics for Sponsorship Kwitansi */
+@media print {
+  .kwitansi-print-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  .kwitansi-print-page {
+    page-break-after: always;
+    padding: 10px 0;
+  }
+  
+  .kwitansi-print-page:last-child {
+    page-break-after: auto;
+  }
+  
+  .kwitansi-divider-line {
+    border-top: 2px dashed #666666;
+    margin: 35px 0;
+    position: relative;
+    text-align: center;
+  }
+
+  .kwitansi-divider-line::after {
+    content: '✂--- Gunting / Potong Disini (Lembar Arsip Bendahara) ---✂';
+    background: #ffffff;
+    padding: 0 10px;
+    font-size: 8pt;
+    color: #666666;
+    position: relative;
+    top: -9px;
+  }
+}
+

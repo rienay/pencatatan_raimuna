@@ -90,6 +90,12 @@
           </a>
         </li>
         <li>
+          <a href="#" class="nav-link" data-target="sponsorship-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            <span>Cetak Kwitansi</span>
+          </a>
+        </li>
+        <li>
           <a href="#" class="nav-link" data-target="pengaturan-section">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Pengaturan</span>
@@ -818,6 +824,106 @@ function autoMigrateColumns(sheet) {
             </div>
           </div>
           
+        </div>
+      </section>
+
+      <!-- ================= SPONSORSHIP SECTION ================= -->
+      <section id="sponsorship-section" class="content-section">
+        <div class="sponsorship-grid">
+          <!-- Form Controls -->
+          <div class="form-container-card no-print">
+            <div class="card-header">
+              <h2>Form Cetak Kwitansi Sponsorship</h2>
+              <p>Isi rincian atau pilih dari transaksi pemasukan sponsorship</p>
+            </div>
+            
+            <form id="form-sponsorship-kwitansi" class="cute-form">
+              <div class="form-group full-width" style="margin-bottom: 15px;">
+                <label for="sponsor-select-tx">Pilih dari Pemasukan (Opsional)</label>
+                <select id="sponsor-select-tx" class="form-control">
+                  <option value="">-- Buat Kwitansi Manual / Custom --</option>
+                  <!-- Populated dynamically -->
+                </select>
+                <small class="form-help-text">Pilih transaksi untuk mengisi otomatis data sponsor</small>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="kwitansi-no">Nomor Kwitansi <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-no" value="001" placeholder="Contoh: 001" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="kwitansi-tgl">Tanggal Kwitansi <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-tgl" placeholder="Contoh: 5 Agustus 2026" required>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="kwitansi-dari">Telah Diterima Dari <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-dari" placeholder="Nama Perusahaan / Instansi / Donatur" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="kwitansi-nominal">Nominal Uang (Rp) <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-nominal" placeholder="Contoh: 300.000" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="kwitansi-lembar">Format Lembar Cetak</label>
+                  <select id="kwitansi-lembar">
+                    <option value="2">2 Lembar (Sponsor & Arsip Bendahara)</option>
+                    <option value="1">1 Lembar (Sponsor Sahaja)</option>
+                  </select>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="kwitansi-terbilang">Terbilang <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-terbilang" placeholder="Otomatis terisi dari nominal..." required style="font-weight: 600; text-transform: uppercase;">
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="kwitansi-guna">Guna Membayar <span class="required">*</span></label>
+                  <textarea id="kwitansi-guna" rows="2" placeholder="Keperluan pembayaran sponsorship..." required>SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026</textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="kwitansi-penerima">Nama Yang Menerima <span class="required">*</span></label>
+                  <input type="text" id="kwitansi-penerima" value="Sulis Rahayu" placeholder="Nama penerima / bendahara" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="kwitansi-nta">NTA Penerima</label>
+                  <input type="text" id="kwitansi-nta" value="NTA. 11.01.00.100806.00001" placeholder="Nomor Tanda Anggota">
+                </div>
+              </div>
+
+              <div class="form-actions mt-20">
+                <button type="button" id="btn-print-kwitansi" class="btn btn-success btn-icon-text">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  <span>Cetak / Print Kwitansi</span>
+                </button>
+                <button type="button" id="btn-reset-kwitansi" class="btn btn-secondary">Reset Form</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Screen Live Preview Card -->
+          <div class="table-card no-print">
+            <div class="table-card-header">
+              <h3>Pratinjau Nota Sponsorship</h3>
+              <span class="badge badge-success">Live Screen Preview</span>
+            </div>
+            <div class="sponsorship-live-preview-container">
+              <div id="kwitansi-screen-preview" class="kwitansi-paper-sheet">
+                <!-- Live rendered inside JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Printable Container for Sponsorship Receipt (@media print) -->
+        <div id="kwitansi-printable-area" class="print-only kwitansi-print-wrapper">
+          <!-- Populated dynamically before print -->
         </div>
       </section>
 

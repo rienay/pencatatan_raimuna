@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupSettingsHandlers();
   setupExportHandlers();
   setupCustomModals();
+  setupSponsorshipHandlers();
   
   // Set default dates on forms
   const today = new Date().toISOString().split('T')[0];
@@ -466,6 +467,7 @@ function setupNavigation() {
         'pengeluaran-section': 'Pencatatan Pengeluaran',
         'kategori-section': 'Manajemen Kategori',
         'laporan-section': 'Laporan Keuangan',
+        'sponsorship-section': 'Cetak Nota Sponsorship',
         'pengaturan-section': 'Integrasi Google Sheets'
       };
       document.getElementById('page-title').textContent = titles[targetSectionId] || 'Keuangan Raimuna';
@@ -480,6 +482,8 @@ function setupNavigation() {
         renderLaporan();
       } else if (targetSectionId === 'kategori-section') {
         renderKategoriPage();
+      } else if (targetSectionId === 'sponsorship-section') {
+        renderSponsorshipSection();
       } else if (targetSectionId === 'pemasukan-section' || targetSectionId === 'pengeluaran-section') {
         populateDropdowns();
       }
@@ -987,6 +991,7 @@ function renderApp() {
     if (id === 'dashboard-section') renderDashboard();
     else if (id === 'laporan-section') renderLaporan();
     else if (id === 'kategori-section') renderKategoriPage();
+    else if (id === 'sponsorship-section') renderSponsorshipSection();
   }
 }
 
@@ -2425,3 +2430,241 @@ function setupLoginHandler() {
     });
   }
 }
+
+// ================= SPONSORSHIP KWITANSI LOGIC =================
+
+// Helper: Convert numbers to Indonesian words ("Terbilang")
+function terbilangIndo(angka) {
+  angka = Math.abs(parseInt(angka, 10)) || 0;
+  if (angka === 0) return 'NOL RUPIAH';
+  
+  const satuan = ['', 'SATU', 'DUA', 'TIGA', 'EMPAT', 'LIMA', 'ENAM', 'TUJUH', 'DELAPAN', 'SEMBILAN', 'SEPULUH', 'SEBELAS'];
+  
+  function baca(n) {
+    if (n < 12) return satuan[n];
+    if (n < 20) return baca(n - 10) + ' BELAS';
+    if (n < 100) return baca(Math.floor(n / 10)) + ' PULUH ' + (n % 10 !== 0 ? baca(n % 10) : '');
+    if (n < 200) return 'SERATUS ' + (n - 100 !== 0 ? baca(n - 100) : '');
+    if (n < 1000) return baca(Math.floor(n / 100)) + ' RATUS ' + (n % 100 !== 0 ? baca(n % 100) : '');
+    if (n < 2000) return 'SERIBU ' + (n - 1000 !== 0 ? baca(n - 1000) : '');
+    if (n < 1000000) return baca(Math.floor(n / 1000)) + ' RIBU ' + (n % 1000 !== 0 ? baca(n % 1000) : '');
+    if (n < 1000000000) return baca(Math.floor(n / 1000000)) + ' JUTA ' + (n % 1000000 !== 0 ? baca(n % 1000000) : '');
+    if (n < 1000000000000) return baca(Math.floor(n / 1000000000)) + ' MILYAR ' + (n % 1000000000 !== 0 ? baca(n % 1000000000) : '');
+    return n.toString();
+  }
+  
+  let hasil = baca(angka).replace(/\s+/g, ' ').trim();
+  return (hasil + ' RUPIAH').toUpperCase();
+}
+
+let isSponsorshipSetupDone = false;
+
+function setupSponsorshipHandlers() {
+  if (isSponsorshipSetupDone) return;
+  
+  const kwitansiNo = document.getElementById('kwitansi-no');
+  const kwitansiTgl = document.getElementById('kwitansi-tgl');
+  const kwitansiDari = document.getElementById('kwitansi-dari');
+  const kwitansiNominal = document.getElementById('kwitansi-nominal');
+  const kwitansiTerbilang = document.getElementById('kwitansi-terbilang');
+  const kwitansiGuna = document.getElementById('kwitansi-guna');
+  const kwitansiPenerima = document.getElementById('kwitansi-penerima');
+  const kwitansiNta = document.getElementById('kwitansi-nta');
+  const kwitansiLembar = document.getElementById('kwitansi-lembar');
+  const selectTx = document.getElementById('sponsor-select-tx');
+  const btnPrint = document.getElementById('btn-print-kwitansi');
+  const btnReset = document.getElementById('btn-reset-kwitansi');
+  
+  if (!kwitansiNo) return;
+  
+  // Format nominal input as rupiah & auto calculate terbilang
+  kwitansiNominal.addEventListener('input', (e) => {
+    let raw = e.target.value.replace(/[^0-9]/g, '');
+    if (raw) {
+      e.target.value = formatRupiahDisplay(raw);
+      kwitansiTerbilang.value = terbilangIndo(raw);
+    } else {
+      e.target.value = '';
+      kwitansiTerbilang.value = '';
+    }
+    updateKwitansiLivePreview();
+  });
+  
+  // Auto-fill from transaction selector
+  selectTx.addEventListener('change', (e) => {
+    const txId = e.target.value;
+    if (!txId) return;
+    
+    const tx = state.transactions.find(t => t.id === txId);
+    if (tx) {
+      kwitansiDari.value = tx.pic || getTxSumber(tx) || 'Sponsor Eksternal';
+      kwitansiNominal.value = formatRupiahDisplay(tx.nominal);
+      kwitansiTerbilang.value = terbilangIndo(tx.nominal);
+      if (tx.keterangan) {
+        kwitansiGuna.value = tx.keterangan.toUpperCase().includes('SPONSORSHIP') 
+          ? tx.keterangan 
+          : `SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
+      }
+      if (tx.tanggal) {
+        kwitansiTgl.value = formatTanggalIndoFull(tx.tanggal);
+      }
+      updateKwitansiLivePreview();
+    }
+  });
+
+  // Listen for changes on all input fields to update preview live
+  const inputs = [kwitansiNo, kwitansiTgl, kwitansiDari, kwitansiTerbilang, kwitansiGuna, kwitansiPenerima, kwitansiNta, kwitansiLembar];
+  inputs.forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', updateKwitansiLivePreview);
+      inp.addEventListener('change', updateKwitansiLivePreview);
+    }
+  });
+  
+  btnPrint.addEventListener('click', () => {
+    printSponsorshipKwitansi();
+  });
+  
+  btnReset.addEventListener('click', () => {
+    selectTx.value = '';
+    kwitansiNo.value = '001';
+    kwitansiDari.value = '';
+    kwitansiNominal.value = '';
+    kwitansiTerbilang.value = '';
+    kwitansiGuna.value = 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+    kwitansiPenerima.value = 'Sulis Rahayu';
+    kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
+    
+    const printDate = new Date();
+    kwitansiTgl.value = `${printDate.getDate()} ${getIndonesianMonthName(String(printDate.getMonth() + 1).padStart(2, '0'))} ${printDate.getFullYear()}`;
+    
+    updateKwitansiLivePreview();
+  });
+  
+  isSponsorshipSetupDone = true;
+}
+
+function formatTanggalIndoFull(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const yyyy = parts[0];
+  const mm = parts[1];
+  const dd = parseInt(parts[2], 10);
+  return `${dd} ${getIndonesianMonthName(mm)} ${yyyy}`;
+}
+
+function renderSponsorshipSection() {
+  setupSponsorshipHandlers();
+  
+  // Populate Transaction selector with Pemasukan transactions
+  const selectTx = document.getElementById('sponsor-select-tx');
+  if (selectTx) {
+    const incomeTxns = state.transactions.filter(t => t.tipe === 'IN');
+    selectTx.innerHTML = '<option value="">-- Buat Kwitansi Manual / Custom --</option>';
+    incomeTxns.forEach(tx => {
+      const opt = document.createElement('option');
+      opt.value = tx.id;
+      const srcName = tx.pic || getTxSumber(tx) || 'Sponsor';
+      opt.textContent = `${tx.tanggal} - ${srcName} (Rp ${formatRupiahDisplay(tx.nominal)})`;
+      selectTx.appendChild(opt);
+    });
+  }
+  
+  // Default date if empty
+  const kwitansiTgl = document.getElementById('kwitansi-tgl');
+  if (kwitansiTgl && !kwitansiTgl.value) {
+    const printDate = new Date();
+    kwitansiTgl.value = `${printDate.getDate()} ${getIndonesianMonthName(String(printDate.getMonth() + 1).padStart(2, '0'))} ${printDate.getFullYear()}`;
+  }
+
+  // Update preview
+  updateKwitansiLivePreview();
+}
+
+function generateKwitansiHTML() {
+  const no = document.getElementById('kwitansi-no')?.value || '001';
+  const tgl = document.getElementById('kwitansi-tgl')?.value || '5 Agustus 2026';
+  const dari = document.getElementById('kwitansi-dari')?.value || '........................................................';
+  const nominalVal = document.getElementById('kwitansi-nominal')?.value || '0';
+  const terbilang = document.getElementById('kwitansi-terbilang')?.value || 'NOL RUPIAH';
+  const guna = document.getElementById('kwitansi-guna')?.value || 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+  const penerima = document.getElementById('kwitansi-penerima')?.value || 'Sulis Rahayu';
+  const nta = document.getElementById('kwitansi-nta')?.value || 'NTA. 11.01.00.100806.00001';
+
+  return `
+    <div class="kwitansi-box-frame">
+      <div class="kwitansi-title-header">
+        <h2>K W I T A N S I &nbsp;&nbsp; S P O N S O R S H I P</h2>
+      </div>
+      <div class="kwitansi-no-line">
+        No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: &nbsp;${no}
+      </div>
+      <table class="kwitansi-body-table">
+        <tr>
+          <td class="kwitansi-label-col">Telah Diterima Dari</td>
+          <td class="kwitansi-sep-col">:</td>
+          <td class="kwitansi-val-col">${dari}</td>
+        </tr>
+        <tr>
+          <td class="kwitansi-label-col">Terbilang</td>
+          <td class="kwitansi-sep-col">:</td>
+          <td class="kwitansi-val-col"><span class="kwitansi-val-terbilang">${terbilang}</span></td>
+        </tr>
+        <tr>
+          <td class="kwitansi-label-col">Guna Membayar</td>
+          <td class="kwitansi-sep-col">:</td>
+          <td class="kwitansi-val-col">${guna}</td>
+        </tr>
+      </table>
+      <div class="kwitansi-footer-row">
+        <div class="kwitansi-amount-box-container">
+          <div class="kwitansi-amount-box">
+            Rp. &nbsp;${nominalVal},00
+          </div>
+        </div>
+        <div class="kwitansi-sig-container">
+          <div class="kwitansi-sig-date">Cilacap, ${tgl}</div>
+          <div class="kwitansi-sig-role">Yang menerima,</div>
+          <div class="kwitansi-sig-name">${penerima}</div>
+          <div class="kwitansi-sig-nta">${nta}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function updateKwitansiLivePreview() {
+  const previewArea = document.getElementById('kwitansi-screen-preview');
+  if (previewArea) {
+    previewArea.innerHTML = generateKwitansiHTML();
+  }
+}
+
+function printSponsorshipKwitansi() {
+  const printableArea = document.getElementById('kwitansi-printable-area');
+  const numLembar = parseInt(document.getElementById('kwitansi-lembar')?.value || '2', 10);
+  
+  if (!printableArea) return;
+  
+  const kwitansiHtml = generateKwitansiHTML();
+  
+  if (numLembar === 2) {
+    printableArea.innerHTML = `
+      <div class="kwitansi-print-page">
+        ${kwitansiHtml}
+        <div class="kwitansi-divider-line"></div>
+        ${kwitansiHtml}
+      </div>
+    `;
+  } else {
+    printableArea.innerHTML = `
+      <div class="kwitansi-print-page">
+        ${kwitansiHtml}
+      </div>
+    `;
+  }
+  
+  window.print();
+}
+
