@@ -2612,7 +2612,7 @@ function generateKwitansiHTML() {
           <td class="kwitansi-val-col"><span class="kwitansi-val-terbilang">${terbilang}</span></td>
         </tr>
         <tr>
-          <td class="kwitansi-label-col">Guna Membayar</td>
+          <td class="kwitansi-label-col">Keperluan</td>
           <td class="kwitansi-sep-col">:</td>
           <td class="kwitansi-val-col">${guna}</td>
         </tr>
