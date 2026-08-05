@@ -58,20 +58,43 @@ function getTxSumber(tx) {
 }
 
 function parseSheetRow(row) {
-  const tipe = row.tipe;
+  let tipe = row.tipe;
   let kategori = row.kategori;
   let sumberDana = row.sumberDana;
-  
-  if (!kategori || kategori === '' || kategori === '-') {
-    if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
-    else kategori = '-';
+  let pic = row.pic;
+  let nominal = parseInt(row.nominal, 10) || 0;
+  let keterangan = row.keterangan || '';
+
+  // Detect and repair column shift from legacy Google Sheet format
+  // In legacy shifted format: 'pic' column contains numeric nominal, 'sumberDana' contains pic/source
+  if ((!nominal || nominal === 0) && pic && /^\d+$/.test(String(pic).trim())) {
+    nominal = parseInt(pic, 10) || 0;
+    const oldSumber = sumberDana || '-';
+    pic = (oldSumber && oldSumber !== '-') ? oldSumber : '-';
+    
+    if (tipe === 'OUT') {
+      sumberDana = (oldSumber && oldSumber !== '-') ? oldSumber : 'Minyak Jelantah';
+      if (!kategori || kategori === '' || kategori === '-') {
+        kategori = row.kategoriSumber || 'Perlengkapan';
+      }
+    } else {
+      if (!sumberDana || sumberDana === '' || sumberDana === '-') {
+        sumberDana = row.kategoriSumber || 'Sponsor';
+      }
+      kategori = '-';
+    }
+  } else {
+    if (!kategori || kategori === '' || kategori === '-') {
+      if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
+      else kategori = '-';
+    }
+    
+    if (!sumberDana || sumberDana === '' || sumberDana === '-') {
+      if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
+      else sumberDana = '-';
+    }
   }
-  
-  if (!sumberDana || sumberDana === '' || sumberDana === '-') {
-    if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
-    else sumberDana = '';
-  }
-  
+
   return {
     id: row.id,
     tanggal: formatDateString(row.tanggal),
@@ -79,9 +102,9 @@ function parseSheetRow(row) {
     kategori: kategori,
     sumberDana: sumberDana,
     kategoriSumber: row.kategoriSumber || (tipe === 'IN' ? sumberDana : kategori),
-    pic: row.pic,
-    nominal: parseInt(row.nominal, 10) || 0,
-    keterangan: row.keterangan,
+    pic: pic,
+    nominal: nominal,
+    keterangan: keterangan,
     dateCreated: row.dateCreated || new Date().toISOString(),
     attachment: null,
     sync: true
