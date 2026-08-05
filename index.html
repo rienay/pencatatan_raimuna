@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=1.2">
-  
+
   <!-- Chart.js CDN for visual charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
   <!-- Login Overlay Screen -->
@@ -47,8 +49,9 @@
     <div class="sidebar-header">
       <div class="logo-container">
         <!-- Cute Pramuka/Raimuna representation icon -->
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
       </div>
       <div class="sidebar-title">
@@ -56,71 +59,115 @@
         <p>Cilacap 2026</p>
       </div>
     </div>
-    
+
     <nav class="sidebar-nav">
       <ul>
         <li>
           <a href="#" class="nav-link active" data-target="dashboard-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9" rx="1" />
+              <rect x="14" y="3" width="7" height="5" rx="1" />
+              <rect x="14" y="12" width="7" height="9" rx="1" />
+              <rect x="3" y="16" width="7" height="5" rx="1" />
+            </svg>
             <span>Dashboard</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="pemasukan-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v8M8 12h8" />
+            </svg>
             <span>Pemasukan</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="pengeluaran-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 12h8" />
+            </svg>
             <span>Pengeluaran</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="kategori-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
             <span>Kategori</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="laporan-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
             <span>Laporan</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="sponsorship-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+              <path d="M10 9H8" />
+            </svg>
             <span>Cetak Kwitansi</span>
           </a>
         </li>
         <li>
           <a href="#" class="nav-link" data-target="pengaturan-section">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
             <span>Pengaturan</span>
           </a>
         </li>
       </ul>
     </nav>
     <div class="sidebar-footer">
-      <button id="btn-logout" class="btn btn-small btn-danger" style="width: 100%; margin-bottom: 10px; border-radius: var(--border-radius-sm); font-weight: 600; padding: 8px;">Keluar Aplikasi</button>
+      <button id="btn-logout" class="btn btn-small btn-danger"
+        style="width: 100%; margin-bottom: 10px; border-radius: var(--border-radius-sm); font-weight: 600; padding: 8px;">Keluar
+        Aplikasi</button>
       <p>&copy; 2026 DKC Cilacap</p>
     </div>
   </aside>
 
   <!-- Main Content Wrapper -->
   <main class="main-content">
-    
+
     <!-- Top Navbar -->
     <header class="navbar">
       <div class="navbar-left">
         <button id="sidebar-toggle" class="btn-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
         </button>
         <h1 id="page-title">Dashboard Keuangan</h1>
       </div>
-      
+
       <div class="navbar-right">
         <!-- Google Sheets sync indicator badge -->
         <div id="sync-status-badge" class="sync-badge unsynced" title="Status Sinkronisasi Google Sheets">
@@ -139,7 +186,7 @@
 
     <!-- Content Sections Container -->
     <div class="content-container">
-      
+
       <!-- ================= DASHBOARD SECTION ================= -->
       <section id="dashboard-section" class="content-section active">
         <!-- Info Cards -->
@@ -253,14 +300,14 @@
             <h2>Tambah Transaksi Pemasukan</h2>
             <p>Catat setiap pemasukan dana kegiatan Raimuna Cabang Cilacap secara teliti.</p>
           </div>
-          
+
           <form id="form-pemasukan" class="cute-form">
             <div class="form-grid">
               <div class="form-group">
                 <label for="in-tanggal">Tanggal <span class="required">*</span></label>
                 <input type="date" id="in-tanggal" required>
               </div>
-              
+
               <div class="form-group">
                 <label for="in-sumber">Sumber Dana <span class="required">*</span></label>
                 <div class="input-with-button">
@@ -268,7 +315,8 @@
                     <option value="" disabled selected>Pilih Sumber Dana</option>
                     <!-- Populated dynamically and from Categories page -->
                   </select>
-                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-inline" title="Tambah sumber baru">+</button>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-inline"
+                    title="Tambah sumber baru">+</button>
                 </div>
               </div>
 
@@ -285,15 +333,20 @@
 
             <div class="form-group">
               <label for="in-keterangan">Keterangan / Deskripsi <span class="required">*</span></label>
-              <textarea id="in-keterangan" rows="3" placeholder="Tulis rincian informasi pemasukan..." required></textarea>
+              <textarea id="in-keterangan" rows="3" placeholder="Tulis rincian informasi pemasukan..."
+                required></textarea>
             </div>
 
             <div class="form-group">
-              <label for="in-bukti">Upload Bukti Transaksi <span class="text-muted">(Optional, Bisa pilih lebih dari 1 file, PNG/JPG/PDF)</span></label>
+              <label for="in-bukti">Upload Bukti Transaksi <span class="text-muted">(Optional, Bisa pilih lebih dari 1
+                  file, PNG/JPG/PDF)</span></label>
               <div class="file-dropzone" id="in-dropzone">
-                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
                 <p>Klik untuk memilih file atau seret file ke sini</p>
-                <input type="file" id="in-bukti" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                <input type="file" id="in-bukti" accept="image/png, image/jpeg, application/pdf"
+                  class="file-input-hidden" multiple>
                 <div class="file-preview-indicator" id="in-file-indicator"></div>
               </div>
             </div>
@@ -328,7 +381,8 @@
                     <option value="" disabled selected>Pilih Kategori Bidang</option>
                     <!-- Populated dynamically -->
                   </select>
-                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-kategori-inline" title="Tambah kategori baru">+</button>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-kategori-inline"
+                    title="Tambah kategori baru">+</button>
                 </div>
               </div>
 
@@ -339,13 +393,15 @@
                     <option value="" disabled selected>Pilih Sumber Dana</option>
                     <!-- Populated dynamically -->
                   </select>
-                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-out-inline" title="Tambah sumber baru">+</button>
+                  <button type="button" class="btn btn-small btn-add-custom" id="btn-add-sumber-out-inline"
+                    title="Tambah sumber baru">+</button>
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="out-pengambil">Nama Pengambil Dana <span class="required">*</span></label>
-                <input type="text" id="out-pengambil" placeholder="Nama pengambil/penanggung jawab pengeluaran" required>
+                <input type="text" id="out-pengambil" placeholder="Nama pengambil/penanggung jawab pengeluaran"
+                  required>
               </div>
 
               <div class="form-group">
@@ -356,15 +412,20 @@
 
             <div class="form-group">
               <label for="out-keterangan">Keterangan / Keperluan <span class="required">*</span></label>
-              <textarea id="out-keterangan" rows="3" placeholder="Tulis deskripsi detail keperluan pengeluaran..." required></textarea>
+              <textarea id="out-keterangan" rows="3" placeholder="Tulis deskripsi detail keperluan pengeluaran..."
+                required></textarea>
             </div>
 
             <div class="form-group">
-              <label for="out-nota">Upload Nota / Bukti Pembayaran <span class="text-muted">(Optional, Bisa pilih lebih dari 1 file, PNG/JPG/PDF)</span></label>
+              <label for="out-nota">Upload Nota / Bukti Pembayaran <span class="text-muted">(Optional, Bisa pilih lebih
+                  dari 1 file, PNG/JPG/PDF)</span></label>
               <div class="file-dropzone" id="out-dropzone">
-                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
                 <p>Klik untuk memilih file atau seret file ke sini</p>
-                <input type="file" id="out-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                <input type="file" id="out-nota" accept="image/png, image/jpeg, application/pdf"
+                  class="file-input-hidden" multiple>
                 <div class="file-preview-indicator" id="out-file-indicator"></div>
               </div>
             </div>
@@ -386,7 +447,7 @@
               <h2>Kategori Pengeluaran</h2>
               <p>Kelola kategori bidang untuk pengelompokan pengeluaran dana Raimuna.</p>
             </div>
-            
+
             <form id="form-kategori-add" class="inline-add-form">
               <div class="form-group flex-1">
                 <input type="text" id="kategori-nama" placeholder="Nama Kategori Baru (misal: Bidang Giat)" required>
@@ -405,7 +466,7 @@
               <h2>Sumber Dana Pemasukan</h2>
               <p>Kelola sumber asal dana masuk untuk penyusunan laporan keuangan.</p>
             </div>
-            
+
             <form id="form-sumber-add" class="inline-add-form">
               <div class="form-group flex-1">
                 <input type="text" id="sumber-nama" placeholder="Nama Sumber Dana Baru (misal: Sponsorship A)" required>
@@ -428,7 +489,7 @@
             <h3>Filter & Pencarian Laporan</h3>
             <button id="btn-reset-filters" class="btn btn-text">Reset Filter</button>
           </div>
-          
+
           <div class="filter-grid">
             <div class="form-group">
               <label for="filter-search">Cari Transaksi / PIC / Keterangan</label>
@@ -486,7 +547,7 @@
                 <!-- Populated dynamically -->
               </select>
             </div>
-            
+
             <div class="form-group">
               <label for="filter-sync">Status Google Sheets</label>
               <select id="filter-sync">
@@ -503,19 +564,30 @@
           <div class="table-card-header no-print">
             <div class="header-left">
               <h2>Laporan Arus Kas Kegiatan</h2>
-              <span class="report-subtitle text-muted">Histori transaksi keuangan terperinci beserta saldo berjalan.</span>
+              <span class="report-subtitle text-muted">Histori transaksi keuangan terperinci beserta saldo
+                berjalan.</span>
             </div>
             <div class="header-actions">
               <button id="btn-export-excel" class="btn btn-secondary btn-icon-text">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                </svg>
                 <span>Excel</span>
               </button>
               <button id="btn-export-csv" class="btn btn-secondary btn-icon-text">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
                 <span>CSV</span>
               </button>
               <button id="btn-print-report" class="btn btn-secondary btn-icon-text">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
                 <span>Print</span>
               </button>
             </div>
@@ -550,7 +622,8 @@
                   <th>Sumber Dana</th>
                   <th>Penanggung Jawab</th>
                   <th>Keterangan</th>
-                  <th class="cursor-pointer sortable text-right" data-sort="nominal">Nominal <span class="sort-icon"></span></th>
+                  <th class="cursor-pointer sortable text-right" data-sort="nominal">Nominal <span
+                      class="sort-icon"></span></th>
                   <th class="text-right">Saldo Kas</th>
                   <th class="no-print">Sync</th>
                   <th class="no-print">Aksi</th>
@@ -569,7 +642,7 @@
               </tfoot>
             </table>
           </div>
-          
+
           <div class="print-only print-signatures">
             <div class="signature-block">
               <p>Mengetahui,</p>
@@ -590,40 +663,45 @@
       <!-- ================= PENGATURAN SECTION ================= -->
       <section id="pengaturan-section" class="content-section">
         <div class="settings-grid">
-          
+
           <!-- Integration Form -->
           <div class="form-container-card">
             <div class="form-header">
               <h2>Integrasi Google Sheets</h2>
               <p>Sinkronisasikan pembukuan lokal Anda langsung ke Google Sheets secara berkala.</p>
             </div>
-            
+
             <div class="cute-form">
               <div class="form-group">
                 <label for="settings-sheet-url">URL Google Apps Script Web App <span class="required">*</span></label>
                 <input type="url" id="settings-sheet-url" placeholder="https://script.google.com/macros/s/.../exec">
-                <span class="input-help-text">Masukkan URL Web App hasil deploy Apps Script pada Google Sheets Anda.</span>
+                <span class="input-help-text">Masukkan URL Web App hasil deploy Apps Script pada Google Sheets
+                  Anda.</span>
               </div>
-              
+
               <div class="form-group flex-row-center gap-10">
                 <input type="checkbox" id="settings-auto-sync" class="cute-checkbox" checked>
-                <label for="settings-auto-sync" class="cursor-pointer label-checkbox">Aktifkan Sinkronisasi Otomatis Real-Time</label>
+                <label for="settings-auto-sync" class="cursor-pointer label-checkbox">Aktifkan Sinkronisasi Otomatis
+                  Real-Time</label>
               </div>
 
               <div class="form-actions-row">
                 <button id="btn-save-settings" class="btn btn-success">Simpan Pengaturan</button>
                 <button id="btn-test-connection" class="btn btn-secondary">Tes Koneksi</button>
               </div>
-              
+
               <hr class="form-divider">
-              
+
               <div class="auto-sync-card">
                 <div class="sync-icon-badge">
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                  </svg>
                 </div>
                 <div>
                   <h3>Sinkronisasi Otomatis Real-Time</h3>
-                  <p>Setiap transaksi baru, perubahan, atau penghapusan data akan otomatis terhubung secara langsung ke Google Sheets tanpa perlu proses manual.</p>
+                  <p>Setiap transaksi baru, perubahan, atau penghapusan data akan otomatis terhubung secara langsung ke
+                    Google Sheets tanpa perlu proses manual.</p>
                 </div>
               </div>
             </div>
@@ -635,16 +713,20 @@
               <h2>Panduan Setup Google Sheets</h2>
               <p>Ikuti langkah-langkah berikut untuk mengaktifkan sinkronisasi otomatis:</p>
             </div>
-            
+
             <div class="guide-steps">
               <ol>
                 <li>Buat spreadsheet baru di Google Sheets Anda.</li>
-                <li>Buat tab lembar kerja dengan nama <strong>"Transaksi"</strong>, <strong>"Kategori"</strong>, dan <strong>"Sumber"</strong> (opsional).</li>
+                <li>Buat tab lembar kerja dengan nama <strong>"Transaksi"</strong>, <strong>"Kategori"</strong>, dan
+                  <strong>"Sumber"</strong> (opsional).</li>
                 <li>Pada menu bar atas, klik <strong>Ekstensi</strong> &raquo; <strong>Apps Script</strong>.</li>
                 <li>Hapus kode bawaan, lalu salin dan tempelkan kode di bawah ini.</li>
-                <li>Klik tombol <strong>Terapkan (Deploy)</strong> di bagian kanan atas &raquo; <strong>Penerapan baru (New deployment)</strong>.</li>
-                <li>Pilih jenis <strong>Aplikasi Web (Web App)</strong>. Setel <em>"Akses"</em> ke **"Siapa saja" (Anyone)** agar website dapat mengaksesnya tanpa login.</li>
-                <li>Klik <strong>Terapkan</strong>, berikan izin akses Google, lalu salin **URL Aplikasi Web** yang diberikan.</li>
+                <li>Klik tombol <strong>Terapkan (Deploy)</strong> di bagian kanan atas &raquo; <strong>Penerapan baru
+                    (New deployment)</strong>.</li>
+                <li>Pilih jenis <strong>Aplikasi Web (Web App)</strong>. Setel <em>"Akses"</em> ke **"Siapa saja"
+                  (Anyone)** agar website dapat mengaksesnya tanpa login.</li>
+                <li>Klik <strong>Terapkan</strong>, berikan izin akses Google, lalu salin **URL Aplikasi Web** yang
+                  diberikan.</li>
                 <li>Tempel URL tersebut ke kolom isian integrasi di sebelah kiri.</li>
               </ol>
 
@@ -823,7 +905,7 @@ function autoMigrateColumns(sheet) {
 }</code></pre>
             </div>
           </div>
-          
+
         </div>
       </section>
 
@@ -836,7 +918,7 @@ function autoMigrateColumns(sheet) {
               <h2>Form Cetak Kwitansi Sponsorship</h2>
               <p>Isi rincian atau pilih dari transaksi pemasukan sponsorship</p>
             </div>
-            
+
             <form id="form-sponsorship-kwitansi" class="cute-form">
               <div class="form-group full-width" style="margin-bottom: 15px;">
                 <label for="sponsor-select-tx">Pilih dari Pemasukan (Opsional)</label>
@@ -852,7 +934,7 @@ function autoMigrateColumns(sheet) {
                   <label for="kwitansi-no">Nomor Kwitansi <span class="required">*</span></label>
                   <input type="text" id="kwitansi-no" value="001" placeholder="Contoh: 001" required>
                 </div>
-                
+
                 <div class="form-group">
                   <label for="kwitansi-tgl">Tanggal Kwitansi <span class="required">*</span></label>
                   <input type="text" id="kwitansi-tgl" placeholder="Contoh: 5 Agustus 2026" required>
@@ -878,28 +960,38 @@ function autoMigrateColumns(sheet) {
 
                 <div class="form-group full-width">
                   <label for="kwitansi-terbilang">Terbilang <span class="required">*</span></label>
-                  <input type="text" id="kwitansi-terbilang" placeholder="Otomatis terisi dari nominal..." required style="font-weight: 600; text-transform: uppercase;">
+                  <input type="text" id="kwitansi-terbilang" placeholder="Otomatis terisi dari nominal..." required
+                    style="font-weight: 600; text-transform: uppercase;">
                 </div>
 
                 <div class="form-group full-width">
-                  <label for="kwitansi-guna">Guna Membayar <span class="required">*</span></label>
-                  <textarea id="kwitansi-guna" rows="2" placeholder="Keperluan pembayaran sponsorship..." required>SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026</textarea>
+                  <label for="kwitansi-guna">keperluan
+                    <span class="required">*</span></label>
+                  <textarea id="kwitansi-guna" rows="2" placeholder="Keperluan pembayaran sponsorship..."
+                    required>SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026</textarea>
                 </div>
 
                 <div class="form-group">
                   <label for="kwitansi-penerima">Nama Yang Menerima <span class="required">*</span></label>
-                  <input type="text" id="kwitansi-penerima" value="Sulis Rahayu" placeholder="Nama penerima / bendahara" required>
+                  <input type="text" id="kwitansi-penerima" value="Sulis Rahayu" placeholder="Nama penerima / bendahara"
+                    required>
                 </div>
 
                 <div class="form-group">
                   <label for="kwitansi-nta">NTA Penerima</label>
-                  <input type="text" id="kwitansi-nta" value="NTA. 11.01.00.100806.00001" placeholder="Nomor Tanda Anggota">
+                  <input type="text" id="kwitansi-nta" value="NTA. 11.01.00.100806.00001"
+                    placeholder="Nomor Tanda Anggota">
                 </div>
               </div>
 
               <div class="form-actions mt-20">
                 <button type="button" id="btn-print-kwitansi" class="btn btn-success btn-icon-text">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" />
+                  </svg>
                   <span>Cetak / Print Kwitansi</span>
                 </button>
                 <button type="button" id="btn-reset-kwitansi" class="btn btn-secondary">Reset Form</button>
@@ -937,13 +1029,13 @@ function autoMigrateColumns(sheet) {
         <h3 id="modal-title">Detail Transaksi</h3>
         <button id="btn-close-modal" class="btn-close">&times;</button>
       </div>
-      
+
       <div class="modal-body">
         <div class="detail-badge-row">
           <span id="detail-txn-id" class="txn-badge-id">TXN-XX-00000</span>
           <span id="detail-txn-type" class="txn-badge-type">Pemasukan</span>
         </div>
-        
+
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">Tanggal Transaksi:</span>
@@ -966,12 +1058,12 @@ function autoMigrateColumns(sheet) {
             <span id="detail-amount" class="detail-value font-bold text-primary">Rp 0</span>
           </div>
         </div>
-        
+
         <div class="detail-item full-width mt-10">
           <span class="detail-label">Keterangan / Keperluan:</span>
           <p id="detail-description" class="detail-description-box">--</p>
         </div>
-        
+
         <div class="detail-item full-width mt-15" id="detail-attachment-container">
           <span class="detail-label">Bukti Transaksi / Nota:</span>
           <div class="attachment-preview-box">
@@ -982,14 +1074,18 @@ function autoMigrateColumns(sheet) {
           </div>
         </div>
       </div>
-      
+
       <div class="modal-footer">
         <div class="footer-left">
           <button id="btn-delete-txn" class="btn btn-danger">Hapus Transaksi</button>
         </div>
         <div class="footer-right">
-          <button id="btn-edit-txn" class="btn btn-warning btn-icon-text" style="background-color: #f59e0b; color: white;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <button id="btn-edit-txn" class="btn btn-warning btn-icon-text"
+            style="background-color: #f59e0b; color: white;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
             <span>Edit Transaksi</span>
           </button>
           <button id="btn-sync-individual" class="btn btn-secondary btn-icon-text">
@@ -1008,17 +1104,17 @@ function autoMigrateColumns(sheet) {
         <h3 id="edit-modal-title">Edit Transaksi</h3>
         <button id="btn-close-edit-modal" class="btn-close">&times;</button>
       </div>
-      
+
       <form id="form-edit-transaction" class="cute-form">
         <div class="modal-body">
           <input type="hidden" id="edit-txn-id">
-          
+
           <div class="form-grid">
             <div class="form-group">
               <label for="edit-tanggal">Tanggal Transaksi <span class="required">*</span></label>
               <input type="date" id="edit-tanggal" required>
             </div>
-            
+
             <div class="form-group">
               <label for="edit-tipe">Tipe Transaksi <span class="required">*</span></label>
               <select id="edit-tipe" required>
@@ -1059,7 +1155,7 @@ function autoMigrateColumns(sheet) {
             <textarea id="edit-keterangan" rows="3" placeholder="Deskripsi transaksi..." required></textarea>
           </div>
         </div>
-        
+
         <div class="modal-footer">
           <button type="button" id="btn-cancel-edit-modal" class="btn btn-secondary">Batal</button>
           <button type="submit" class="btn btn-success">Simpan Perubahan</button>
@@ -1095,4 +1191,5 @@ function autoMigrateColumns(sheet) {
   <script src="app.js?v=1.2"></script>
 
 </body>
+
 </html>
