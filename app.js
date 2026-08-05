@@ -62,37 +62,37 @@ function parseSheetRow(row) {
   let kategori = row.kategori;
   let sumberDana = row.sumberDana;
   let pic = row.pic;
-  let nominal = parseInt(row.nominal, 10) || 0;
+  let nominal = parseInt(row.nominal, 10);
   let keterangan = row.keterangan || '';
 
-  // Detect and repair column shift from legacy Google Sheet format
-  // In legacy shifted format: 'pic' column contains numeric nominal, 'sumberDana' contains pic/source
-  if ((!nominal || nominal === 0) && pic && /^\d+$/.test(String(pic).trim())) {
-    nominal = parseInt(pic, 10) || 0;
-    const oldSumber = sumberDana || '-';
-    pic = (oldSumber && oldSumber !== '-') ? oldSumber : '-';
-    
-    if (tipe === 'OUT') {
-      sumberDana = (oldSumber && oldSumber !== '-') ? oldSumber : 'Minyak Jelantah';
-      if (!kategori || kategori === '' || kategori === '-') {
-        kategori = row.kategoriSumber || 'Perlengkapan';
-      }
-    } else {
-      if (!sumberDana || sumberDana === '' || sumberDana === '-') {
-        sumberDana = row.kategoriSumber || 'Sponsor';
-      }
-      kategori = '-';
-    }
+  // Check if row has blank column shift (Column F in Google Sheets is blank):
+  // When shifted: row.pic contains numeric nominal (e.g. 500000), row.nominal contains text keterangan, row[""] or row.col5 contains real pic (e.g. "said")
+  const rawPic = String(pic || '').trim();
+  const rawNominal = String(row.nominal || '').trim();
+  const blankCol = row[''] || row['col5'] || row['COL5'] || '';
+
+  if (/^\d+$/.test(rawPic) && (isNaN(nominal) || !/^\d+$/.test(rawNominal))) {
+    // Row is shifted due to extra blank column!
+    nominal = parseInt(rawPic, 10) || 0;
+    pic = blankCol ? String(blankCol).trim() : '-';
+    keterangan = row.nominal ? String(row.nominal).trim() : keterangan;
   } else {
-    if (!kategori || kategori === '' || kategori === '-') {
-      if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
-      else kategori = '-';
-    }
-    
-    if (!sumberDana || sumberDana === '' || sumberDana === '-') {
-      if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
-      else sumberDana = '-';
-    }
+    nominal = isNaN(nominal) ? (parseInt(rawNominal, 10) || 0) : nominal;
+  }
+
+  // Fallbacks for Kategori & Sumber Dana
+  if (!kategori || kategori === '' || kategori === '-') {
+    if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
+    else kategori = '-';
+  }
+  
+  if (!sumberDana || sumberDana === '' || sumberDana === '-') {
+    if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
+    else sumberDana = '-';
+  }
+
+  if (!pic || pic === '' || pic === '-') {
+    pic = '-';
   }
 
   return {
@@ -102,9 +102,9 @@ function parseSheetRow(row) {
     kategori: kategori,
     sumberDana: sumberDana,
     kategoriSumber: row.kategoriSumber || (tipe === 'IN' ? sumberDana : kategori),
-    pic: pic,
+    pic: String(pic).trim(),
     nominal: nominal,
-    keterangan: keterangan,
+    keterangan: String(keterangan).trim(),
     dateCreated: row.dateCreated || new Date().toISOString(),
     attachment: null,
     sync: true
