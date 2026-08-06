@@ -1637,17 +1637,19 @@ body {
 .kwitansi-title-header {
   text-align: center;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .kwitansi-title-header h2 {
   font-family: 'Cataneo BT', 'Georgia', 'Times New Roman', serif;
-  font-size: 18pt;
+  font-size: 15pt;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   margin: 0 0 4px 0;
   text-decoration: underline;
   text-transform: uppercase;
   color: #000000;
+  white-space: nowrap;
 }
 
 .kwitansi-no-line {
