@@ -118,7 +118,7 @@ function parseSheetRow(row) {
 
 // Default Data Seed arrays
 const DEFAULT_SOURCES = [
-  'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Stand', 'Donatur', 'Iuran Panitia', 'Tanpa Sumber Dana (Dana Talangan)', 'Lainnya'
+  'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Tenant', 'Donatur', 'Iuran Panitia', 'Tanpa Sumber Dana (Dana Talangan)', 'Lainnya'
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -414,14 +414,21 @@ async function loadStateFromDB() {
     }
   }
 
-  // Migration check: Ensure required sources ('Pembayaran Stand', 'Tanpa Sumber Dana (Dana Talangan)') are present
-  const requiredSources = ['Pembayaran Stand', 'Tanpa Sumber Dana (Dana Talangan)'];
+  // Migration check: Ensure required sources ('Pembayaran Tenant', 'Tanpa Sumber Dana (Dana Talangan)') are present
+  const requiredSources = ['Pembayaran Tenant', 'Tanpa Sumber Dana (Dana Talangan)'];
   for (const reqSrc of requiredSources) {
     if (!state.sources.some(s => s && s.nama === reqSrc)) {
       const item = { id: generateUniqueId('SRC'), nama: reqSrc, isDefault: true };
       await saveToStore(STORE_SRCS, item);
       state.sources.push(item);
     }
+  }
+
+  // Rename any existing 'Pembayaran Stand' source entry to 'Pembayaran Tenant'
+  const oldStandSrc = state.sources.find(s => s && s.nama === 'Pembayaran Stand');
+  if (oldStandSrc) {
+    oldStandSrc.nama = 'Pembayaran Tenant';
+    await saveToStore(STORE_SRCS, oldStandSrc);
   }
   
   // Load settings
@@ -2634,12 +2641,12 @@ function setupSponsorshipHandlers() {
   if (kwitansiTipeJenis) {
     kwitansiTipeJenis.addEventListener('change', (e) => {
       const val = e.target.value;
-      if (val === 'STAND') {
+      if (val === 'STAND' || val === 'TENANT') {
         if (!kwitansiGuna.value || kwitansiGuna.value.includes('SPONSORSHIP')) {
-          kwitansiGuna.value = 'PEMBAYARAN SEWA STAND BOOTH RAIMUNA CABANG CILACAP TAHUN 2026';
+          kwitansiGuna.value = 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026';
         }
       } else {
-        if (!kwitansiGuna.value || kwitansiGuna.value.includes('STAND')) {
+        if (!kwitansiGuna.value || kwitansiGuna.value.includes('TENANT') || kwitansiGuna.value.includes('STAND')) {
           kwitansiGuna.value = 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
         }
       }
@@ -2668,26 +2675,26 @@ function setupSponsorshipHandlers() {
     const tx = state.transactions.find(t => t.id === txId);
     if (tx) {
       const srcName = getTxSumber(tx);
-      const isStand = srcName === 'Pembayaran Stand' || (tx.keterangan && tx.keterangan.toLowerCase().includes('stand'));
+      const isTenant = srcName === 'Pembayaran Tenant' || srcName === 'Pembayaran Stand' || (tx.keterangan && (tx.keterangan.toLowerCase().includes('tenant') || tx.keterangan.toLowerCase().includes('stand')));
       
       if (kwitansiTipeJenis) {
-        kwitansiTipeJenis.value = isStand ? 'STAND' : 'SPONSORSHIP';
+        kwitansiTipeJenis.value = isTenant ? 'STAND' : 'SPONSORSHIP';
       }
       
-      kwitansiDari.value = tx.pic || srcName || 'Penyewa Stand / Sponsor';
+      kwitansiDari.value = tx.pic || srcName || 'Penyewa Tenant / Sponsor';
       kwitansiNominal.value = formatRupiahDisplay(tx.nominal);
       kwitansiTerbilang.value = terbilangIndo(tx.nominal);
       if (tx.keterangan) {
-        if (isStand) {
-          kwitansiGuna.value = `PEMBAYARAN SEWA STAND BOOTH RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
+        if (isTenant) {
+          kwitansiGuna.value = `PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
         } else {
           kwitansiGuna.value = tx.keterangan.toUpperCase().includes('SPONSORSHIP') 
             ? tx.keterangan 
             : `SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
         }
       } else {
-        kwitansiGuna.value = isStand
-          ? 'PEMBAYARAN SEWA STAND BOOTH RAIMUNA CABANG CILACAP TAHUN 2026'
+        kwitansiGuna.value = isTenant
+          ? 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026'
           : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
       }
       if (tx.tanggal) {
@@ -2765,8 +2772,8 @@ function renderSponsorshipSection() {
       const opt = document.createElement('option');
       opt.value = tx.id;
       const srcName = tx.pic || getTxSumber(tx) || 'Pemasukan';
-      const isStandTag = getTxSumber(tx) === 'Pembayaran Stand' ? '[Stand] ' : '';
-      opt.textContent = `${isStandTag}${tx.tanggal} - ${srcName} (Rp ${formatRupiahDisplay(tx.nominal)})`;
+      const isTenantTag = (getTxSumber(tx) === 'Pembayaran Tenant' || getTxSumber(tx) === 'Pembayaran Stand') ? '[Tenant] ' : '';
+      opt.textContent = `${isTenantTag}${tx.tanggal} - ${srcName} (Rp ${formatRupiahDisplay(tx.nominal)})`;
       selectTx.appendChild(opt);
     });
   }
@@ -2819,9 +2826,9 @@ function renderSponsorshipHistoryTable() {
   let html = '';
   history.forEach(item => {
     const formattedNominal = formatRupiah(item.nominal || 0);
-    const isStand = item.tipeJenis === 'STAND' || (item.guna && item.guna.toUpperCase().includes('STAND'));
-    const typeTag = isStand 
-      ? '<span class="badge-type in" style="font-size: 0.75rem;">Stand</span>' 
+    const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+    const typeTag = isTenant 
+      ? '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>' 
       : '<span class="badge-type balance" style="font-size: 0.75rem;">Sponsorship</span>';
       
     html += `
@@ -2863,7 +2870,7 @@ async function loadKwitansiFromHistory(id) {
   const kwitansiPenerima = document.getElementById('kwitansi-penerima');
   const kwitansiNta = document.getElementById('kwitansi-nta');
 
-  if (kwitansiTipeJenis) kwitansiTipeJenis.value = item.tipeJenis || (item.guna && item.guna.toUpperCase().includes('STAND') ? 'STAND' : 'SPONSORSHIP');
+  if (kwitansiTipeJenis) kwitansiTipeJenis.value = item.tipeJenis || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')) ? 'STAND' : 'SPONSORSHIP');
   if (kwitansiNo) kwitansiNo.value = item.no || '001';
   if (kwitansiTgl) kwitansiTgl.value = item.tgl || '';
   if (kwitansiDari) kwitansiDari.value = item.dari || '';
@@ -2901,12 +2908,12 @@ function generateKwitansiHTML() {
   const dari = document.getElementById('kwitansi-dari')?.value || '........................................................';
   const nominalVal = document.getElementById('kwitansi-nominal')?.value || '0';
   const terbilang = document.getElementById('kwitansi-terbilang')?.value || 'NOL RUPIAH';
-  const guna = document.getElementById('kwitansi-guna')?.value || (tipeJenis === 'STAND' ? 'PEMBAYARAN SEWA STAND BOOTH RAIMUNA CABANG CILACAP TAHUN 2026' : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026');
+  const guna = document.getElementById('kwitansi-guna')?.value || (tipeJenis === 'STAND' ? 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026' : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026');
   const penerima = document.getElementById('kwitansi-penerima')?.value || 'Sulis Rahayu';
   const nta = document.getElementById('kwitansi-nta')?.value || 'NTA. 11.01.00.100806.00001';
 
-  const titleHeader = tipeJenis === 'STAND'
-    ? 'K W I T A N S I &nbsp;&nbsp; P E M B A Y A R A N &nbsp;&nbsp; S T A N D'
+  const titleHeader = (tipeJenis === 'STAND' || tipeJenis === 'TENANT')
+    ? 'K W I T A N S I &nbsp;&nbsp; P E M B A Y A R A N &nbsp;&nbsp; T E N A N T'
     : 'K W I T A N S I &nbsp;&nbsp; S P O N S O R S H I P';
 
   return `
@@ -2914,10 +2921,12 @@ function generateKwitansiHTML() {
       <div class="kwitansi-title-header">
         <h2>${titleHeader}</h2>
       </div>
-      <div class="kwitansi-no-line">
-        No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: &nbsp;${no}
-      </div>
       <table class="kwitansi-body-table">
+        <tr>
+          <td class="kwitansi-label-col">No.</td>
+          <td class="kwitansi-sep-col">:</td>
+          <td class="kwitansi-val-col font-bold">${no}</td>
+        </tr>
         <tr>
           <td class="kwitansi-label-col">Telah Diterima Dari</td>
           <td class="kwitansi-sep-col">:</td>
@@ -3177,7 +3186,7 @@ async function toggleUtangStatus(utangId, isPaid) {
       tanggal: item.tanggalLunas,
       tipe: item.tipe,
       kategori: item.tipe === 'OUT' ? (item.sumberDana || 'Sekretariat') : '-',
-      sumberDana: item.sumberDana || (item.tipe === 'IN' ? 'Pembayaran Stand' : 'Lainnya'),
+      sumberDana: item.sumberDana || (item.tipe === 'IN' ? 'Pembayaran Tenant' : 'Lainnya'),
       kategoriSumber: item.sumberDana || 'Pelunasan Utang',
       pic: item.nama,
       nominal: item.nominal,
