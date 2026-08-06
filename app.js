@@ -766,7 +766,33 @@ async function saveTransaction(txn) {
   state.transactions.push(txn);
   await saveToStore(STORE_TXNS, txn);
   
-  showToast('Transaksi Berhasil Disimpan', `Transaksi ${txn.id} tersimpan secara lokal.`, 'success');
+  // Auto-record to state.utang if OUT transaction is marked as Tanpa Sumber Dana (Dana Talangan)
+  const src = getTxSumber(txn);
+  if (txn.tipe === 'OUT' && (src.includes('Dana Talangan') || src === 'Tanpa Sumber Dana')) {
+    const existingUtang = (state.utang || []).find(u => u.linkedTxId === txn.id);
+    if (!existingUtang) {
+      const autoUtang = {
+        id: generateUniqueId('UTG'),
+        tanggal: txn.tanggal,
+        tipe: 'OUT',
+        nama: txn.pic || 'Pembayar Dana Talangan',
+        sumberDana: 'Tanpa Sumber Dana (Dana Talangan)',
+        kategori: txn.kategori || 'Dana Talangan',
+        nominal: txn.nominal,
+        keterangan: `[Dana Talangan Nota] ${txn.keterangan}`,
+        status: 'BELUM_LUNAS',
+        paidTxId: null,
+        linkedTxId: txn.id,
+        dateCreated: new Date().toISOString()
+      };
+      if (!state.utang) state.utang = [];
+      state.utang.unshift(autoUtang);
+      await saveToStore(STORE_UTANG, autoUtang);
+      showToast('Masuk ke Catatan Utang', `Transaksi ${txn.id} dicatat sebagai Utang Belum Lunas (Dana Talangan). Saldo Kas Kas tidak berkurang.`, 'info');
+    }
+  } else {
+    showToast('Transaksi Berhasil Disimpan', `Transaksi ${txn.id} tersimpan secara lokal.`, 'success');
+  }
   
   // If autoSync enabled, push to Google Sheets (non-blocking, runs in the background)
   if (state.settings.autoSync && state.settings.sheetUrl) {
@@ -1094,15 +1120,25 @@ function renderApp() {
 function renderDashboard() {
   // 1. Calculate Metrics
   let totalIn = 0;
-  let totalOut = 0;
+  let totalOutKas = 0; // Kas keluar dari Sumber Dana resmi
+  let totalOutAll = 0; // Total pengeluaran termasuk Dana Talangan
   let txnCount = state.transactions.length;
   
   state.transactions.forEach(t => {
-    if (t.tipe === 'IN') totalIn += t.nominal;
-    else if (t.tipe === 'OUT') totalOut += t.nominal;
+    if (t.tipe === 'IN') {
+      totalIn += t.nominal;
+    } else if (t.tipe === 'OUT') {
+      totalOutAll += t.nominal;
+      const src = getTxSumber(t);
+      const isTalangan = src.includes('Dana Talangan') || src === 'Tanpa Sumber Dana';
+      if (!isTalangan) {
+        totalOutKas += t.nominal;
+      }
+    }
   });
   
-  let saldo = Math.max(0, totalIn - totalOut);
+  // Saldo Kas HANYA dikurangi oleh pengeluaran dari Sumber Dana Resmi (kas keluar)
+  let saldo = Math.max(0, totalIn - totalOutKas);
 
   let totalUtangPending = 0;
   (state.utang || []).forEach(u => {
