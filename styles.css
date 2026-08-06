@@ -1751,25 +1751,43 @@ body {
   color: #333333;
 }
 
-/* Print Only Specifics for Sponsorship Kwitansi */
+/* Print Only Specifics for Sponsorship & Stand Kwitansi */
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
   .kwitansi-print-wrapper {
-    width: 100%;
-    max-width: 750px;
-    margin: 0 auto;
-    padding: 0;
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto !important;
+    padding: 5px 10px !important;
+    box-sizing: border-box !important;
     font-family: Arial, Helvetica, sans-serif;
     color: #000000;
+    display: block !important;
   }
   
+  .kwitansi-box-frame {
+    border: 3px double #000000 !important;
+    padding: 16px 20px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+
   .kwitansi-print-page {
     padding: 5px 0;
     page-break-inside: avoid;
+    box-sizing: border-box;
   }
   
   .kwitansi-divider-line {
     border-top: 2px dashed #666666;
-    margin: 25px 0;
+    margin: 18px 0;
     position: relative;
     text-align: center;
   }
