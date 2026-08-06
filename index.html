@@ -1080,18 +1080,26 @@ function autoMigrateColumns(sheet) {
           <!-- Form Controls -->
           <div class="form-container-card no-print">
             <div class="card-header">
-              <h2>Form Cetak Kwitansi Sponsorship</h2>
-              <p>Isi rincian atau pilih dari transaksi pemasukan sponsorship</p>
+              <h2>Form Cetak Kwitansi</h2>
+              <p>Cetak kwitansi resmi untuk Pemasukan Sponsorship maupun Pembayaran Stand</p>
             </div>
 
             <form id="form-sponsorship-kwitansi" class="cute-form">
+              <div class="form-group full-width" style="margin-bottom: 12px;">
+                <label for="kwitansi-tipe-jenis">Jenis / Tipe Kwitansi <span class="required">*</span></label>
+                <select id="kwitansi-tipe-jenis" class="form-control" style="font-weight: 700;">
+                  <option value="SPONSORSHIP">💼 Kwitansi Sponsorship / Donatur</option>
+                  <option value="STAND">🏢 Kwitansi Pembayaran Stand Booth</option>
+                </select>
+              </div>
+
               <div class="form-group full-width" style="margin-bottom: 15px;">
-                <label for="sponsor-select-tx">Pilih dari Pemasukan (Opsional)</label>
+                <label for="sponsor-select-tx">Pilih dari Transaksi Pemasukan (Opsional)</label>
                 <select id="sponsor-select-tx" class="form-control">
                   <option value="">-- Buat Kwitansi Manual / Custom --</option>
                   <!-- Populated dynamically -->
                 </select>
-                <small class="form-help-text">Pilih transaksi untuk mengisi otomatis data sponsor</small>
+                <small class="form-help-text">Pilih transaksi untuk mengabungkan data sponsor atau stand otomatis</small>
               </div>
 
               <div class="form-grid">
