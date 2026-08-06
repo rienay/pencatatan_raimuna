@@ -2641,28 +2641,58 @@ function setupSponsorshipHandlers() {
   if (kwitansiTipeJenis) {
     kwitansiTipeJenis.addEventListener('change', (e) => {
       const val = e.target.value;
-      if (val === 'STAND' || val === 'TENANT') {
-        if (!kwitansiGuna.value || kwitansiGuna.value.includes('SPONSORSHIP')) {
+      const labelNominal = document.getElementById('label-kwitansi-nominal');
+      
+      if (val === 'JELANTAH') {
+        if (labelNominal) labelNominal.textContent = 'Jumlah Berat (KG)';
+        kwitansiNominal.value = '150';
+        kwitansiTerbilang.value = 'SERATUS LIMA PULUH KILOGRAM';
+        kwitansiGuna.value = 'PERSYARATAN MINYAK JELANTAH';
+        kwitansiPenerima.value = 'Tri Soma Ananta Rahman';
+        kwitansiNta.value = 'Ketua Panitia';
+      } else if (val === 'STAND' || val === 'TENANT') {
+        if (labelNominal) labelNominal.textContent = 'Nominal Uang (Rp)';
+        if (!kwitansiGuna.value || kwitansiGuna.value.includes('SPONSORSHIP') || kwitansiGuna.value.includes('JELANTAH')) {
           kwitansiGuna.value = 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026';
         }
+        if (kwitansiPenerima.value === 'Tri Soma Ananta Rahman') {
+          kwitansiPenerima.value = 'Sulis Rahayu';
+          kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
+        }
       } else {
-        if (!kwitansiGuna.value || kwitansiGuna.value.includes('TENANT') || kwitansiGuna.value.includes('STAND')) {
+        if (labelNominal) labelNominal.textContent = 'Nominal Uang (Rp)';
+        if (!kwitansiGuna.value || kwitansiGuna.value.includes('TENANT') || kwitansiGuna.value.includes('JELANTAH')) {
           kwitansiGuna.value = 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+        }
+        if (kwitansiPenerima.value === 'Tri Soma Ananta Rahman') {
+          kwitansiPenerima.value = 'Sulis Rahayu';
+          kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
         }
       }
       updateKwitansiLivePreview();
     });
   }
   
-  // Format nominal input as rupiah & auto calculate terbilang
+  // Format nominal input as rupiah or KG based on type
   kwitansiNominal.addEventListener('input', (e) => {
+    const valType = kwitansiTipeJenis?.value || 'SPONSORSHIP';
     let raw = e.target.value.replace(/[^0-9]/g, '');
-    if (raw) {
-      e.target.value = formatRupiahDisplay(raw);
-      kwitansiTerbilang.value = terbilangIndo(raw);
+    if (valType === 'JELANTAH') {
+      if (raw) {
+        e.target.value = raw;
+        kwitansiTerbilang.value = terbilangIndo(raw).toUpperCase() + ' KILOGRAM';
+      } else {
+        e.target.value = '';
+        kwitansiTerbilang.value = '';
+      }
     } else {
-      e.target.value = '';
-      kwitansiTerbilang.value = '';
+      if (raw) {
+        e.target.value = formatRupiahDisplay(raw);
+        kwitansiTerbilang.value = terbilangIndo(raw);
+      } else {
+        e.target.value = '';
+        kwitansiTerbilang.value = '';
+      }
     }
     updateKwitansiLivePreview();
   });
@@ -2675,27 +2705,39 @@ function setupSponsorshipHandlers() {
     const tx = state.transactions.find(t => t.id === txId);
     if (tx) {
       const srcName = getTxSumber(tx);
+      const isJelantah = srcName === 'Minyak Jelantah' || (tx.keterangan && tx.keterangan.toLowerCase().includes('jelantah'));
       const isTenant = srcName === 'Pembayaran Tenant' || srcName === 'Pembayaran Stand' || (tx.keterangan && (tx.keterangan.toLowerCase().includes('tenant') || tx.keterangan.toLowerCase().includes('stand')));
       
       if (kwitansiTipeJenis) {
-        kwitansiTipeJenis.value = isTenant ? 'STAND' : 'SPONSORSHIP';
+        kwitansiTipeJenis.value = isJelantah ? 'JELANTAH' : (isTenant ? 'STAND' : 'SPONSORSHIP');
       }
       
-      kwitansiDari.value = tx.pic || srcName || 'Penyewa Tenant / Sponsor';
-      kwitansiNominal.value = formatRupiahDisplay(tx.nominal);
-      kwitansiTerbilang.value = terbilangIndo(tx.nominal);
-      if (tx.keterangan) {
-        if (isTenant) {
-          kwitansiGuna.value = `PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
-        } else {
-          kwitansiGuna.value = tx.keterangan.toUpperCase().includes('SPONSORSHIP') 
-            ? tx.keterangan 
-            : `SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})`;
-        }
+      const labelNominal = document.getElementById('label-kwitansi-nominal');
+
+      if (isJelantah) {
+        if (labelNominal) labelNominal.textContent = 'Jumlah Berat (KG)';
+        kwitansiDari.value = tx.pic || srcName || 'Donatur Minyak Jelantah';
+        kwitansiNominal.value = '150';
+        kwitansiTerbilang.value = 'SERATUS LIMA PULUH KILOGRAM';
+        kwitansiGuna.value = tx.keterangan || 'PERSYARATAN MINYAK JELANTAH';
+        kwitansiPenerima.value = 'Tri Soma Ananta Rahman';
+        kwitansiNta.value = 'Ketua Panitia';
+      } else if (isTenant) {
+        if (labelNominal) labelNominal.textContent = 'Nominal Uang (Rp)';
+        kwitansiDari.value = tx.pic || srcName || 'Penyewa Tenant / Sponsor';
+        kwitansiNominal.value = formatRupiahDisplay(tx.nominal);
+        kwitansiTerbilang.value = terbilangIndo(tx.nominal);
+        kwitansiGuna.value = tx.keterangan ? `PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026 (${tx.keterangan})` : 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026';
+        kwitansiPenerima.value = 'Sulis Rahayu';
+        kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
       } else {
-        kwitansiGuna.value = isTenant
-          ? 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026'
-          : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+        if (labelNominal) labelNominal.textContent = 'Nominal Uang (Rp)';
+        kwitansiDari.value = tx.pic || srcName || 'Sponsor Eksternal';
+        kwitansiNominal.value = formatRupiahDisplay(tx.nominal);
+        kwitansiTerbilang.value = terbilangIndo(tx.nominal);
+        kwitansiGuna.value = tx.keterangan || 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+        kwitansiPenerima.value = 'Sulis Rahayu';
+        kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
       }
       if (tx.tanggal) {
         kwitansiTgl.value = formatTanggalIndoFull(tx.tanggal);
@@ -2720,6 +2762,8 @@ function setupSponsorshipHandlers() {
   btnReset.addEventListener('click', () => {
     selectTx.value = '';
     if (kwitansiTipeJenis) kwitansiTipeJenis.value = 'SPONSORSHIP';
+    const labelNominal = document.getElementById('label-kwitansi-nominal');
+    if (labelNominal) labelNominal.textContent = 'Nominal Uang (Rp)';
     kwitansiNo.value = getNextKwitansiNumber();
     kwitansiDari.value = '';
     kwitansiNominal.value = '';
@@ -2825,11 +2869,18 @@ function renderSponsorshipHistoryTable() {
   
   let html = '';
   history.forEach(item => {
-    const formattedNominal = formatRupiah(item.nominal || 0);
+    const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
     const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
-    const typeTag = isTenant 
-      ? '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>' 
-      : '<span class="badge-type balance" style="font-size: 0.75rem;">Sponsorship</span>';
+    
+    const formattedNominal = isJelantah 
+      ? `${item.nominal || 150} KG` 
+      : formatRupiah(item.nominal || 0);
+
+    const typeTag = isJelantah
+      ? '<span class="badge-type out" style="font-size: 0.75rem; background-color: #fef3c7; color: #92400e;">Jelantah</span>'
+      : (isTenant 
+        ? '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>' 
+        : '<span class="badge-type balance" style="font-size: 0.75rem;">Sponsorship</span>');
       
     html += `
       <tr>
@@ -2870,15 +2921,18 @@ async function loadKwitansiFromHistory(id) {
   const kwitansiPenerima = document.getElementById('kwitansi-penerima');
   const kwitansiNta = document.getElementById('kwitansi-nta');
 
-  if (kwitansiTipeJenis) kwitansiTipeJenis.value = item.tipeJenis || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')) ? 'STAND' : 'SPONSORSHIP');
+  const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+  const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+
+  if (kwitansiTipeJenis) kwitansiTipeJenis.value = isJelantah ? 'JELANTAH' : (isTenant ? 'STAND' : 'SPONSORSHIP');
   if (kwitansiNo) kwitansiNo.value = item.no || '001';
   if (kwitansiTgl) kwitansiTgl.value = item.tgl || '';
   if (kwitansiDari) kwitansiDari.value = item.dari || '';
-  if (kwitansiNominal) kwitansiNominal.value = formatRupiahDisplay(item.nominal || 0);
-  if (kwitansiTerbilang) kwitansiTerbilang.value = item.terbilang || terbilangIndo(item.nominal || 0);
-  if (kwitansiGuna) kwitansiGuna.value = item.guna || 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
-  if (kwitansiPenerima) kwitansiPenerima.value = item.penerima || 'Sulis Rahayu';
-  if (kwitansiNta) kwitansiNta.value = item.nta || 'NTA. 11.01.00.100806.00001';
+  if (kwitansiNominal) kwitansiNominal.value = isJelantah ? (item.nominal || '150') : formatRupiahDisplay(item.nominal || 0);
+  if (kwitansiTerbilang) kwitansiTerbilang.value = item.terbilang || (isJelantah ? 'SERATUS LIMA PULUH KILOGRAM' : terbilangIndo(item.nominal || 0));
+  if (kwitansiGuna) kwitansiGuna.value = item.guna || (isJelantah ? 'PERSYARATAN MINYAK JELANTAH' : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026');
+  if (kwitansiPenerima) kwitansiPenerima.value = item.penerima || (isJelantah ? 'Tri Soma Ananta Rahman' : 'Sulis Rahayu');
+  if (kwitansiNta) kwitansiNta.value = item.nta || (isJelantah ? 'Ketua Panitia' : 'NTA. 11.01.00.100806.00001');
 
   updateKwitansiLivePreview();
   showToast('Kwitansi Dimuat', `Data Kwitansi No. ${item.no} berhasil dimuat ke form.`, 'info');
@@ -2907,14 +2961,25 @@ function generateKwitansiHTML() {
   const tgl = document.getElementById('kwitansi-tgl')?.value || '5 Agustus 2026';
   const dari = document.getElementById('kwitansi-dari')?.value || '........................................................';
   const nominalVal = document.getElementById('kwitansi-nominal')?.value || '0';
-  const terbilang = document.getElementById('kwitansi-terbilang')?.value || 'NOL RUPIAH';
-  const guna = document.getElementById('kwitansi-guna')?.value || (tipeJenis === 'STAND' ? 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026' : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026');
-  const penerima = document.getElementById('kwitansi-penerima')?.value || 'Sulis Rahayu';
-  const nta = document.getElementById('kwitansi-nta')?.value || 'NTA. 11.01.00.100806.00001';
+  const terbilang = document.getElementById('kwitansi-terbilang')?.value || (tipeJenis === 'JELANTAH' ? 'SERATUS LIMA PULUH KILOGRAM' : 'NOL RUPIAH');
+  const guna = document.getElementById('kwitansi-guna')?.value || (tipeJenis === 'JELANTAH' ? 'PERSYARATAN MINYAK JELANTAH' : (tipeJenis === 'STAND' ? 'PEMBAYARAN SEWA TENANT BOOTH RAIMUNA CABANG CILACAP TAHUN 2026' : 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026'));
+  const penerima = document.getElementById('kwitansi-penerima')?.value || (tipeJenis === 'JELANTAH' ? 'Tri Soma Ananta Rahman' : 'Sulis Rahayu');
+  const nta = document.getElementById('kwitansi-nta')?.value || (tipeJenis === 'JELANTAH' ? 'Ketua Panitia' : 'NTA. 11.01.00.100806.00001');
 
-  const titleHeader = (tipeJenis === 'STAND' || tipeJenis === 'TENANT')
-    ? 'KWITANSI &nbsp; PEMBAYARAN &nbsp; TENANT'
-    : 'KWITANSI &nbsp; SPONSORSHIP';
+  let titleHeader = 'KWITANSI &nbsp; SPONSORSHIP';
+  let amountBoxText = `Rp. &nbsp;${nominalVal},00`;
+  let sigRoleText = 'Yang menerima,';
+
+  if (tipeJenis === 'JELANTAH') {
+    titleHeader = 'TANDA &nbsp; TERIMA &nbsp; JELANTAH';
+    const kgDisplay = nominalVal.includes('KG') ? nominalVal : `${nominalVal} KG`;
+    amountBoxText = kgDisplay;
+    sigRoleText = (nta && !nta.startsWith('NTA')) ? `${nta},` : 'Ketua Panitia,';
+  } else if (tipeJenis === 'STAND' || tipeJenis === 'TENANT') {
+    titleHeader = 'KWITANSI &nbsp; PEMBAYARAN &nbsp; TENANT';
+  }
+
+  const showNtaLine = (tipeJenis !== 'JELANTAH' && nta && nta.startsWith('NTA'));
 
   return `
     <div class="kwitansi-box-frame">
@@ -2946,14 +3011,14 @@ function generateKwitansiHTML() {
       <div class="kwitansi-footer-row">
         <div class="kwitansi-amount-box-container">
           <div class="kwitansi-amount-box">
-            Rp. &nbsp;${nominalVal},00
+            ${amountBoxText}
           </div>
         </div>
         <div class="kwitansi-sig-container">
           <div class="kwitansi-sig-date">Cilacap, ${tgl}</div>
-          <div class="kwitansi-sig-role">Yang menerima,</div>
+          <div class="kwitansi-sig-role">${sigRoleText}</div>
           <div class="kwitansi-sig-name">${penerima}</div>
-          <div class="kwitansi-sig-nta">${nta}</div>
+          ${showNtaLine ? `<div class="kwitansi-sig-nta">${nta}</div>` : ''}
         </div>
       </div>
     </div>
