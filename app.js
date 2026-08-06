@@ -1122,17 +1122,18 @@ function renderDashboard() {
   let totalIn = 0;
   let totalOutKas = 0; // Kas keluar dari Sumber Dana resmi
   let totalOutAll = 0; // Total pengeluaran termasuk Dana Talangan
-  let txnCount = state.transactions.length;
+  let txnCount = (state.transactions || []).length;
   
-  state.transactions.forEach(t => {
+  (state.transactions || []).forEach(t => {
+    const nom = parseInt(t.nominal, 10) || 0;
     if (t.tipe === 'IN') {
-      totalIn += t.nominal;
+      totalIn += nom;
     } else if (t.tipe === 'OUT') {
-      totalOutAll += t.nominal;
-      const src = getTxSumber(t);
-      const isTalangan = src.includes('Dana Talangan') || src === 'Tanpa Sumber Dana';
+      totalOutAll += nom;
+      const src = String(getTxSumber(t) || '');
+      const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
       if (!isTalangan) {
-        totalOutKas += t.nominal;
+        totalOutKas += nom;
       }
     }
   });
@@ -1142,20 +1143,21 @@ function renderDashboard() {
 
   let totalUtangPending = 0;
   (state.utang || []).forEach(u => {
-    if (u.status === 'BELUM_LUNAS') totalUtangPending += u.nominal;
+    if (u.status === 'BELUM_LUNAS') totalUtangPending += (parseInt(u.nominal, 10) || 0);
   });
 
   let totalTalanganPending = 0;
-  state.transactions.forEach(t => {
-    if (t.tipe === 'OUT' && getTxSumber(t).includes('Dana Talangan')) {
-      totalTalanganPending += t.nominal;
+  (state.transactions || []).forEach(t => {
+    const src = String(getTxSumber(t) || '');
+    if (t.tipe === 'OUT' && (src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana'))) {
+      totalTalanganPending += (parseInt(t.nominal, 10) || 0);
     }
   });
   
   // Update fields
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldo);
   if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalIn);
-  if (document.getElementById('dashboard-total-pengeluaran')) document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOut);
+  if (document.getElementById('dashboard-total-pengeluaran')) document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOutKas);
   if (document.getElementById('dashboard-total-transaksi')) document.getElementById('dashboard-total-transaksi').textContent = txnCount;
   if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
@@ -1171,21 +1173,24 @@ function renderDashboard() {
     // Group transactions by Sumber Dana
     const sourceSummaries = {};
     // Seed with all current sources in state
-    state.sources.forEach(src => {
-      sourceSummaries[src.nama] = { pemasukan: 0, pengeluaran: 0 };
+    (state.sources || []).forEach(src => {
+      if (src && src.nama) {
+        sourceSummaries[src.nama] = { pemasukan: 0, pengeluaran: 0 };
+      }
     });
     
     // Process transactions
-    state.transactions.forEach(t => {
+    (state.transactions || []).forEach(t => {
       const src = getTxSumber(t);
       const targetSrc = (src && src !== '-') ? src : 'Tanpa Sumber Dana';
       if (!sourceSummaries[targetSrc]) {
         sourceSummaries[targetSrc] = { pemasukan: 0, pengeluaran: 0 };
       }
+      const nom = parseInt(t.nominal, 10) || 0;
       if (t.tipe === 'IN') {
-        sourceSummaries[targetSrc].pemasukan += t.nominal;
+        sourceSummaries[targetSrc].pemasukan += nom;
       } else if (t.tipe === 'OUT') {
-        sourceSummaries[targetSrc].pengeluaran += t.nominal;
+        sourceSummaries[targetSrc].pengeluaran += nom;
       }
     });
     
