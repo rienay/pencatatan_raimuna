@@ -2925,22 +2925,22 @@ function generateKwitansiHTML() {
         <tr>
           <td class="kwitansi-label-col">No.</td>
           <td class="kwitansi-sep-col">:</td>
-          <td class="kwitansi-val-col font-bold">&nbsp;&nbsp;${no}</td>
+          <td class="kwitansi-val-col font-bold">${no}</td>
         </tr>
         <tr>
           <td class="kwitansi-label-col">Telah Diterima Dari</td>
           <td class="kwitansi-sep-col">:</td>
-          <td class="kwitansi-val-col">&nbsp;&nbsp;${dari}</td>
+          <td class="kwitansi-val-col">${dari}</td>
         </tr>
         <tr>
           <td class="kwitansi-label-col">Terbilang</td>
           <td class="kwitansi-sep-col">:</td>
-          <td class="kwitansi-val-col">&nbsp;&nbsp;<span class="kwitansi-val-terbilang">${terbilang}</span></td>
+          <td class="kwitansi-val-col"><span class="kwitansi-val-terbilang">${terbilang}</span></td>
         </tr>
         <tr>
           <td class="kwitansi-label-col">Keperluan</td>
           <td class="kwitansi-sep-col">:</td>
-          <td class="kwitansi-val-col">&nbsp;&nbsp;${guna}</td>
+          <td class="kwitansi-val-col">${guna}</td>
         </tr>
       </table>
       <div class="kwitansi-footer-row">
