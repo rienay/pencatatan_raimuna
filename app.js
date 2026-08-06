@@ -2913,8 +2913,8 @@ function generateKwitansiHTML() {
   const nta = document.getElementById('kwitansi-nta')?.value || 'NTA. 11.01.00.100806.00001';
 
   const titleHeader = (tipeJenis === 'STAND' || tipeJenis === 'TENANT')
-    ? 'KWITANSI &nbsp;&nbsp; PEMBAYARAN &nbsp;&nbsp; TENANT'
-    : 'KWITANSI &nbsp;&nbsp; SPONSORSHIP';
+    ? 'KWITANSI &nbsp; PEMBAYARAN &nbsp; TENANT'
+    : 'KWITANSI &nbsp; SPONSORSHIP';
 
   return `
     <div class="kwitansi-box-frame">

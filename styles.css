@@ -1642,14 +1642,15 @@ body {
 
 .kwitansi-title-header h2 {
   font-family: 'Cataneo BT', 'Georgia', 'Times New Roman', serif;
-  font-size: 15pt;
+  font-size: 14pt;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   margin: 0 0 4px 0;
   text-decoration: underline;
   text-transform: uppercase;
   color: #000000;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 .kwitansi-no-line {
@@ -1775,6 +1776,13 @@ body {
     display: block !important;
   }
   
+  .kwitansi-title-header h2 {
+    font-size: 13.5pt !important;
+    letter-spacing: 1.8px !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+
   .kwitansi-box-frame {
     border: 3px double #000000 !important;
     padding: 16px 20px !important;
