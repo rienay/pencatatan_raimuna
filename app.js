@@ -8,6 +8,8 @@ const state = {
   transactions: [],
   categories: [],
   sources: [],
+  utang: [],
+  utangFilter: 'ALL',
   settings: {
     sheetUrl: 'https://script.google.com/macros/s/AKfycbx1fS7Pa5w3sHHxuCBYM4K4-ns53dp-N6JXRP3_2fHzJfFu-_vDCbIcFThnJKD5giNgQg/exec',
     autoSync: true
@@ -42,6 +44,7 @@ const STORE_CATS = 'categories';
 const STORE_SRCS = 'sources';
 const STORE_SETTINGS = 'settings';
 const STORE_SPONSORSHIPS = 'sponsorship_history';
+const STORE_UTANG = 'utang';
 
 // Helper functions for Kategori & Sumber Dana
 function getTxCategory(tx) {
@@ -115,7 +118,7 @@ function parseSheetRow(row) {
 
 // Default Data Seed arrays
 const DEFAULT_SOURCES = [
-  'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Stand', 'Donatur', 'Iuran Panitia', 'Lainnya'
+  'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Stand', 'Donatur', 'Iuran Panitia', 'Tanpa Sumber Dana (Dana Talangan)', 'Lainnya'
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -146,11 +149,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupExportHandlers();
   setupCustomModals();
   setupSponsorshipHandlers();
+  setupUtangHandlers();
+  setupAlokasiTalanganModal();
   
   // Set default dates on forms
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('in-tanggal').value = today;
-  document.getElementById('out-tanggal').value = today;
+  if (document.getElementById('in-tanggal')) document.getElementById('in-tanggal').value = today;
+  if (document.getElementById('out-tanggal')) document.getElementById('out-tanggal').value = today;
+  if (document.getElementById('utang-tanggal')) document.getElementById('utang-tanggal').value = today;
   
   // Render application
   renderApp();
@@ -178,6 +184,7 @@ function setupDomReferences() {
   // Numeric Inputs Formatting (Auto Rupiah)
   setupRupiahInput('in-nominal');
   setupRupiahInput('out-nominal');
+  setupRupiahInput('utang-nominal');
   
   // Sidebar responsive toggle
   const sidebar = document.querySelector('.sidebar');
@@ -356,6 +363,11 @@ function initIndexedDB() {
       if (!db.objectStoreNames.contains(STORE_SPONSORSHIPS)) {
         db.createObjectStore(STORE_SPONSORSHIPS, { keyPath: 'id' });
       }
+
+      // Utang store
+      if (!db.objectStoreNames.contains(STORE_UTANG)) {
+        db.createObjectStore(STORE_UTANG, { keyPath: 'id' });
+      }
     };
   });
 }
@@ -365,6 +377,12 @@ async function loadStateFromDB() {
   state.transactions = await getAllFromStore(STORE_TXNS);
   state.categories = await getAllFromStore(STORE_CATS);
   state.sources = await getAllFromStore(STORE_SRCS);
+  
+  try {
+    state.utang = await getAllFromStore(STORE_UTANG);
+  } catch (err) {
+    state.utang = [];
+  }
   
   try {
     state.sponsorshipHistory = await getAllFromStore(STORE_SPONSORSHIPS);
@@ -391,6 +409,16 @@ async function loadStateFromDB() {
   if (state.sources.length === 0) {
     for (const src of DEFAULT_SOURCES) {
       const item = { id: generateUniqueId('SRC'), nama: src, isDefault: true };
+      await saveToStore(STORE_SRCS, item);
+      state.sources.push(item);
+    }
+  }
+
+  // Migration check: Ensure required sources ('Pembayaran Stand', 'Tanpa Sumber Dana (Dana Talangan)') are present
+  const requiredSources = ['Pembayaran Stand', 'Tanpa Sumber Dana (Dana Talangan)'];
+  for (const reqSrc of requiredSources) {
+    if (!state.sources.some(s => s && s.nama === reqSrc)) {
+      const item = { id: generateUniqueId('SRC'), nama: reqSrc, isDefault: true };
       await saveToStore(STORE_SRCS, item);
       state.sources.push(item);
     }
@@ -509,6 +537,7 @@ function setupNavigation() {
         'pemasukan-section': 'Pencatatan Pemasukan',
         'pengeluaran-section': 'Pencatatan Pengeluaran',
         'kategori-section': 'Manajemen Kategori',
+        'utang-section': 'Pencatatan Utang',
         'laporan-section': 'Laporan Keuangan',
         'sponsorship-section': 'Cetak Nota Sponsorship',
         'pengaturan-section': 'Integrasi Google Sheets'
@@ -525,6 +554,8 @@ function setupNavigation() {
         renderLaporan();
       } else if (targetSectionId === 'kategori-section') {
         renderKategoriPage();
+      } else if (targetSectionId === 'utang-section') {
+        renderUtangPage();
       } else if (targetSectionId === 'sponsorship-section') {
         renderSponsorshipSection();
       } else if (targetSectionId === 'pemasukan-section' || targetSectionId === 'pengeluaran-section') {
@@ -543,6 +574,8 @@ function populateDropdowns() {
   const filterSumberSelect = document.getElementById('filter-sumber');
   const editKategoriSelect = document.getElementById('edit-kategori');
   const editSumberSelect = document.getElementById('edit-sumber');
+  const utangSumberSelect = document.getElementById('utang-sumber-kat');
+  const alokasiSumberSelect = document.getElementById('alokasi-sumber-select');
   
   // Keep selected values if any
   const selectedSumber = inSumberSelect ? inSumberSelect.value : '';
@@ -552,6 +585,8 @@ function populateDropdowns() {
   const selectedFilterSumber = filterSumberSelect ? filterSumberSelect.value : 'ALL';
   const selectedEditKat = editKategoriSelect ? editKategoriSelect.value : '';
   const selectedEditSumber = editSumberSelect ? editSumberSelect.value : '';
+  const selectedUtangSumber = utangSumberSelect ? utangSumberSelect.value : '';
+  const selectedAlokasiSumber = alokasiSumberSelect ? alokasiSumberSelect.value : '';
   
   // Clear
   if (inSumberSelect) inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
@@ -561,6 +596,8 @@ function populateDropdowns() {
   if (filterSumberSelect) filterSumberSelect.innerHTML = '<option value="ALL">Semua Sumber Dana</option>';
   if (editKategoriSelect) editKategoriSelect.innerHTML = '<option value="-">Tanpa Kategori (-)</option>';
   if (editSumberSelect) editSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
+  if (utangSumberSelect) utangSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana / Kategori</option>';
+  if (alokasiSumberSelect) alokasiSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana Resmi</option>';
   
   // Populate Sources
   state.sources.forEach(src => {
@@ -590,6 +627,20 @@ function populateDropdowns() {
       optEdit.value = src.nama;
       optEdit.textContent = src.nama;
       editSumberSelect.appendChild(optEdit);
+    }
+
+    if (utangSumberSelect) {
+      const optUtang = document.createElement('option');
+      optUtang.value = src.nama;
+      optUtang.textContent = src.nama;
+      utangSumberSelect.appendChild(optUtang);
+    }
+
+    if (alokasiSumberSelect && !src.nama.includes('Dana Talangan')) {
+      const optAlokasi = document.createElement('option');
+      optAlokasi.value = src.nama;
+      optAlokasi.textContent = src.nama;
+      alokasiSumberSelect.appendChild(optAlokasi);
     }
   });
   
@@ -1035,6 +1086,7 @@ function renderApp() {
     else if (id === 'laporan-section') renderLaporan();
     else if (id === 'kategori-section') renderKategoriPage();
     else if (id === 'sponsorship-section') renderSponsorshipSection();
+    else if (id === 'utang-section') renderUtangPage();
   }
 }
 
@@ -1051,12 +1103,29 @@ function renderDashboard() {
   });
   
   let saldo = Math.max(0, totalIn - totalOut);
+
+  let totalUtangPending = 0;
+  (state.utang || []).forEach(u => {
+    if (u.status === 'BELUM_LUNAS') totalUtangPending += u.nominal;
+  });
+
+  let totalTalanganPending = 0;
+  state.transactions.forEach(t => {
+    if (t.tipe === 'OUT' && getTxSumber(t).includes('Dana Talangan')) {
+      totalTalanganPending += t.nominal;
+    }
+  });
   
   // Update fields
-  document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldo);
-  document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalIn);
-  document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOut);
-  document.getElementById('dashboard-total-transaksi').textContent = txnCount;
+  if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldo);
+  if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalIn);
+  if (document.getElementById('dashboard-total-pengeluaran')) document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOut);
+  if (document.getElementById('dashboard-total-transaksi')) document.getElementById('dashboard-total-transaksi').textContent = txnCount;
+  if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
+  if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
+
+  // Render Dashboard Quick Checklist Utang
+  renderDashboardQuickUtang();
   
   // 1b. Render Ringkasan Saldo per Sumber Dana
   const summaryTbody = document.getElementById('dashboard-sumber-summary-tbody');
@@ -2863,5 +2932,313 @@ async function printSponsorshipKwitansi() {
   showToast('Kwitansi Disimpan', `Kwitansi No. ${no} berhasil dicatat ke Riwayat Sponsorship.`, 'success');
   
   window.print();
+}
+
+// ================= UTANG MANAGEMENT & CHECKLIST LOGIC =================
+function setupUtangHandlers() {
+  const formAdd = document.getElementById('form-utang-add');
+  if (formAdd) {
+    formAdd.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const tanggal = document.getElementById('utang-tanggal').value;
+      const tipe = document.getElementById('utang-tipe').value;
+      const nama = document.getElementById('utang-nama').value;
+      const sumberKat = document.getElementById('utang-sumber-kat').value;
+      const nominal = parseRupiah(document.getElementById('utang-nominal').value);
+      const keterangan = document.getElementById('utang-keterangan').value;
+      
+      if (nominal <= 0) {
+        showToast('Input Salah', 'Nominal utang harus lebih besar dari Rp 0.', 'error');
+        return;
+      }
+      
+      const newUtang = {
+        id: generateUniqueId('UTG'),
+        tanggal,
+        tipe,
+        nama: String(nama).trim(),
+        sumberDana: sumberKat,
+        kategori: sumberKat,
+        nominal,
+        keterangan: String(keterangan).trim(),
+        status: 'BELUM_LUNAS',
+        paidTxId: null,
+        tanggalLunas: null,
+        dateCreated: new Date().toISOString()
+      };
+      
+      state.utang.unshift(newUtang);
+      await saveToStore(STORE_UTANG, newUtang);
+      
+      showToast('Catatan Utang Tersimpan', `Utang ${newUtang.id} berhasil ditambahkan.`, 'success');
+      
+      formAdd.reset();
+      const today = new Date().toISOString().split('T')[0];
+      if (document.getElementById('utang-tanggal')) document.getElementById('utang-tanggal').value = today;
+      
+      renderUtangPage();
+      renderDashboard();
+    });
+  }
+  
+  // Filter pills event listeners
+  const filterContainer = document.getElementById('utang-filter-pills');
+  if (filterContainer) {
+    const pills = filterContainer.querySelectorAll('.btn-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.utangFilter = pill.getAttribute('data-filter') || 'ALL';
+        renderUtangPage();
+      });
+    });
+  }
+}
+
+function renderUtangPage() {
+  const tbody = document.getElementById('table-utang-tbody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '';
+  
+  // Metrics calculation
+  let pendingSum = 0;
+  let paidSum = 0;
+  let count = (state.utang || []).length;
+  
+  state.utang.forEach(u => {
+    if (u.status === 'BELUM_LUNAS') pendingSum += u.nominal;
+    else if (u.status === 'LUNAS') paidSum += u.nominal;
+  });
+  
+  if (document.getElementById('utang-metric-pending')) document.getElementById('utang-metric-pending').textContent = formatRupiah(pendingSum);
+  if (document.getElementById('utang-metric-paid')) document.getElementById('utang-metric-paid').textContent = formatRupiah(paidSum);
+  if (document.getElementById('utang-metric-count')) document.getElementById('utang-metric-count').textContent = count;
+  
+  // Filter
+  const filtered = (state.utang || []).filter(u => {
+    if (state.utangFilter === 'BELUM_LUNAS') return u.status === 'BELUM_LUNAS';
+    if (state.utangFilter === 'LUNAS') return u.status === 'LUNAS';
+    return true;
+  });
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Belum ada catatan utang sesuai filter.</td></tr>';
+    return;
+  }
+  
+  filtered.forEach(u => {
+    const tr = document.createElement('tr');
+    const isPaid = u.status === 'LUNAS';
+    
+    const typeBadge = u.tipe === 'IN' 
+      ? '<span class="badge-type in">Piutang (Masuk)</span>' 
+      : '<span class="badge-type out">Utang (Keluar)</span>';
+      
+    const statusBadge = isPaid 
+      ? '<span class="badge-status success">LUNAS ✅</span>' 
+      : '<span class="badge-status warning">BELUM LUNAS ⏳</span>';
+      
+    tr.innerHTML = `
+      <td class="text-center">
+        <label class="custom-checkbox-container" title="Centang jika sudah dibayar / lunas">
+          <input type="checkbox" class="utang-checklist-input" ${isPaid ? 'checked' : ''} data-id="${u.id}">
+          <span class="custom-checkbox-checkmark"></span>
+        </label>
+      </td>
+      <td>${formatIndonesianDate(u.tanggal)}</td>
+      <td>${typeBadge}</td>
+      <td class="font-bold">${u.nama}</td>
+      <td>${u.sumberDana || '-'}</td>
+      <td class="font-bold ${u.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(u.nominal)}</td>
+      <td>${u.keterangan}</td>
+      <td>${statusBadge}</td>
+      <td class="text-center">
+        <button class="btn-icon btn-delete-utang" data-id="${u.id}" title="Hapus Catatan Utang">🗑️</button>
+      </td>
+    `;
+    
+    const chk = tr.querySelector('.utang-checklist-input');
+    chk.addEventListener('change', (e) => {
+      toggleUtangStatus(u.id, e.target.checked);
+    });
+    
+    const btnDel = tr.querySelector('.btn-delete-utang');
+    btnDel.addEventListener('click', () => {
+      deleteUtang(u.id);
+    });
+    
+    tbody.appendChild(tr);
+  });
+}
+
+async function toggleUtangStatus(utangId, isPaid) {
+  const item = state.utang.find(u => u.id === utangId);
+  if (!item) return;
+  
+  if (isPaid) {
+    item.status = 'LUNAS';
+    item.tanggalLunas = new Date().toISOString().split('T')[0];
+    
+    // Automatically record transaction to state.transactions
+    const tx = {
+      id: generateUniqueId(item.tipe === 'IN' ? 'TXN-IN' : 'TXN-OUT'),
+      tanggal: item.tanggalLunas,
+      tipe: item.tipe,
+      kategori: item.tipe === 'OUT' ? (item.sumberDana || 'Sekretariat') : '-',
+      sumberDana: item.sumberDana || (item.tipe === 'IN' ? 'Pembayaran Stand' : 'Lainnya'),
+      kategoriSumber: item.sumberDana || 'Pelunasan Utang',
+      pic: item.nama,
+      nominal: item.nominal,
+      keterangan: `[Pelunasan Utang] ${item.keterangan}`,
+      attachment: null,
+      dateCreated: new Date().toISOString(),
+      sync: false
+    };
+    
+    item.paidTxId = tx.id;
+    await saveTransaction(tx);
+    await saveToStore(STORE_UTANG, item);
+    
+    showToast('Utang Dilunasi!', `Transaksi pelunasan ${tx.id} berhasil dicatat dan masuk ke Dashboard.`, 'success');
+  } else {
+    item.status = 'BELUM_LUNAS';
+    item.tanggalLunas = null;
+    
+    if (item.paidTxId) {
+      const txIdToDelete = item.paidTxId;
+      item.paidTxId = null;
+      
+      // Remove transaction from local state & DB
+      state.transactions = state.transactions.filter(t => t.id !== txIdToDelete);
+      await deleteFromStore(STORE_TXNS, txIdToDelete);
+      if (state.settings.autoSync && state.settings.sheetUrl) {
+        syncDeleteToSheets(txIdToDelete);
+      }
+    }
+    
+    await saveToStore(STORE_UTANG, item);
+    showToast('Status Diperbarui', `Utang dikembalikan ke status BELUM LUNAS. Data pelunasan ditarik dari Dashboard.`, 'info');
+  }
+  
+  renderUtangPage();
+  renderDashboard();
+}
+
+async function deleteUtang(utangId) {
+  if (!confirm('Apakah Anda yakin ingin menghapus catatan utang ini?')) return;
+  
+  const item = state.utang.find(u => u.id === utangId);
+  if (item && item.paidTxId) {
+    // Also remove the associated paid transaction
+    const txIdToDelete = item.paidTxId;
+    state.transactions = state.transactions.filter(t => t.id !== txIdToDelete);
+    await deleteFromStore(STORE_TXNS, txIdToDelete);
+    if (state.settings.autoSync && state.settings.sheetUrl) {
+      syncDeleteToSheets(txIdToDelete);
+    }
+  }
+  
+  state.utang = state.utang.filter(u => u.id !== utangId);
+  await deleteFromStore(STORE_UTANG, utangId);
+  
+  showToast('Catatan Utang Dihapus', 'Data utang berhasil dihapus.', 'info');
+  renderUtangPage();
+  renderDashboard();
+}
+
+function renderDashboardQuickUtang() {
+  const tbody = document.getElementById('dashboard-utang-quick-tbody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '';
+  const pendingUtang = (state.utang || []).filter(u => u.status === 'BELUM_LUNAS');
+  
+  if (pendingUtang.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada utang yang belum lunas. 🎉</td></tr>';
+    return;
+  }
+  
+  pendingUtang.slice(0, 5).forEach(u => {
+    const tr = document.createElement('tr');
+    const typeBadge = u.tipe === 'IN' 
+      ? '<span class="badge-type in">Piutang</span>' 
+      : '<span class="badge-type out">Utang</span>';
+      
+    tr.innerHTML = `
+      <td class="text-center">
+        <label class="custom-checkbox-container" title="Centang untuk melunasi langsung dari Dashboard">
+          <input type="checkbox" class="dash-utang-chk" data-id="${u.id}">
+          <span class="custom-checkbox-checkmark"></span>
+        </label>
+      </td>
+      <td>${formatIndonesianDate(u.tanggal)}</td>
+      <td>${typeBadge}</td>
+      <td class="font-bold">${u.nama}</td>
+      <td>${u.sumberDana || '-'}</td>
+      <td class="font-bold ${u.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(u.nominal)}</td>
+      <td>${u.keterangan}</td>
+    `;
+    
+    const chk = tr.querySelector('.dash-utang-chk');
+    chk.addEventListener('change', (e) => {
+      toggleUtangStatus(u.id, e.target.checked);
+    });
+    
+    tbody.appendChild(tr);
+  });
+}
+
+// ================= ALOKASI DANA TALANGAN HANDLERS =================
+function setupAlokasiTalanganModal() {
+  const modal = document.getElementById('modal-alokasi-talangan');
+  const btnClose = document.getElementById('btn-close-alokasi-modal');
+  const btnCancel = document.getElementById('btn-cancel-alokasi-modal');
+  const btnSubmit = document.getElementById('btn-submit-alokasi-modal');
+  
+  if (btnClose) btnClose.addEventListener('click', () => modal.classList.remove('active'));
+  if (btnCancel) btnCancel.addEventListener('click', () => modal.classList.remove('active'));
+  
+  if (btnSubmit) {
+    btnSubmit.addEventListener('click', async () => {
+      const txnId = document.getElementById('alokasi-txn-id').value;
+      const targetSumber = document.getElementById('alokasi-sumber-select').value;
+      
+      if (!targetSumber) {
+        showToast('Pilih Sumber Dana', 'Pilih sumber dana tujuan alokasi.', 'error');
+        return;
+      }
+      
+      await alokasikanNotaTalangan(txnId, targetSumber);
+      modal.classList.remove('active');
+    });
+  }
+}
+
+function openAlokasiTalanganModal(txnId) {
+  const modal = document.getElementById('modal-alokasi-talangan');
+  if (!modal) return;
+  document.getElementById('alokasi-txn-id').value = txnId;
+  populateDropdowns();
+  modal.classList.add('active');
+}
+
+async function alokasikanNotaTalangan(txnId, targetSumber) {
+  const txn = state.transactions.find(t => t.id === txnId);
+  if (!txn) return;
+  
+  txn.sumberDana = targetSumber;
+  txn.kategoriSumber = targetSumber;
+  txn.sync = false;
+  
+  await saveToStore(STORE_TXNS, txn);
+  if (state.settings.autoSync && state.settings.sheetUrl) {
+    syncTransactionToSheets(txn);
+  }
+  
+  showToast('Dana Talangan Dialokasikan', `Transaksi ${txn.id} kini resmi dialokasikan ke ${targetSumber}.`, 'success');
+  renderApp();
 }
 

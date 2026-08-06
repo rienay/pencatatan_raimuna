@@ -105,6 +105,16 @@
           </a>
         </li>
         <li>
+          <a href="#" class="nav-link" data-target="utang-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+            <span>Pencatatan Utang</span>
+          </a>
+        </li>
+        <li>
           <a href="#" class="nav-link" data-target="laporan-section">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -219,6 +229,20 @@
               <p id="dashboard-total-transaksi">0</p>
             </div>
           </div>
+          <div class="metric-card warning-card">
+            <div class="card-icon">📝</div>
+            <div class="card-details">
+              <h3>Utang Belum Lunas</h3>
+              <p id="dashboard-total-utang-pending">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card info-card">
+            <div class="card-icon">🧾</div>
+            <div class="card-details">
+              <h3>Nota Dana Talangan</h3>
+              <p id="dashboard-total-talangan-pending">Rp 0</p>
+            </div>
+          </div>
         </div>
 
         <!-- Charts Grid -->
@@ -234,6 +258,34 @@
             <div class="chart-container">
               <canvas id="categoryChart"></canvas>
             </div>
+          </div>
+        </div>
+
+        <!-- Quick Checklist Utang Belum Lunas Dashboard Widget -->
+        <div class="table-card" style="margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+          <div class="table-card-header">
+            <h3>📝 Quick Checklist: Utang & Piutang Belum Lunas</h3>
+            <button class="btn btn-secondary nav-link-btn" data-target="utang-section">Buka Kelola Utang</button>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 120px;" class="text-center">Centang (Lunas)</th>
+                  <th>Tanggal</th>
+                  <th>Tipe</th>
+                  <th>Penanggung Jawab / Pihak</th>
+                  <th>Sumber / Kategori</th>
+                  <th>Nominal</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-utang-quick-tbody">
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Tidak ada data utang yang belum lunas. 🎉</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -477,6 +529,119 @@
             <ul class="custom-list" id="list-sumber-pemasukan">
               <!-- Populated dynamically -->
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= UTANG SECTION ================= -->
+      <section id="utang-section" class="content-section">
+        <div class="metrics-grid mb-20">
+          <div class="metric-card warning-card">
+            <div class="card-icon">⏳</div>
+            <div class="card-details">
+              <h3>Total Belum Lunas</h3>
+              <p id="utang-metric-pending">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card income">
+            <div class="card-icon">✅</div>
+            <div class="card-details">
+              <h3>Total Sudah Lunas</h3>
+              <p id="utang-metric-paid">Rp 0</p>
+            </div>
+          </div>
+          <div class="metric-card balance">
+            <div class="card-icon">📋</div>
+            <div class="card-details">
+              <h3>Total Catatan Utang</h3>
+              <p id="utang-metric-count">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-container-card mb-25">
+          <div class="form-header">
+            <h2>Tambah Pencatatan Utang / Piutang</h2>
+            <p>Catat daftar utang atau tagihan yang perlu dilunasi. Ketika dicentang (LUNAS), nilainya otomatis masuk ke Dashboard Keuangan.</p>
+          </div>
+
+          <form id="form-utang-add" class="cute-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="utang-tanggal">Tanggal <span class="required">*</span></label>
+                <input type="date" id="utang-tanggal" required>
+              </div>
+
+              <div class="form-group">
+                <label for="utang-tipe">Tipe Utang / Tagihan <span class="required">*</span></label>
+                <select id="utang-tipe" required>
+                  <option value="IN">Piutang / Tagihan Masuk (Misal: Stand/Sponsor yang belum bayar)</option>
+                  <option value="OUT">Utang / Tagihan Keluar (Misal: Utang Panitia ke Vendor/Pemberi)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="utang-nama">Penanggung Jawab / Pihak Terkait <span class="required">*</span></label>
+                <input type="text" id="utang-nama" placeholder="Contoh: Stand Warung Bu Ani / Toko ABC" required>
+              </div>
+
+              <div class="form-group">
+                <label for="utang-sumber-kat">Sumber Dana / Kategori <span class="required">*</span></label>
+                <select id="utang-sumber-kat" required>
+                  <option value="" disabled selected>Pilih Sumber Dana / Kategori</option>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="utang-nominal">Nominal (Rp) <span class="required">*</span></label>
+                <input type="text" id="utang-nominal" placeholder="Contoh: 500.000" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="utang-keterangan">Keterangan / Deskripsi Utang <span class="required">*</span></label>
+              <textarea id="utang-keterangan" rows="2" placeholder="Detail keperluan atau info jatuh tempo..." required></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">Reset</button>
+              <button type="submit" class="btn btn-success">Simpan Catatan Utang</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table Utang Card -->
+        <div class="table-card">
+          <div class="table-card-header">
+            <h3>Daftar Catatan Utang & Piutang</h3>
+            <div class="filter-pills" id="utang-filter-pills">
+              <button class="btn-pill active" data-filter="ALL">Semua</button>
+              <button class="btn-pill" data-filter="BELUM_LUNAS">Belum Lunas</button>
+              <button class="btn-pill" data-filter="LUNAS">Sudah Lunas</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 130px;" class="text-center">Centang (Lunas)</th>
+                  <th>Tanggal</th>
+                  <th>Tipe</th>
+                  <th>Penanggung Jawab / Pihak</th>
+                  <th>Sumber / Kategori</th>
+                  <th>Nominal</th>
+                  <th>Keterangan</th>
+                  <th>Status</th>
+                  <th class="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-utang-tbody">
+                <tr>
+                  <td colspan="9" class="text-center text-muted">Belum ada catatan utang.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -1193,6 +1358,33 @@ function autoMigrateColumns(sheet) {
           <button type="submit" class="btn btn-success">Simpan Perubahan</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= ALOKASI DANA TALANGAN MODAL ================= -->
+  <div id="modal-alokasi-talangan" class="modal-overlay">
+    <div class="modal-card modal-small">
+      <div class="modal-header">
+        <h3>Alokasikan Dana Talangan</h3>
+        <button id="btn-close-alokasi-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="alokasi-txn-id">
+        <p style="margin-bottom: 15px; font-size: 0.9em; color: var(--text-muted);">
+          Pilih Sumber Dana resmi yang akan menanggung nota / pengeluaran ini.
+        </p>
+        <div class="form-group">
+          <label for="alokasi-sumber-select">Sumber Dana Tujuan <span class="required">*</span></label>
+          <select id="alokasi-sumber-select" required>
+            <option value="" disabled selected>Pilih Sumber Dana Resmi</option>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-alokasi-modal" class="btn btn-secondary">Batal</button>
+        <button id="btn-submit-alokasi-modal" class="btn btn-success">Simpan Alokasi</button>
+      </div>
     </div>
   </div>
 

@@ -1789,3 +1789,141 @@ body {
   border-radius: var(--border-radius-sm);
 }
 
+/* ================= UTANG & CHECKLIST CUSTOM STYLES ================= */
+.metric-card.warning-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+.metric-card.warning-card h3 {
+  color: #b45309;
+}
+.metric-card.warning-card p {
+  color: #92400e;
+}
+
+.metric-card.info-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+.metric-card.info-card h3 {
+  color: #1d4ed8;
+}
+.metric-card.info-card p {
+  color: #1e40af;
+}
+
+/* Custom Checkbox */
+.custom-checkbox-container {
+  display: inline-block;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.custom-checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.custom-checkbox-checkmark {
+  position: absolute;
+  top: -11px;
+  left: 0;
+  height: 22px;
+  width: 22px;
+  background-color: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox-container:hover input ~ .custom-checkbox-checkmark {
+  border-color: #10b981;
+  background-color: #e2e8f0;
+}
+
+.custom-checkbox-container input:checked ~ .custom-checkbox-checkmark {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.custom-checkbox-checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.custom-checkbox-container input:checked ~ .custom-checkbox-checkmark:after {
+  display: block;
+}
+
+.custom-checkbox-container .custom-checkbox-checkmark:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+/* Status Badges */
+.badge-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.badge-status.warning {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge-status.success {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+/* Filter Pills */
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-pill {
+  border: 1px solid #cbd5e1;
+  background: var(--bg-card);
+  color: var(--text-color);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pill:hover {
+  background: var(--pastel-blue);
+  color: var(--primary-color);
+}
+
+.btn-pill.active {
+  background: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+}
+
+.mb-20 { margin-bottom: 20px; }
+.mb-25 { margin-bottom: 25px; }
+
