@@ -1687,7 +1687,7 @@ body {
 
 .kwitansi-val-col {
   font-weight: 600;
-  padding-left: 10px !important;
+  padding-left: 0 !important;
   word-break: break-word;
   color: #000000;
 }
