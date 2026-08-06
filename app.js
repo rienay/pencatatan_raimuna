@@ -30,16 +30,18 @@ const state = {
     flow: null,
     category: null
   },
+  sponsorshipHistory: [],
   db: null
 };
 
 // IndexedDB Helper Variables
 const DB_NAME = 'RaimunaCilacapDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_TXNS = 'transactions';
 const STORE_CATS = 'categories';
 const STORE_SRCS = 'sources';
 const STORE_SETTINGS = 'settings';
+const STORE_SPONSORSHIPS = 'sponsorship_history';
 
 // Helper functions for Kategori & Sumber Dana
 function getTxCategory(tx) {
@@ -349,6 +351,11 @@ function initIndexedDB() {
       if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
         db.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
       }
+
+      // Sponsorship History store
+      if (!db.objectStoreNames.contains(STORE_SPONSORSHIPS)) {
+        db.createObjectStore(STORE_SPONSORSHIPS, { keyPath: 'id' });
+      }
     };
   });
 }
@@ -358,6 +365,19 @@ async function loadStateFromDB() {
   state.transactions = await getAllFromStore(STORE_TXNS);
   state.categories = await getAllFromStore(STORE_CATS);
   state.sources = await getAllFromStore(STORE_SRCS);
+  
+  try {
+    state.sponsorshipHistory = await getAllFromStore(STORE_SPONSORSHIPS);
+  } catch (err) {
+    state.sponsorshipHistory = [];
+  }
+  
+  if (!state.sponsorshipHistory || state.sponsorshipHistory.length === 0) {
+    try {
+      const saved = localStorage.getItem('sponsorship_history');
+      if (saved) state.sponsorshipHistory = JSON.parse(saved);
+    } catch (e) {}
+  }
   
   // Seed default categories & sources if empty
   if (state.categories.length === 0) {
@@ -2550,7 +2570,7 @@ function setupSponsorshipHandlers() {
   
   btnReset.addEventListener('click', () => {
     selectTx.value = '';
-    kwitansiNo.value = '001';
+    kwitansiNo.value = getNextKwitansiNumber();
     kwitansiDari.value = '';
     kwitansiNominal.value = '';
     kwitansiTerbilang.value = '';
@@ -2565,6 +2585,19 @@ function setupSponsorshipHandlers() {
   });
   
   isSponsorshipSetupDone = true;
+}
+
+function getNextKwitansiNumber() {
+  if (!state.sponsorshipHistory || state.sponsorshipHistory.length === 0) return '001';
+  let maxNo = 0;
+  state.sponsorshipHistory.forEach(item => {
+    const rawNo = parseInt(String(item.no).replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(rawNo) && rawNo > maxNo) {
+      maxNo = rawNo;
+    }
+  });
+  const nextNo = maxNo + 1;
+  return String(nextNo).padStart(3, '0');
 }
 
 function formatTanggalIndoFull(dateStr) {
@@ -2601,8 +2634,113 @@ function renderSponsorshipSection() {
     kwitansiTgl.value = `${printDate.getDate()} ${getIndonesianMonthName(String(printDate.getMonth() + 1).padStart(2, '0'))} ${printDate.getFullYear()}`;
   }
 
-  // Update preview
+  // Set next receipt number if default
+  const kwitansiNo = document.getElementById('kwitansi-no');
+  if (kwitansiNo && (!kwitansiNo.value || kwitansiNo.value === '001')) {
+    kwitansiNo.value = getNextKwitansiNumber();
+  }
+
+  // Render preview & history table
   updateKwitansiLivePreview();
+  renderSponsorshipHistoryTable();
+}
+
+function renderSponsorshipHistoryTable() {
+  const tbody = document.getElementById('sponsorship-history-tbody');
+  const countBadge = document.getElementById('history-total-count');
+  const amountBadge = document.getElementById('history-total-amount');
+  
+  if (!tbody) return;
+
+  const history = state.sponsorshipHistory || [];
+  
+  // Calculate total count and total amount
+  const totalCount = history.length;
+  const totalAmount = history.reduce((sum, item) => sum + (parseInt(item.nominal, 10) || 0), 0);
+  
+  if (countBadge) countBadge.textContent = `${totalCount} Kwitansi Diterbitkan`;
+  if (amountBadge) amountBadge.textContent = formatRupiah(totalAmount);
+  
+  if (history.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center text-muted" style="padding: 25px;">
+          Belum ada riwayat kwitansi sponsorship yang dicetak.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  let html = '';
+  history.forEach(item => {
+    const formattedNominal = formatRupiah(item.nominal || 0);
+    html += `
+      <tr>
+        <td><span class="kwitansi-no-badge">No. ${item.no || '001'}</span></td>
+        <td>${item.tgl || '-'}</td>
+        <td><strong>${item.dari || '-'}</strong></td>
+        <td class="text-right font-bold text-success">${formattedNominal}</td>
+        <td>${item.guna || '-'}</td>
+        <td>${item.penerima || '-'}</td>
+        <td class="text-center">
+          <div class="history-actions">
+            <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="loadKwitansiFromHistory('${item.id}')" title="Cetak Ulang / Muat Data">
+              🖨️ Muat & Cetak
+            </button>
+            <button type="button" class="btn btn-small btn-danger btn-icon-small" onclick="deleteSponsorshipHistory('${item.id}')" title="Hapus Riwayat">
+              🗑️
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+async function loadKwitansiFromHistory(id) {
+  const item = state.sponsorshipHistory.find(h => h.id === id);
+  if (!item) return;
+
+  const kwitansiNo = document.getElementById('kwitansi-no');
+  const kwitansiTgl = document.getElementById('kwitansi-tgl');
+  const kwitansiDari = document.getElementById('kwitansi-dari');
+  const kwitansiNominal = document.getElementById('kwitansi-nominal');
+  const kwitansiTerbilang = document.getElementById('kwitansi-terbilang');
+  const kwitansiGuna = document.getElementById('kwitansi-guna');
+  const kwitansiPenerima = document.getElementById('kwitansi-penerima');
+  const kwitansiNta = document.getElementById('kwitansi-nta');
+
+  if (kwitansiNo) kwitansiNo.value = item.no || '001';
+  if (kwitansiTgl) kwitansiTgl.value = item.tgl || '';
+  if (kwitansiDari) kwitansiDari.value = item.dari || '';
+  if (kwitansiNominal) kwitansiNominal.value = formatRupiahDisplay(item.nominal || 0);
+  if (kwitansiTerbilang) kwitansiTerbilang.value = item.terbilang || terbilangIndo(item.nominal || 0);
+  if (kwitansiGuna) kwitansiGuna.value = item.guna || 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
+  if (kwitansiPenerima) kwitansiPenerima.value = item.penerima || 'Sulis Rahayu';
+  if (kwitansiNta) kwitansiNta.value = item.nta || 'NTA. 11.01.00.100806.00001';
+
+  updateKwitansiLivePreview();
+  showToast('Kwitansi Dimuat', `Data Kwitansi No. ${item.no} berhasil dimuat ke form.`, 'info');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteSponsorshipHistory(id) {
+  if (!confirm('Apakah Anda yakin ingin menghapus kwitansi ini dari riwayat?')) return;
+  
+  try {
+    await deleteFromStore(STORE_SPONSORSHIPS, id);
+  } catch(e){}
+  
+  state.sponsorshipHistory = state.sponsorshipHistory.filter(h => h.id !== id);
+  try {
+    localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+  } catch(e){}
+  
+  renderSponsorshipHistoryTable();
+  showToast('Riwayat Dihapus', 'Item kwitansi berhasil dihapus dari riwayat.', 'info');
 }
 
 function generateKwitansiHTML() {
@@ -2664,7 +2802,7 @@ function updateKwitansiLivePreview() {
   }
 }
 
-function printSponsorshipKwitansi() {
+async function printSponsorshipKwitansi() {
   const printableArea = document.getElementById('kwitansi-printable-area');
   const numLembar = parseInt(document.getElementById('kwitansi-lembar')?.value || '2', 10);
   
@@ -2687,6 +2825,42 @@ function printSponsorshipKwitansi() {
       </div>
     `;
   }
+
+  // Save entry to sponsorship history
+  const no = document.getElementById('kwitansi-no')?.value || '001';
+  const tgl = document.getElementById('kwitansi-tgl')?.value || '';
+  const dari = document.getElementById('kwitansi-dari')?.value || 'Sponsor';
+  const nominalStr = document.getElementById('kwitansi-nominal')?.value || '0';
+  const nominalNum = parseRupiah(nominalStr);
+  const terbilang = document.getElementById('kwitansi-terbilang')?.value || terbilangIndo(nominalNum);
+  const guna = document.getElementById('kwitansi-guna')?.value || '';
+  const penerima = document.getElementById('kwitansi-penerima')?.value || 'Sulis Rahayu';
+  const nta = document.getElementById('kwitansi-nta')?.value || '';
+
+  const historyItem = {
+    id: 'SPON-' + Date.now(),
+    no: no,
+    tgl: tgl,
+    dari: dari,
+    nominal: nominalNum,
+    terbilang: terbilang,
+    guna: guna,
+    penerima: penerima,
+    nta: nta,
+    dateCreated: new Date().toISOString()
+  };
+
+  try {
+    await saveToStore(STORE_SPONSORSHIPS, historyItem);
+  } catch(e){}
+
+  state.sponsorshipHistory.unshift(historyItem);
+  try {
+    localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+  } catch(e){}
+
+  renderSponsorshipHistoryTable();
+  showToast('Kwitansi Disimpan', `Kwitansi No. ${no} berhasil dicatat ke Riwayat Sponsorship.`, 'success');
   
   window.print();
 }

@@ -1765,3 +1765,27 @@ body {
   }
 }
 
+/* Sponsorship History Table Styles */
+.kwitansi-no-badge {
+  display: inline-block;
+  background-color: var(--pastel-blue);
+  color: #1e3a8a;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.history-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-icon-small {
+  padding: 5px 9px;
+  font-size: 12px;
+  border-radius: var(--border-radius-sm);
+}
+

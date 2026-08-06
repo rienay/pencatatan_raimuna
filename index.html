@@ -1012,6 +1012,39 @@ function autoMigrateColumns(sheet) {
           </div>
         </div>
 
+        <!-- Sponsorship History Card -->
+        <div class="table-card no-print style-history-card mt-20" style="margin-top: 25px;">
+          <div class="table-card-header">
+            <div>
+              <h3>Riwayat Kwitansi Sponsorship Diterbitkan</h3>
+              <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi sponsorship yang pernah dicetak dan diajukan</p>
+            </div>
+            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+              <span class="badge badge-primary" id="history-total-count" style="font-size: 13px; padding: 6px 12px;">0 Kwitansi</span>
+              <span class="badge badge-success" id="history-total-amount" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>No. Kwitansi</th>
+                  <th>Tanggal</th>
+                  <th>Telah Diterima Dari</th>
+                  <th class="text-right">Nominal (Rp)</th>
+                  <th>Keperluan</th>
+                  <th>Penerima</th>
+                  <th class="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="sponsorship-history-tbody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Printable Container for Sponsorship Receipt (@media print) -->
         <div id="kwitansi-printable-area" class="print-only kwitansi-print-wrapper">
           <!-- Populated dynamically before print -->
