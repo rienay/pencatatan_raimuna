@@ -2840,51 +2840,106 @@ function renderSponsorshipSection() {
   renderSponsorshipHistoryTable();
 }
 
+function setupKwitansiHistoryFilterHandlers() {
+  const filterPills = document.getElementById('kwitansi-history-filter-pills');
+  if (filterPills && !filterPills.dataset.setupDone) {
+    const pills = filterPills.querySelectorAll('.btn-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.kwitansiHistoryFilter = pill.getAttribute('data-kw-filter') || 'ALL';
+        renderSponsorshipHistoryTable();
+      });
+    });
+    filterPills.dataset.setupDone = 'true';
+  }
+}
+
 function renderSponsorshipHistoryTable() {
-  const tbody = document.getElementById('sponsorship-history-tbody');
-  const countBadge = document.getElementById('history-total-count');
-  const amountBadge = document.getElementById('history-total-amount');
-  
+  setupKwitansiHistoryFilterHandlers();
+  const history = state.sponsorshipHistory || [];
+
+  const sponsorshipItems = history.filter(item => {
+    const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+    const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+    return !isJelantah && !isTenant;
+  });
+
+  const tenantItems = history.filter(item => {
+    const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+    const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+    return !isJelantah && isTenant;
+  });
+
+  const jelantahItems = history.filter(item => {
+    return item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+  });
+
+  // Render Table 1: Sponsorship
+  renderSingleKwitansiHistoryTable('sponsorship', sponsorshipItems, 'sponsorship-history-tbody', 'sponsorship-count-badge', 'sponsorship-amount-badge', 'RP');
+
+  // Render Table 2: Tenant
+  renderSingleKwitansiHistoryTable('tenant', tenantItems, 'tenant-history-tbody', 'tenant-count-badge', 'tenant-amount-badge', 'RP');
+
+  // Render Table 3: Jelantah
+  renderSingleKwitansiHistoryTable('jelantah', jelantahItems, 'jelantah-history-tbody', 'jelantah-count-badge', 'jelantah-amount-badge', 'KG');
+
+  // Apply Filter Visibility
+  const filter = state.kwitansiHistoryFilter || 'ALL';
+  const cardSponsorship = document.getElementById('kw-card-sponsorship');
+  const cardTenant = document.getElementById('kw-card-tenant');
+  const cardJelantah = document.getElementById('kw-card-jelantah');
+
+  if (cardSponsorship) cardSponsorship.style.display = (filter === 'ALL' || filter === 'SPONSORSHIP') ? 'block' : 'none';
+  if (cardTenant) cardTenant.style.display = (filter === 'ALL' || filter === 'TENANT') ? 'block' : 'none';
+  if (cardJelantah) cardJelantah.style.display = (filter === 'ALL' || filter === 'JELANTAH') ? 'block' : 'none';
+}
+
+function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId, amountBadgeId, unitType) {
+  const tbody = document.getElementById(tbodyId);
+  const countBadge = document.getElementById(countBadgeId);
+  const amountBadge = document.getElementById(amountBadgeId);
+
+  const totalCount = items.length;
+  let totalAmount = 0;
+
+  if (unitType === 'KG') {
+    totalAmount = items.reduce((sum, item) => sum + (parseInt(String(item.nominal).replace(/[^0-9]/g, ''), 10) || 150), 0);
+  } else {
+    totalAmount = items.reduce((sum, item) => sum + (parseInt(item.nominal, 10) || 0), 0);
+  }
+
+  if (countBadge) countBadge.textContent = `${totalCount} ${typeKey === 'jelantah' ? 'Tanda Terima' : 'Kwitansi'}`;
+  if (amountBadge) amountBadge.textContent = unitType === 'KG' ? `${totalAmount} KG` : formatRupiah(totalAmount);
+
   if (!tbody) return;
 
-  const history = state.sponsorshipHistory || [];
-  
-  // Calculate total count and total amount
-  const totalCount = history.length;
-  const totalAmount = history.reduce((sum, item) => sum + (parseInt(item.nominal, 10) || 0), 0);
-  
-  if (countBadge) countBadge.textContent = `${totalCount} Kwitansi Diterbitkan`;
-  if (amountBadge) amountBadge.textContent = formatRupiah(totalAmount);
-  
-  if (history.length === 0) {
+  if (items.length === 0) {
+    const labelEmpty = typeKey === 'jelantah' ? 'minyak jelantah' : (typeKey === 'tenant' ? 'pembayaran tenant' : 'sponsorship');
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="text-center text-muted" style="padding: 25px;">
-          Belum ada riwayat kwitansi yang dicetak.
+          Belum ada riwayat ${labelEmpty} yang dicetak.
         </td>
       </tr>
     `;
     return;
   }
-  
+
   let html = '';
-  history.forEach(item => {
-    const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
-    const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
-    
-    const formattedNominal = isJelantah 
-      ? `${item.nominal || 150} KG` 
+  items.forEach(item => {
+    const formattedNominal = unitType === 'KG'
+      ? `${item.nominal || 150} KG`
       : formatRupiah(item.nominal || 0);
 
-    const typeTag = isJelantah
-      ? '<span class="badge-type out" style="font-size: 0.75rem; background-color: #fef3c7; color: #92400e;">Jelantah</span>'
-      : (isTenant 
-        ? '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>' 
-        : '<span class="badge-type balance" style="font-size: 0.75rem;">Sponsorship</span>');
-      
+    let badgeTag = '<span class="badge-type balance" style="font-size: 0.75rem;">Sponsorship</span>';
+    if (typeKey === 'tenant') badgeTag = '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>';
+    if (typeKey === 'jelantah') badgeTag = '<span class="badge-type out" style="font-size: 0.75rem; background-color: #fef3c7; color: #92400e;">Jelantah</span>';
+
     html += `
       <tr>
-        <td><span class="kwitansi-no-badge">No. ${item.no || '001'}</span> ${typeTag}</td>
+        <td><span class="kwitansi-no-badge">No. ${item.no || '001'}</span> ${badgeTag}</td>
         <td>${item.tgl || '-'}</td>
         <td><strong>${item.dari || '-'}</strong></td>
         <td class="text-right font-bold text-success">${formattedNominal}</td>
@@ -2903,7 +2958,7 @@ function renderSponsorshipHistoryTable() {
       </tr>
     `;
   });
-  
+
   tbody.innerHTML = html;
 }
 

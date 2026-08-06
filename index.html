@@ -1186,37 +1186,118 @@ function autoMigrateColumns(sheet) {
           </div>
         </div>
 
-        <!-- Sponsorship History Card -->
-        <div class="table-card no-print style-history-card mt-20" style="margin-top: 25px;">
-          <div class="table-card-header">
-            <div>
-              <h3>Riwayat Kwitansi Sponsorship Diterbitkan</h3>
-              <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi sponsorship yang pernah dicetak dan diajukan</p>
-            </div>
-            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
-              <span class="badge badge-primary" id="history-total-count" style="font-size: 13px; padding: 6px 12px;">0 Kwitansi</span>
-              <span class="badge badge-success" id="history-total-amount" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+        <!-- Separate History Section with Filter Pills & 3 Tables -->
+        <div class="kwitansi-history-container no-print mt-25" style="margin-top: 25px;">
+
+          <!-- Filter Pills Bar -->
+          <div class="kwitansi-history-filter-bar mb-20" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div class="filter-pills" id="kwitansi-history-filter-pills">
+              <button type="button" class="btn-pill active" data-kw-filter="ALL">📊 Semua Riwayat</button>
+              <button type="button" class="btn-pill" data-kw-filter="SPONSORSHIP">💼 Sponsorship</button>
+              <button type="button" class="btn-pill" data-kw-filter="TENANT">🏢 Pembayaran Tenant</button>
+              <button type="button" class="btn-pill" data-kw-filter="JELANTAH">🛢️ Minyak Jelantah</button>
             </div>
           </div>
-          
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>No. Kwitansi</th>
-                  <th>Tanggal</th>
-                  <th>Telah Diterima Dari</th>
-                  <th class="text-right">Nominal (Rp)</th>
-                  <th>Keperluan</th>
-                  <th>Penerima</th>
-                  <th class="text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="sponsorship-history-tbody">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
+
+          <!-- CARD 1: SPONSORSHIP HISTORY -->
+          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-sponsorship" style="margin-bottom: 25px;">
+            <div class="table-card-header">
+              <div>
+                <h3>💼 Riwayat Kwitansi Sponsorship / Donatur</h3>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi sponsorship & donatur yang telah diterbitkan</p>
+              </div>
+              <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+                <span class="badge badge-primary" id="sponsorship-count-badge" style="font-size: 13px; padding: 6px 12px;">0 Kwitansi</span>
+                <span class="badge badge-success" id="sponsorship-amount-badge" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>No. Kwitansi</th>
+                    <th>Tanggal</th>
+                    <th>Telah Diterima Dari</th>
+                    <th class="text-right">Nominal (Rp)</th>
+                    <th>Keperluan</th>
+                    <th>Penerima</th>
+                    <th class="text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="sponsorship-history-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          <!-- CARD 2: TENANT HISTORY -->
+          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-tenant" style="margin-bottom: 25px;">
+            <div class="table-card-header">
+              <div>
+                <h3>🏢 Riwayat Kwitansi Pembayaran Tenant</h3>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi pembayaran sewa tenant booth yang telah diterbitkan</p>
+              </div>
+              <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+                <span class="badge badge-info" id="tenant-count-badge" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Kwitansi</span>
+                <span class="badge badge-success" id="tenant-amount-badge" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>No. Kwitansi</th>
+                    <th>Tanggal</th>
+                    <th>Penyewa Tenant</th>
+                    <th class="text-right">Nominal (Rp)</th>
+                    <th>Keperluan</th>
+                    <th>Penerima</th>
+                    <th class="text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tenant-history-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CARD 3: JELANTAH HISTORY -->
+          <div class="table-card style-history-card kw-card-section" id="kw-card-jelantah">
+            <div class="table-card-header">
+              <div>
+                <h3>🛢️ Riwayat Tanda Terima Minyak Jelantah</h3>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar tanda terima pengumpulan minyak jelantah (berdasarkan berat KG)</p>
+              </div>
+              <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+                <span class="badge badge-warning" id="jelantah-count-badge" style="font-size: 13px; padding: 6px 12px; background-color: #fef3c7; color: #92400e;">0 Tanda Terima</span>
+                <span class="badge badge-primary" id="jelantah-amount-badge" style="font-size: 13px; padding: 6px 12px;">0 KG</span>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>No. Tanda Terima</th>
+                    <th>Tanggal</th>
+                    <th>Diterima Dari</th>
+                    <th class="text-right">Jumlah Berat (KG)</th>
+                    <th>Keperluan</th>
+                    <th>Penandatangan (Ketua Panitia)</th>
+                    <th class="text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="jelantah-history-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
 
         <!-- Printable Container for Sponsorship Receipt (@media print) -->
