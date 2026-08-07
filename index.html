@@ -1121,6 +1121,24 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Hapus 1 Kwitansi
+    if (action === "delete_kwitansi") {
+      var kwSheetDel = ss.getSheetByName("Kwitansi");
+      if (kwSheetDel) {
+        var kwId = payload.id;
+        var kwNo = payload.no;
+        var kwRowsDel = kwSheetDel.getDataRange().getValues();
+        for (var kd = 1; kd < kwRowsDel.length; kd++) {
+          if (kwRowsDel[kd][0] === kwId || (kwNo && String(kwRowsDel[kd][2]).trim() === String(kwNo).trim())) {
+            kwSheetDel.deleteRow(kd + 1);
+            break;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Sync Utang / Piutang
     if (action === "sync_utang") {
       var utSheet = ss.getSheetByName("Utang") || ss.insertSheet("Utang");

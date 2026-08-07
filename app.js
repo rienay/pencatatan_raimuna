@@ -3283,6 +3283,9 @@ async function loadKwitansiFromHistory(id, autoPrint = true) {
 async function deleteSponsorshipHistory(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus kwitansi ini dari riwayat?')) return;
   
+  const item = state.sponsorshipHistory.find(h => h.id === id);
+  const kwNo = item ? item.no : null;
+
   try {
     await deleteFromStore(STORE_SPONSORSHIPS, id);
   } catch(e){}
@@ -3292,8 +3295,25 @@ async function deleteSponsorshipHistory(id) {
     localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
   } catch(e){}
   
+  if (state.settings.sheetUrl) {
+    syncKwitansiToSheets_delete(id, kwNo);
+  }
+
   renderSponsorshipHistoryTable();
   showToast('Riwayat Dihapus', 'Item kwitansi berhasil dihapus dari riwayat.', 'info');
+}
+
+async function syncKwitansiToSheets_delete(id, no) {
+  if (!state.settings.sheetUrl) return;
+  try {
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'delete_kwitansi', id: id, no: no })
+    });
+  } catch (err) {
+    console.error('Failed to delete kwitansi from sheet:', err);
+  }
 }
 
 function generateKwitansiHTML() {
