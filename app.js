@@ -1009,6 +1009,18 @@ async function autoPullFromSheets() {
         await saveToStore(STORE_TXNS, txn);
       }
       
+      // Merge sponsorship/kwitansi history if returned from Apps Script
+      if (result.kwitansi && Array.isArray(result.kwitansi) && result.kwitansi.length > 0) {
+        state.sponsorshipHistory = result.kwitansi;
+        try {
+          await clearStore(STORE_SPONSORSHIPS);
+          for (const kw of result.kwitansi) {
+            await saveToStore(STORE_SPONSORSHIPS, kw);
+          }
+          localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+        } catch(e){}
+      }
+
       state.transactions = mergedTxns;
       updateSyncBadgeState();
       renderApp();
@@ -2854,6 +2866,144 @@ function setupKwitansiHistoryFilterHandlers() {
     });
     filterPills.dataset.setupDone = 'true';
   }
+
+  setupKwitansiExportHandlers();
+}
+
+function setupKwitansiExportHandlers() {
+  const btnExcel = document.getElementById('btn-export-kwitansi-excel');
+  const btnCsv = document.getElementById('btn-export-kwitansi-csv');
+
+  if (btnExcel && !btnExcel.dataset.setupDone) {
+    btnExcel.addEventListener('click', () => exportKwitansiRecap('EXCEL'));
+    btnExcel.dataset.setupDone = 'true';
+  }
+
+  if (btnCsv && !btnCsv.dataset.setupDone) {
+    btnCsv.addEventListener('click', () => exportKwitansiRecap('CSV'));
+    btnCsv.dataset.setupDone = 'true';
+  }
+}
+
+function exportKwitansiRecap(format) {
+  const history = state.sponsorshipHistory || [];
+  const filter = state.kwitansiHistoryFilter || 'ALL';
+
+  let filtered = history;
+  if (filter === 'SPONSORSHIP') {
+    filtered = history.filter(item => {
+      const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+      const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+      return !isJelantah && !isTenant;
+    });
+  } else if (filter === 'TENANT') {
+    filtered = history.filter(item => {
+      const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+      return isTenant;
+    });
+  } else if (filter === 'JELANTAH') {
+    filtered = history.filter(item => {
+      return item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+    });
+  }
+
+  if (filtered.length === 0) {
+    showToast('Data Kosong', 'Tidak ada riwayat kwitansi untuk diekspor.', 'error');
+    return;
+  }
+
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  if (format === 'CSV') {
+    let csv = '\ufeffNo;No Kwitansi;Tipe / Kategori;Tanggal;Diterima Dari;Nominal / Berat;Terbilang;Keperluan;Penerima;NTA / Jabatan\n';
+    filtered.forEach((item, i) => {
+      const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+      const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+      const tipeText = isJelantah ? 'Minyak Jelantah' : (isTenant ? 'Pembayaran Tenant' : 'Sponsorship');
+      const formattedNominal = isJelantah ? `${item.nominal || 150} KG` : item.nominal;
+      const cleanGuna = (item.guna || '-').replace(/[\n\r;]/g, ' ');
+      const cleanDari = (item.dari || '-').replace(/[\n\r;]/g, ' ');
+      const cleanTerbilang = (item.terbilang || '-').replace(/[\n\r;]/g, ' ');
+
+      csv += `${i+1};No. ${item.no || '001'};${tipeText};${item.tgl || '-'};${cleanDari};${formattedNominal};${cleanTerbilang};${cleanGuna};${item.penerima || '-'};${item.nta || '-'}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Rekap_Kwitansi_${filter}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Ekspor CSV', 'Rekap kwitansi berhasil diunduh.', 'success');
+  } else if (format === 'EXCEL') {
+    let tableRows = '';
+    filtered.forEach((item, i) => {
+      const isJelantah = item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH'));
+      const isTenant = item.tipeJenis === 'STAND' || item.tipeJenis === 'TENANT' || (item.guna && (item.guna.toUpperCase().includes('TENANT') || item.guna.toUpperCase().includes('STAND')));
+      const tipeText = isJelantah ? 'Minyak Jelantah' : (isTenant ? 'Pembayaran Tenant' : 'Sponsorship');
+      const formattedNominal = isJelantah ? `${item.nominal || 150} KG` : formatRupiah(item.nominal || 0);
+
+      tableRows += `
+        <tr>
+          <td style="text-align:center;">${i+1}</td>
+          <td>No. ${item.no || '001'}</td>
+          <td>${tipeText}</td>
+          <td>${item.tgl || '-'}</td>
+          <td><b>${item.dari || '-'}</b></td>
+          <td style="text-align:right;">${formattedNominal}</td>
+          <td>${item.terbilang || '-'}</td>
+          <td>${item.guna || '-'}</td>
+          <td>${item.penerima || '-'}</td>
+          <td>${item.nta || '-'}</td>
+        </tr>
+      `;
+    });
+
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <style>
+          th { background-color: #0284c7; color: white; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
+          td { border: 1px solid #cbd5e1; padding: 6px; }
+        </style>
+      </head>
+      <body>
+        <h2>REKAP KWITANSI & TANDA TERIMA RAIMUNA CABANG CILACAP 2026</h2>
+        <p>Kategori Filter: ${filter} | Tanggal Ekspor: ${dateStr}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>No. Kwitansi</th>
+              <th>Tipe</th>
+              <th>Tanggal</th>
+              <th>Diterima Dari</th>
+              <th>Nominal / Jumlah</th>
+              <th>Terbilang</th>
+              <th>Keperluan</th>
+              <th>Penerima</th>
+              <th>NTA / Jabatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Rekap_Kwitansi_${filter}_${dateStr}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Ekspor Excel', 'Rekap kwitansi berhasil diunduh dalam format Excel.', 'success');
+  }
 }
 
 function renderSponsorshipHistoryTable() {
@@ -2962,7 +3112,7 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
   tbody.innerHTML = html;
 }
 
-async function loadKwitansiFromHistory(id) {
+async function loadKwitansiFromHistory(id, autoPrint = true) {
   const item = state.sponsorshipHistory.find(h => h.id === id);
   if (!item) return;
 
@@ -2990,8 +3140,13 @@ async function loadKwitansiFromHistory(id) {
   if (kwitansiNta) kwitansiNta.value = item.nta || (isJelantah ? 'Ketua Panitia' : 'NTA. 11.01.00.100806.00001');
 
   updateKwitansiLivePreview();
-  showToast('Kwitansi Dimuat', `Data Kwitansi No. ${item.no} berhasil dimuat ke form.`, 'info');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (autoPrint) {
+    printSponsorshipKwitansi(false);
+  } else {
+    showToast('Kwitansi Dimuat', `Data Kwitansi No. ${item.no} berhasil dimuat ke form.`, 'info');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 async function deleteSponsorshipHistory(id) {
@@ -3087,7 +3242,7 @@ function updateKwitansiLivePreview() {
   }
 }
 
-async function printSponsorshipKwitansi() {
+async function printSponsorshipKwitansi(saveHistory = true) {
   const printableArea = document.getElementById('kwitansi-printable-area');
   const numLembar = parseInt(document.getElementById('kwitansi-lembar')?.value || '2', 10);
   
@@ -3111,45 +3266,64 @@ async function printSponsorshipKwitansi() {
     `;
   }
 
-  // Save entry to sponsorship history
-  const tipeJenis = document.getElementById('kwitansi-tipe-jenis')?.value || 'SPONSORSHIP';
-  const no = document.getElementById('kwitansi-no')?.value || '001';
-  const tgl = document.getElementById('kwitansi-tgl')?.value || '';
-  const dari = document.getElementById('kwitansi-dari')?.value || 'Sponsor / Stand';
-  const nominalStr = document.getElementById('kwitansi-nominal')?.value || '0';
-  const nominalNum = parseRupiah(nominalStr);
-  const terbilang = document.getElementById('kwitansi-terbilang')?.value || terbilangIndo(nominalNum);
-  const guna = document.getElementById('kwitansi-guna')?.value || '';
-  const penerima = document.getElementById('kwitansi-penerima')?.value || 'Sulis Rahayu';
-  const nta = document.getElementById('kwitansi-nta')?.value || '';
+  if (saveHistory) {
+    // Save entry to sponsorship history
+    const tipeJenis = document.getElementById('kwitansi-tipe-jenis')?.value || 'SPONSORSHIP';
+    const no = document.getElementById('kwitansi-no')?.value || '001';
+    const tgl = document.getElementById('kwitansi-tgl')?.value || '';
+    const dari = document.getElementById('kwitansi-dari')?.value || 'Sponsor / Tenant';
+    const nominalStr = document.getElementById('kwitansi-nominal')?.value || '0';
+    const nominalNum = tipeJenis === 'JELANTAH' ? nominalStr : parseRupiah(nominalStr);
+    const terbilang = document.getElementById('kwitansi-terbilang')?.value || (tipeJenis === 'JELANTAH' ? 'SERATUS LIMA PULUH KILOGRAM' : terbilangIndo(nominalNum));
+    const guna = document.getElementById('kwitansi-guna')?.value || '';
+    const penerima = document.getElementById('kwitansi-penerima')?.value || (tipeJenis === 'JELANTAH' ? 'Tri Soma Ananta Rahman' : 'Sulis Rahayu');
+    const nta = document.getElementById('kwitansi-nta')?.value || (tipeJenis === 'JELANTAH' ? 'Ketua Panitia' : 'NTA. 11.01.00.100806.00001');
 
-  const historyItem = {
-    id: 'KW-' + Date.now(),
-    tipeJenis: tipeJenis,
-    no: no,
-    tgl: tgl,
-    dari: dari,
-    nominal: nominalNum,
-    terbilang: terbilang,
-    guna: guna,
-    penerima: penerima,
-    nta: nta,
-    dateCreated: new Date().toISOString()
-  };
+    const historyItem = {
+      id: 'KW-' + Date.now(),
+      tipeJenis: tipeJenis,
+      no: no,
+      tgl: tgl,
+      dari: dari,
+      nominal: nominalNum,
+      terbilang: terbilang,
+      guna: guna,
+      penerima: penerima,
+      nta: nta,
+      dateCreated: new Date().toISOString()
+    };
 
-  try {
-    await saveToStore(STORE_SPONSORSHIPS, historyItem);
-  } catch(e){}
+    try {
+      await saveToStore(STORE_SPONSORSHIPS, historyItem);
+    } catch(e){}
 
-  state.sponsorshipHistory.unshift(historyItem);
-  try {
-    localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
-  } catch(e){}
+    state.sponsorshipHistory.unshift(historyItem);
+    try {
+      localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+    } catch(e){}
 
-  renderSponsorshipHistoryTable();
-  showToast('Kwitansi Disimpan', `Kwitansi No. ${no} berhasil dicatat ke Riwayat Sponsorship.`, 'success');
+    renderSponsorshipHistoryTable();
+    showToast('Kwitansi Disimpan', `Kwitansi No. ${no} berhasil dicatat ke Riwayat.`, 'success');
+
+    if (state.settings.sheetUrl) {
+      syncKwitansiToSheets(historyItem);
+    }
+  }
   
   window.print();
+}
+
+async function syncKwitansiToSheets(kw) {
+  if (!state.settings.sheetUrl) return;
+  try {
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'sync_kwitansi', kwitansi: kw })
+    });
+  } catch (err) {
+    console.error('Failed to sync kwitansi to sheet:', err);
+  }
 }
 
 // ================= UTANG MANAGEMENT & CHECKLIST LOGIC =================
