@@ -1002,7 +1002,7 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Push Bulk Transaksi
+    // Push Bulk Transaksi, Kwitansi, & Utang
     if (action === "push_bulk") {
       var transactions = payload.transactions || [];
       if (sheet.getLastRow() > 1) {
@@ -1016,6 +1016,45 @@ function doPost(e) {
       if (rowsToAppend.length > 0) {
         sheet.getRange(2, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
       }
+
+      // Kwitansi Bulk
+      var kwitansiList = payload.kwitansi || [];
+      if (kwitansiList.length > 0) {
+        var kwSheet = ss.getSheetByName("Kwitansi") || ss.insertSheet("Kwitansi");
+        if (kwSheet.getLastRow() === 0) {
+          kwSheet.appendRow(["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated"]);
+        } else if (kwSheet.getLastRow() > 1) {
+          kwSheet.getRange(2, 1, kwSheet.getLastRow() - 1, kwSheet.getLastColumn()).clearContent();
+        }
+        var kwRowsToAppend = kwitansiList.map(function(kw) {
+          return [
+            kw.id, kw.tipeJenis, kw.no, kw.tgl, kw.dari, kw.nominal, kw.terbilang, kw.guna, kw.penerima, kw.nta, kw.dateCreated
+          ];
+        });
+        if (kwRowsToAppend.length > 0) {
+          kwSheet.getRange(2, 1, kwRowsToAppend.length, kwRowsToAppend[0].length).setValues(kwRowsToAppend);
+        }
+      }
+
+      // Utang Bulk
+      var utangList = payload.utang || [];
+      if (utangList.length > 0) {
+        var utSheet = ss.getSheetByName("Utang") || ss.insertSheet("Utang");
+        if (utSheet.getLastRow() === 0) {
+          utSheet.appendRow(["id", "tanggal", "tipe", "nama", "sumberDana", "kategori", "nominal", "keterangan", "status", "paidTxId", "tanggalLunas", "dateCreated"]);
+        } else if (utSheet.getLastRow() > 1) {
+          utSheet.getRange(2, 1, utSheet.getLastRow() - 1, utSheet.getLastColumn()).clearContent();
+        }
+        var utRowsToAppend = utangList.map(function(ut) {
+          return [
+            ut.id, ut.tanggal, ut.tipe, ut.nama, ut.sumberDana || "-", ut.kategori || "-", ut.nominal, ut.keterangan, ut.status, ut.paidTxId || "-", ut.tanggalLunas || "-", ut.dateCreated
+          ];
+        });
+        if (utRowsToAppend.length > 0) {
+          utSheet.getRange(2, 1, utRowsToAppend.length, utRowsToAppend[0].length).setValues(utRowsToAppend);
+        }
+      }
+
       return ContentService.createTextOutput(JSON.stringify({ success: true, count: rowsToAppend.length }))
         .setMimeType(ContentService.MimeType.JSON);
     }
