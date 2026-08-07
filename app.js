@@ -38,7 +38,7 @@ const state = {
 
 // IndexedDB Helper Variables
 const DB_NAME = 'RaimunaCilacapDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_TXNS = 'transactions';
 const STORE_CATS = 'categories';
 const STORE_SRCS = 'sources';
@@ -382,6 +382,13 @@ async function loadStateFromDB() {
     state.utang = await getAllFromStore(STORE_UTANG);
   } catch (err) {
     state.utang = [];
+  }
+
+  if (!state.utang || state.utang.length === 0) {
+    try {
+      const savedUtang = localStorage.getItem('raimuna_utang_data');
+      if (savedUtang) state.utang = JSON.parse(savedUtang);
+    } catch (e) {}
   }
   
   try {
@@ -794,7 +801,8 @@ async function saveTransaction(txn) {
       };
       if (!state.utang) state.utang = [];
       state.utang.unshift(autoUtang);
-      await saveToStore(STORE_UTANG, autoUtang);
+      try { await saveToStore(STORE_UTANG, autoUtang); } catch(e){}
+      try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
       showToast('Masuk ke Catatan Utang', `Transaksi ${txn.id} dicatat sebagai Utang Belum Lunas (Dana Talangan). Saldo Kas Kas tidak berkurang.`, 'info');
     }
   } else {
@@ -3360,8 +3368,18 @@ function setupUtangHandlers() {
         dateCreated: new Date().toISOString()
       };
       
+      if (!state.utang) state.utang = [];
       state.utang.unshift(newUtang);
-      await saveToStore(STORE_UTANG, newUtang);
+      
+      try {
+        await saveToStore(STORE_UTANG, newUtang);
+      } catch (err) {
+        console.warn('Save to STORE_UTANG failed, using localStorage fallback:', err);
+      }
+
+      try {
+        localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
+      } catch(e){}
       
       showToast('Catatan Utang Tersimpan', `Utang ${newUtang.id} berhasil ditambahkan.`, 'success');
       
@@ -3492,7 +3510,8 @@ async function toggleUtangStatus(utangId, isPaid) {
     
     item.paidTxId = tx.id;
     await saveTransaction(tx);
-    await saveToStore(STORE_UTANG, item);
+    try { await saveToStore(STORE_UTANG, item); } catch(e){}
+    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
     
     showToast('Utang Dilunasi!', `Transaksi pelunasan ${tx.id} berhasil dicatat dan masuk ke Dashboard.`, 'success');
   } else {
@@ -3511,7 +3530,8 @@ async function toggleUtangStatus(utangId, isPaid) {
       }
     }
     
-    await saveToStore(STORE_UTANG, item);
+    try { await saveToStore(STORE_UTANG, item); } catch(e){}
+    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
     showToast('Status Diperbarui', `Utang dikembalikan ke status BELUM LUNAS. Data pelunasan ditarik dari Dashboard.`, 'info');
   }
   
@@ -3534,7 +3554,8 @@ async function deleteUtang(utangId) {
   }
   
   state.utang = state.utang.filter(u => u.id !== utangId);
-  await deleteFromStore(STORE_UTANG, utangId);
+  try { await deleteFromStore(STORE_UTANG, utangId); } catch(e){}
+  try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
   
   showToast('Catatan Utang Dihapus', 'Data utang berhasil dihapus.', 'info');
   renderUtangPage();
