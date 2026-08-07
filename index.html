@@ -1082,10 +1082,11 @@ function doPost(e) {
     
     // Hapus 1 Transaksi
     if (action === "delete_single") {
-      var txId = payload.id;
+      var txId = String(payload.id).trim();
       var rows = sheet.getDataRange().getValues();
       for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] === txId) {
+        var rowStr = rows[i].join(" ");
+        if (rows[i][0] == txId || rowStr.indexOf(txId) !== -1) {
           sheet.deleteRow(i + 1);
           break;
         }
@@ -1125,11 +1126,18 @@ function doPost(e) {
     if (action === "delete_kwitansi") {
       var kwSheetDel = ss.getSheetByName("Kwitansi");
       if (kwSheetDel) {
-        var kwId = payload.id;
-        var kwNo = payload.no;
+        var kwId = String(payload.id || '').trim();
+        var kwNo = String(payload.no || '').trim();
+        var cleanKwNo = kwNo.replace(/^No\.\s*/i, '').trim();
         var kwRowsDel = kwSheetDel.getDataRange().getValues();
         for (var kd = 1; kd < kwRowsDel.length; kd++) {
-          if (kwRowsDel[kd][0] === kwId || (kwNo && String(kwRowsDel[kd][2]).trim() === String(kwNo).trim())) {
+          var rowDataStr = kwRowsDel[kd].join(" ");
+          var colA = String(kwRowsDel[kd][0]).trim();
+          var colB = String(kwRowsDel[kd][1]).trim();
+          var cleanColB = colB.replace(/^No\.\s*/i, '').trim();
+          
+          if ((kwId && (colA === kwId || rowDataStr.indexOf(kwId) !== -1)) ||
+              (cleanKwNo && (cleanColB === cleanKwNo || colB.indexOf(cleanKwNo) !== -1))) {
             kwSheetDel.deleteRow(kd + 1);
             break;
           }
@@ -1170,14 +1178,16 @@ function doPost(e) {
     if (action === "delete_utang") {
       var utSheetDel = ss.getSheetByName("Utang");
       if (utSheetDel) {
-        var utId = payload.id;
+        var utId = String(payload.id || '').trim();
         var utRowsDel = utSheetDel.getDataRange().getValues();
         for (var d = 1; d < utRowsDel.length; d++) {
-          if (utRowsDel[d][0] === utId) {
+          var utRowStr = utRowsDel[d].join(" ");
+          if (utRowsDel[d][0] == utId || utRowsDel[d][1] == utId || utRowStr.indexOf(utId) !== -1) {
             utSheetDel.deleteRow(d + 1);
             break;
           }
         }
+      }
       }
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
         .setMimeType(ContentService.MimeType.JSON);
