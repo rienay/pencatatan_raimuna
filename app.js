@@ -116,6 +116,89 @@ function parseSheetRow(row) {
   };
 }
 
+function parseKwitansiRow(row) {
+  if (!row) return null;
+  const no = row.no || row['No. Kwitansi'] || row['No.'] || row['No'] || row.noKwitansi || '';
+  const tipeJenis = row.tipeJenis || row['Tipe'] || row['Jenis'] || row['Tipe Jenis'] || 'SPONSORSHIP';
+  const tgl = row.tgl || row['Tanggal'] || row.tanggal || '';
+  const dari = row.dari || row['Diterima Dari'] || row['Telah Diterima Dari'] || row['Diterima Dan'] || row.pemberi || '';
+  const rawNominal = row.nominal !== undefined ? row.nominal : (row['Nominal / Jumlah'] || row['Nominal (Rp)'] || row['Nominal'] || 0);
+  const terbilang = row.terbilang || row['Terbilang'] || '';
+  const guna = row.guna || row['Keperluan'] || row['Guna'] || '';
+  const penerima = row.penerima || row['Penerima'] || row['Penandatangan (Ketua Panitia)'] || '';
+  const nta = row.nta || row['NTA'] || row['NTA / Jabatan'] || '';
+  const id = row.id || ('KW-' + Math.random().toString(36).substring(2, 8));
+
+  let normalizedTipe = String(tipeJenis).toUpperCase();
+  if (normalizedTipe.includes('JELANTAH')) normalizedTipe = 'JELANTAH';
+  else if (normalizedTipe.includes('TENANT') || normalizedTipe.includes('STAND')) normalizedTipe = 'STAND';
+  else if (normalizedTipe.includes('SPONSOR')) normalizedTipe = 'SPONSORSHIP';
+
+  let finalNominal = rawNominal;
+  if (typeof rawNominal === 'string') {
+    if (rawNominal.toUpperCase().includes('KG')) {
+      finalNominal = rawNominal.trim();
+    } else {
+      finalNominal = parseRupiah(rawNominal);
+    }
+  }
+
+  return {
+    id: String(id),
+    tipeJenis: normalizedTipe,
+    no: String(no).replace(/^No\.\s*/i, '').trim(),
+    tgl: String(tgl),
+    dari: String(dari),
+    nominal: finalNominal,
+    terbilang: String(terbilang),
+    guna: String(guna),
+    penerima: String(penerima),
+    nta: String(nta),
+    dateCreated: row.dateCreated || new Date().toISOString()
+  };
+}
+
+function parseUtangRow(row) {
+  if (!row) return null;
+  const id = row.id || row['ID Utang'] || row['ID'] || generateUniqueId('UTG');
+  const tanggal = row.tanggal || row['Tanggal'] || '';
+  const rawTipe = row.tipe || row['Tipe'] || 'OUT';
+  const nama = row.nama || row['Penanggung Jawab / Pihak'] || row['Penanggung Jawab / P'] || row['Penanggung Jawab'] || row['Nama'] || '';
+  const sumberDana = row.sumberDana || row['Sumber / Kategori'] || row['Sumber Dana'] || row.kategori || '-';
+  const rawNominal = row.nominal !== undefined ? row.nominal : (row['Nominal (Rp)'] || row['Nominal'] || 0);
+  const keterangan = row.keterangan || row['Keterangan'] || '';
+  const status = row.status || row['Status'] || 'BELUM_LUNAS';
+  const paidTxId = row.paidTxId || row['paidTxId'] || null;
+  const tanggalLunas = row.tanggalLunas || row['Tanggal Lunas'] || null;
+
+  let normalizedTipe = 'OUT';
+  if (String(rawTipe).toUpperCase().includes('MASUK') || String(rawTipe).toUpperCase().includes('PIUTANG') || String(rawTipe).toUpperCase() === 'IN') {
+    normalizedTipe = 'IN';
+  }
+
+  let normalizedStatus = 'BELUM_LUNAS';
+  if (String(status).toUpperCase().includes('LUNAS') && !String(status).toUpperCase().includes('BELUM')) {
+    normalizedStatus = 'LUNAS';
+  }
+
+  let finalNominal = typeof rawNominal === 'string' ? parseRupiah(rawNominal) : (parseInt(rawNominal, 10) || 0);
+
+  return {
+    id: String(id),
+    tanggal: formatDateString(tanggal),
+    tipe: normalizedTipe,
+    nama: String(nama).trim(),
+    sumberDana: String(sumberDana).trim(),
+    kategori: String(sumberDana).trim(),
+    nominal: finalNominal,
+    keterangan: String(keterangan).trim(),
+    status: normalizedStatus,
+    paidTxId: paidTxId && paidTxId !== '-' ? paidTxId : null,
+    tanggalLunas: tanggalLunas && tanggalLunas !== '-' ? tanggalLunas : null,
+    dateCreated: row.dateCreated || new Date().toISOString()
+  };
+}
+
 // Default Data Seed arrays
 const DEFAULT_SOURCES = [
   'Sponsor', 'APBD', 'Minyak Jelantah', 'Pembayaran Tenant', 'Donatur', 'Iuran Panitia', 'Tanpa Sumber Dana (Dana Talangan)', 'Lainnya'
@@ -970,6 +1053,30 @@ async function pullAllTransactionsFromSheets() {
       for (const txn of newTxns) {
         await saveToStore(STORE_TXNS, txn);
       }
+
+      if (result.kwitansi && Array.isArray(result.kwitansi) && result.kwitansi.length > 0) {
+        const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
+        state.sponsorshipHistory = parsedKw;
+        try {
+          await clearStore(STORE_SPONSORSHIPS);
+          for (const kw of parsedKw) {
+            await saveToStore(STORE_SPONSORSHIPS, kw);
+          }
+          localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+        } catch(e){}
+      }
+
+      if (result.utang && Array.isArray(result.utang) && result.utang.length > 0) {
+        const parsedUt = result.utang.map(parseUtangRow).filter(Boolean);
+        state.utang = parsedUt;
+        try {
+          await clearStore(STORE_UTANG);
+          for (const ut of parsedUt) {
+            await saveToStore(STORE_UTANG, ut);
+          }
+          localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
+        } catch(e){}
+      }
       
       state.transactions = newTxns;
       updateSyncBadgeState();
@@ -1021,10 +1128,11 @@ async function autoPullFromSheets() {
       
       // Merge sponsorship/kwitansi history if returned from Apps Script
       if (result.kwitansi && Array.isArray(result.kwitansi) && result.kwitansi.length > 0) {
-        state.sponsorshipHistory = result.kwitansi;
+        const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
+        state.sponsorshipHistory = parsedKw;
         try {
           await clearStore(STORE_SPONSORSHIPS);
-          for (const kw of result.kwitansi) {
+          for (const kw of parsedKw) {
             await saveToStore(STORE_SPONSORSHIPS, kw);
           }
           localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
@@ -1033,10 +1141,11 @@ async function autoPullFromSheets() {
 
       // Merge utang records if returned from Apps Script
       if (result.utang && Array.isArray(result.utang) && result.utang.length > 0) {
-        state.utang = result.utang;
+        const parsedUt = result.utang.map(parseUtangRow).filter(Boolean);
+        state.utang = parsedUt;
         try {
           await clearStore(STORE_UTANG);
-          for (const ut of result.utang) {
+          for (const ut of parsedUt) {
             await saveToStore(STORE_UTANG, ut);
           }
           localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
