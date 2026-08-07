@@ -899,35 +899,65 @@
                 <span>Kode Google Apps Script</span>
                 <button id="btn-copy-code" class="btn btn-small btn-secondary">Salin Kode</button>
               </div>
-              <pre class="code-box" id="code-script-content"><code>// KODE APPS SCRIPT UNTUK GOOGLE SHEETS
+              <pre class="code-box" id="code-script-content"><code>// KODE APPS SCRIPT UNTUK GOOGLE SHEETS (SINKRONISASI 3 TAB: Transaksi, Kwitansi, Utang)
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Transaksi");
-  if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Sheet Transaksi tidak ditemukan" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
+  var sheetTx = ss.getSheetByName("Transaksi");
+  var sheetKw = ss.getSheetByName("Kwitansi");
+  var sheetUt = ss.getSheetByName("Utang");
   
-  // Otomatis memisahkan kolom 'kategoriSumber' jika Google Sheet masih format lama
-  autoMigrateColumns(sheet);
-  
-  var data = [];
-  var rows = sheet.getDataRange().getValues();
-  if (rows.length === 0) {
-    return ContentService.createTextOutput(JSON.stringify({ success: true, data: [] }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  var headers = rows[0];
-  for (var i = 1; i < rows.length; i++) {
-    var row = rows[i];
-    var obj = {};
-    for (var j = 0; j < headers.length; j++) {
-      obj[headers[j]] = row[j];
+  // 1. Data Transaksi
+  var txData = [];
+  if (sheetTx && sheetTx.getLastRow() > 1) {
+    autoMigrateColumns(sheetTx);
+    var rows = sheetTx.getDataRange().getValues();
+    var headers = rows[0];
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = row[j];
+      }
+      txData.push(obj);
     }
-    data.push(obj);
   }
-  return ContentService.createTextOutput(JSON.stringify({ success: true, data: data }))
-    .setMimeType(ContentService.MimeType.JSON);
+
+  // 2. Data Kwitansi / Tanda Terima Jelantah
+  var kwData = [];
+  if (sheetKw && sheetKw.getLastRow() > 1) {
+    var rowsKw = sheetKw.getDataRange().getValues();
+    var headersKw = rowsKw[0];
+    for (var k = 1; k < rowsKw.length; k++) {
+      var rowKw = rowsKw[k];
+      var objKw = {};
+      for (var m = 0; m < headersKw.length; m++) {
+        objKw[headersKw[m]] = rowKw[m];
+      }
+      kwData.push(objKw);
+    }
+  }
+
+  // 3. Data Utang / Piutang
+  var utData = [];
+  if (sheetUt && sheetUt.getLastRow() > 1) {
+    var rowsUt = sheetUt.getDataRange().getValues();
+    var headersUt = rowsUt[0];
+    for (var u = 1; u < rowsUt.length; u++) {
+      var rowUt = rowsUt[u];
+      var objUt = {};
+      for (var v = 0; v < headersUt.length; v++) {
+        objUt[headersUt[v]] = rowUt[v];
+      }
+      utData.push(objUt);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ 
+    success: true, 
+    data: txData,
+    kwitansi: kwData,
+    utang: utData
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -949,30 +979,7 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    if (action === "push_bulk") {
-      var lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        sheet.deleteRows(2, lastRow - 1);
-      }
-      var txs = payload.transactions;
-      for (var i = 0; i < txs.length; i++) {
-        var tx = txs[i];
-        sheet.appendRow([
-          tx.id,
-          tx.tanggal,
-          tx.tipe,
-          tx.kategori || "-",
-          tx.sumberDana || "-",
-          tx.pic,
-          tx.nominal,
-          tx.keterangan,
-          tx.dateCreated
-        ]);
-      }
-      return ContentService.createTextOutput(JSON.stringify({ success: true, count: txs.length }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
+    // Sync 1 Transaksi Keuangan
     if (action === "sync_single") {
       var tx = payload.transaction;
       var rows = sheet.getDataRange().getValues();
@@ -983,19 +990,9 @@ function doPost(e) {
           break;
         }
       }
-      
       var rowData = [
-        tx.id,
-        tx.tanggal,
-        tx.tipe,
-        tx.kategori || "-",
-        tx.sumberDana || "-",
-        tx.pic,
-        tx.nominal,
-        tx.keterangan,
-        tx.dateCreated
+        tx.id, tx.tanggal, tx.tipe, tx.kategori || "-", tx.sumberDana || "-", tx.pic, tx.nominal, tx.keterangan, tx.dateCreated
       ];
-      
       if (foundRow !== -1) {
         sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
       } else {
@@ -1004,7 +1001,26 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
         .setMimeType(ContentService.MimeType.JSON);
     }
+
+    // Push Bulk Transaksi
+    if (action === "push_bulk") {
+      var transactions = payload.transactions || [];
+      if (sheet.getLastRow() > 1) {
+        sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+      }
+      var rowsToAppend = transactions.map(function(tx) {
+        return [
+          tx.id, tx.tanggal, tx.tipe, tx.kategori || "-", tx.sumberDana || "-", tx.pic, tx.nominal, tx.keterangan, tx.dateCreated
+        ];
+      });
+      if (rowsToAppend.length > 0) {
+        sheet.getRange(2, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true, count: rowsToAppend.length }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     
+    // Hapus 1 Transaksi
     if (action === "delete_single") {
       var txId = payload.id;
       var rows = sheet.getDataRange().getValues();
@@ -1012,6 +1028,77 @@ function doPost(e) {
         if (rows[i][0] === txId) {
           sheet.deleteRow(i + 1);
           break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Sync Kwitansi
+    if (action === "sync_kwitansi") {
+      var kwSheet = ss.getSheetByName("Kwitansi") || ss.insertSheet("Kwitansi");
+      if (kwSheet.getLastRow() === 0) {
+        kwSheet.appendRow(["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated"]);
+      }
+      var kw = payload.kwitansi;
+      var kwRows = kwSheet.getDataRange().getValues();
+      var foundKwRow = -1;
+      for (var k = 1; k < kwRows.length; k++) {
+        if (kwRows[k][0] === kw.id) {
+          foundKwRow = k + 1;
+          break;
+        }
+      }
+      var kwRowData = [
+        kw.id, kw.tipeJenis, kw.no, kw.tgl, kw.dari, kw.nominal, kw.terbilang, kw.guna, kw.penerima, kw.nta, kw.dateCreated
+      ];
+      if (foundKwRow !== -1) {
+        kwSheet.getRange(foundKwRow, 1, 1, kwRowData.length).setValues([kwRowData]);
+      } else {
+        kwSheet.appendRow(kwRowData);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Sync Utang / Piutang
+    if (action === "sync_utang") {
+      var utSheet = ss.getSheetByName("Utang") || ss.insertSheet("Utang");
+      if (utSheet.getLastRow() === 0) {
+        utSheet.appendRow(["id", "tanggal", "tipe", "nama", "sumberDana", "kategori", "nominal", "keterangan", "status", "paidTxId", "tanggalLunas", "dateCreated"]);
+      }
+      var ut = payload.utang;
+      var utRows = utSheet.getDataRange().getValues();
+      var foundUtRow = -1;
+      for (var u = 1; u < utRows.length; u++) {
+        if (utRows[u][0] === ut.id) {
+          foundUtRow = u + 1;
+          break;
+        }
+      }
+      var utRowData = [
+        ut.id, ut.tanggal, ut.tipe, ut.nama, ut.sumberDana || "-", ut.kategori || "-", ut.nominal, ut.keterangan, ut.status, ut.paidTxId || "-", ut.tanggalLunas || "-", ut.dateCreated
+      ];
+      if (foundUtRow !== -1) {
+        utSheet.getRange(foundUtRow, 1, 1, utRowData.length).setValues([utRowData]);
+      } else {
+        utSheet.appendRow(utRowData);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Hapus 1 Utang
+    if (action === "delete_utang") {
+      var utSheetDel = ss.getSheetByName("Utang");
+      if (utSheetDel) {
+        var utId = payload.id;
+        var utRowsDel = utSheetDel.getDataRange().getValues();
+        for (var d = 1; d < utRowsDel.length; d++) {
+          if (utRowsDel[d][0] === utId) {
+            utSheetDel.deleteRow(d + 1);
+            break;
+          }
         }
       }
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
@@ -1041,16 +1128,12 @@ function autoMigrateColumns(sheet) {
   var catIndex = headers.indexOf("kategoriSumber");
   if (catIndex === -1) return; // Sudah versi baru
   
-  // Sisipkan 1 kolom baru setelah kategoriSumber
   sheet.insertColumnAfter(catIndex + 1);
-  
-  // Update nama header
   sheet.getRange(1, catIndex + 1).setValue("kategori");
   sheet.getRange(1, catIndex + 2).setValue("sumberDana");
   
-  // Konversi isi baris
   for (var i = 1; i < values.length; i++) {
-    var tipe = values[i][2]; // Kolom tipe (IN / OUT)
+    var tipe = values[i][2];
     var val = values[i][catIndex];
     
     var kategoriVal = "-";

@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbx1fS7Pa5w3sHHxuCBYM4K4-ns53dp-N6JXRP3_2fHzJfFu-_vDCbIcFThnJKD5giNgQg/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbyW53t5kH8oMy4LbuekgNTYbq4GaFyx2qys8mQIWKO_gLsBVynL1taHR_geQNBuc3U1Qg/exec',
     autoSync: true
   },
   filters: {
@@ -442,7 +442,7 @@ async function loadStateFromDB() {
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
-  const defaultUrl = 'https://script.google.com/macros/s/AKfycbx1fS7Pa5w3sHHxuCBYM4K4-ns53dp-N6JXRP3_2fHzJfFu-_vDCbIcFThnJKD5giNgQg/exec';
+  const defaultUrl = 'https://script.google.com/macros/s/AKfycbyW53t5kH8oMy4LbuekgNTYbq4GaFyx2qys8mQIWKO_gLsBVynL1taHR_geQNBuc3U1Qg/exec';
   state.settings.sheetUrl = defaultUrl;
   await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
   
@@ -919,7 +919,9 @@ async function pushAllTransactionsToSheets() {
       },
       body: JSON.stringify({
         action: 'push_bulk',
-        transactions: cleanList
+        transactions: cleanList,
+        kwitansi: state.sponsorshipHistory || [],
+        utang: state.utang || []
       })
     });
     
@@ -1026,6 +1028,18 @@ async function autoPullFromSheets() {
             await saveToStore(STORE_SPONSORSHIPS, kw);
           }
           localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
+        } catch(e){}
+      }
+
+      // Merge utang records if returned from Apps Script
+      if (result.utang && Array.isArray(result.utang) && result.utang.length > 0) {
+        state.utang = result.utang;
+        try {
+          await clearStore(STORE_UTANG);
+          for (const ut of result.utang) {
+            await saveToStore(STORE_UTANG, ut);
+          }
+          localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
         } catch(e){}
       }
 
@@ -3381,6 +3395,10 @@ function setupUtangHandlers() {
         localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
       } catch(e){}
       
+      if (state.settings.sheetUrl) {
+        syncUtangToSheets(newUtang);
+      }
+
       showToast('Catatan Utang Tersimpan', `Utang ${newUtang.id} berhasil ditambahkan.`, 'success');
       
       formAdd.reset();
@@ -3512,6 +3530,7 @@ async function toggleUtangStatus(utangId, isPaid) {
     await saveTransaction(tx);
     try { await saveToStore(STORE_UTANG, item); } catch(e){}
     try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+    if (state.settings.sheetUrl) { syncUtangToSheets(item); }
     
     showToast('Utang Dilunasi!', `Transaksi pelunasan ${tx.id} berhasil dicatat dan masuk ke Dashboard.`, 'success');
   } else {
@@ -3532,6 +3551,7 @@ async function toggleUtangStatus(utangId, isPaid) {
     
     try { await saveToStore(STORE_UTANG, item); } catch(e){}
     try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+    if (state.settings.sheetUrl) { syncUtangToSheets(item); }
     showToast('Status Diperbarui', `Utang dikembalikan ke status BELUM LUNAS. Data pelunasan ditarik dari Dashboard.`, 'info');
   }
   
@@ -3556,10 +3576,37 @@ async function deleteUtang(utangId) {
   state.utang = state.utang.filter(u => u.id !== utangId);
   try { await deleteFromStore(STORE_UTANG, utangId); } catch(e){}
   try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+  if (state.settings.sheetUrl) { syncUtangToSheets_delete(utangId); }
   
   showToast('Catatan Utang Dihapus', 'Data utang berhasil dihapus.', 'info');
   renderUtangPage();
   renderDashboard();
+}
+
+async function syncUtangToSheets(ut) {
+  if (!state.settings.sheetUrl) return;
+  try {
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'sync_utang', utang: ut })
+    });
+  } catch (err) {
+    console.error('Failed to sync utang to sheet:', err);
+  }
+}
+
+async function syncUtangToSheets_delete(utangId) {
+  if (!state.settings.sheetUrl) return;
+  try {
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'delete_utang', id: utangId })
+    });
+  } catch (err) {
+    console.error('Failed to delete utang from sheet:', err);
+  }
 }
 
 function renderDashboardQuickUtang() {
