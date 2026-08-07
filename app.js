@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbxcBmA0afiAPwsy_0XdXRzccl-OCbl4a9cpZL5tfIJOXZBEOr02T-JoLI5z1OvMx36JHQ/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbwG2W4toZtjXFk5UmWt9xemdTqyodjqEOfQzXYEs1uMMNzJdqBWtUhW2o4aJ1-aq4W6pQ/exec',
     autoSync: true
   },
   filters: {
@@ -533,7 +533,7 @@ async function loadStateFromDB() {
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
-  const defaultUrl = 'https://script.google.com/macros/s/AKfycbxcBmA0afiAPwsy_0XdXRzccl-OCbl4a9cpZL5tfIJOXZBEOr02T-JoLI5z1OvMx36JHQ/exec';
+  const defaultUrl = 'https://script.google.com/macros/s/AKfycbwG2W4toZtjXFk5UmWt9xemdTqyodjqEOfQzXYEs1uMMNzJdqBWtUhW2o4aJ1-aq4W6pQ/exec';
   state.settings.sheetUrl = defaultUrl;
   await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
   
