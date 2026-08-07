@@ -3423,6 +3423,129 @@ function setupUtangHandlers() {
       });
     });
   }
+
+  setupUtangExportHandlers();
+}
+
+function setupUtangExportHandlers() {
+  const btnExcel = document.getElementById('btn-export-utang-excel');
+  const btnCsv = document.getElementById('btn-export-utang-csv');
+
+  if (btnExcel && !btnExcel.dataset.setupDone) {
+    btnExcel.addEventListener('click', () => exportUtangRecap('EXCEL'));
+    btnExcel.dataset.setupDone = 'true';
+  }
+
+  if (btnCsv && !btnCsv.dataset.setupDone) {
+    btnCsv.addEventListener('click', () => exportUtangRecap('CSV'));
+    btnCsv.dataset.setupDone = 'true';
+  }
+}
+
+function exportUtangRecap(format) {
+  const utangList = state.utang || [];
+  const filter = state.utangFilter || 'ALL';
+
+  const filtered = utangList.filter(u => {
+    if (filter === 'BELUM_LUNAS') return u.status === 'BELUM_LUNAS';
+    if (filter === 'LUNAS') return u.status === 'LUNAS';
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    showToast('Data Kosong', 'Tidak ada catatan utang untuk diekspor.', 'error');
+    return;
+  }
+
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  if (format === 'CSV') {
+    let csv = '\ufeffNo;ID Utang;Tanggal;Tipe;Penanggung Jawab / Pihak;Sumber / Kategori;Nominal (Rp);Keterangan;Status;Tanggal Lunas\n';
+    filtered.forEach((u, i) => {
+      const tipeText = u.tipe === 'IN' ? 'Piutang (Masuk)' : 'Utang (Keluar)';
+      const statusText = u.status === 'LUNAS' ? 'LUNAS' : 'BELUM LUNAS';
+      const cleanNama = (u.nama || '-').replace(/[\n\r;]/g, ' ');
+      const cleanSumber = (u.sumberDana || '-').replace(/[\n\r;]/g, ' ');
+      const cleanKeterangan = (u.keterangan || '-').replace(/[\n\r;]/g, ' ');
+
+      csv += `${i+1};${u.id};${u.tanggal};${tipeText};${cleanNama};${cleanSumber};${u.nominal};${cleanKeterangan};${statusText};${u.tanggalLunas || '-'}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Rekap_Utang_${filter}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Ekspor CSV', 'Rekap utang berhasil diunduh.', 'success');
+  } else if (format === 'EXCEL') {
+    let tableRows = '';
+    filtered.forEach((u, i) => {
+      const tipeText = u.tipe === 'IN' ? 'Piutang (Masuk)' : 'Utang (Keluar)';
+      const statusText = u.status === 'LUNAS' ? '<b style="color: #16a34a;">LUNAS ✅</b>' : '<b style="color: #dc2626;">BELUM LUNAS ⏳</b>';
+      const formattedNominal = formatRupiah(u.nominal || 0);
+
+      tableRows += `
+        <tr>
+          <td style="text-align:center;">${i+1}</td>
+          <td>${u.id}</td>
+          <td>${u.tanggal || '-'}</td>
+          <td>${tipeText}</td>
+          <td><b>${u.nama || '-'}</b></td>
+          <td>${u.sumberDana || '-'}</td>
+          <td style="text-align:right;">${formattedNominal}</td>
+          <td>${u.keterangan || '-'}</td>
+          <td style="text-align:center;">${statusText}</td>
+          <td>${u.tanggalLunas || '-'}</td>
+        </tr>
+      `;
+    });
+
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <style>
+          th { background-color: #0284c7; color: white; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
+          td { border: 1px solid #cbd5e1; padding: 6px; }
+        </style>
+      </head>
+      <body>
+        <h2>REKAP CATATAN UTANG & PIUTANG RAIMUNA CABANG CILACAP 2026</h2>
+        <p>Status Filter: ${filter} | Tanggal Ekspor: ${dateStr}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>ID Utang</th>
+              <th>Tanggal</th>
+              <th>Tipe</th>
+              <th>Penanggung Jawab / Pihak</th>
+              <th>Sumber / Kategori</th>
+              <th>Nominal</th>
+              <th>Keterangan</th>
+              <th>Status</th>
+              <th>Tanggal Lunas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Rekap_Utang_${filter}_${dateStr}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Ekspor Excel', 'Rekap utang berhasil diunduh dalam format Excel.', 'success');
+  }
 }
 
 function renderUtangPage() {
