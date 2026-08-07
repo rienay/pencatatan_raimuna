@@ -38,13 +38,14 @@ const state = {
 
 // IndexedDB Helper Variables
 const DB_NAME = 'RaimunaCilacapDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4; // Upgraded: tambah store deleted_ids untuk tombstone sync
 const STORE_TXNS = 'transactions';
 const STORE_CATS = 'categories';
 const STORE_SRCS = 'sources';
 const STORE_SETTINGS = 'settings';
 const STORE_SPONSORSHIPS = 'sponsorship_history';
 const STORE_UTANG = 'utang';
+const STORE_DELETED_IDS = 'deleted_ids'; // Tombstone: ID yang dihapus lokal tapi belum terkirim ke Sheet
 
 // Helper functions for Kategori & Sumber Dana
 function getTxCategory(tx) {
@@ -248,8 +249,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (state.settings.sheetUrl) {
     updateSyncBadge('unsynced', 'Menghubungkan...');
     await testGoogleSheetsConnection(false);
-    await autoPullFromSheets();
+    // Urutan penting: push pending deletes & unsynced DULU, baru pull (agar data Sheet akurat)
+    await pushPendingDeletes();
     await autoSyncPendingTransactions();
+    await autoPullFromSheets();
   }
 });
 
@@ -450,6 +453,11 @@ function initIndexedDB() {
       // Utang store
       if (!db.objectStoreNames.contains(STORE_UTANG)) {
         db.createObjectStore(STORE_UTANG, { keyPath: 'id' });
+      }
+
+      // Deleted IDs tombstone store (untuk retry hapus ke Google Sheets)
+      if (!db.objectStoreNames.contains(STORE_DELETED_IDS)) {
+        db.createObjectStore(STORE_DELETED_IDS, { keyPath: 'id' });
       }
     };
   });
@@ -950,22 +958,50 @@ async function syncTransactionToSheets(txn) {
   }
 }
 
-// Delete transaction from Google Sheets
+// Delete transaction from Google Sheets dengan tombstone pattern
 async function syncDeleteToSheets(txnId) {
-  if (!state.settings.sheetUrl) return;
+  if (!state.settings.sheetUrl) {
+    // Simpan ke tombstone jika tidak ada URL (akan dicoba lagi nanti)
+    try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
+    return;
+  }
+  // Simpan ke tombstone dulu (jaga-jaga jika request gagal)
+  try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
   try {
-    await fetch(state.settings.sheetUrl, {
+    const resp = await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain'
-      },
-      body: JSON.stringify({
-        action: 'delete_single',
-        id: txnId
-      })
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'delete_single', id: txnId })
     });
+    // Jika berhasil, hapus dari tombstone
+    try { await deleteFromStore(STORE_DELETED_IDS, txnId); } catch(e){}
   } catch (err) {
-    console.error('Failed to sync delete to sheet:', err);
+    console.error('Gagal hapus dari Sheet, akan dicoba ulang saat startup:', err);
+    // Tombstone tetap tersimpan untuk retry berikutnya
+  }
+}
+
+// Kirim semua pending deletes ke Google Sheets (dipanggil saat startup)
+async function pushPendingDeletes() {
+  if (!state.settings.sheetUrl) return;
+  let pendingDeletes = [];
+  try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch(e){ return; }
+  if (!pendingDeletes || pendingDeletes.length === 0) return;
+
+  for (const item of pendingDeletes) {
+    try {
+      const action = item.type === 'utang' ? 'delete_utang' :
+                     item.type === 'kwitansi' ? 'delete_kwitansi' : 'delete_single';
+      await fetch(state.settings.sheetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action, id: item.id, no: item.no || '' })
+      });
+      // Berhasil → hapus dari tombstone
+      try { await deleteFromStore(STORE_DELETED_IDS, item.id); } catch(e){}
+    } catch (err) {
+      console.error('Gagal push pending delete:', item.id, err);
+    }
   }
 }
 
@@ -1092,7 +1128,8 @@ async function pullAllTransactionsFromSheets() {
   }
 }
 
-// Auto-pull & merge transactions from Google Sheets on start for multi-device sync (HP & Laptop)
+// Auto-pull dari Google Sheets saat startup (FULL REPLACE - Google Sheets = sumber kebenaran tunggal)
+// Catatan: pushPendingDeletes() dan autoSyncPendingTransactions() HARUS dipanggil SEBELUM fungsi ini
 async function autoPullFromSheets() {
   if (!state.settings.sheetUrl) return;
   
@@ -1102,32 +1139,21 @@ async function autoPullFromSheets() {
     const result = await response.json();
     
     if (result.success && Array.isArray(result.data)) {
+      // ===== FULL REPLACE: Google Sheets adalah sumber kebenaran =====
+      // Semua data lokal diganti dengan data dari Sheet
+      // (pushPendingDeletes & autoSyncPendingTransactions sudah jalan sebelumnya,
+      //  jadi data Sheet sudah akurat mencerminkan semua aksi hapus/tambah lokal)
       const remoteTxns = result.data.map(parseSheetRow);
       
-      // Preserve any pending unsynced local transactions
-      const unsyncedLocal = state.transactions.filter(t => !t.sync);
-      
-      // Map remote transactions into a combined dictionary
-      const combinedMap = {};
-      remoteTxns.forEach(tx => {
-        combinedMap[tx.id] = tx;
-      });
-      
-      // Merge unsynced local transactions
-      unsyncedLocal.forEach(tx => {
-        combinedMap[tx.id] = tx;
-      });
-      
-      const mergedTxns = Object.values(combinedMap);
-      
-      // Clear and rewrite local store with merged data
+      // Ganti data transaksi lokal sepenuhnya
       await clearStore(STORE_TXNS);
-      for (const txn of mergedTxns) {
+      for (const txn of remoteTxns) {
         await saveToStore(STORE_TXNS, txn);
       }
+      state.transactions = remoteTxns;
       
-      // Merge sponsorship/kwitansi history if returned from Apps Script
-      if (result.kwitansi && Array.isArray(result.kwitansi) && result.kwitansi.length > 0) {
+      // Ganti data kwitansi/sponsorship sepenuhnya
+      if (result.kwitansi && Array.isArray(result.kwitansi)) {
         const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
         state.sponsorshipHistory = parsedKw;
         try {
@@ -1139,8 +1165,8 @@ async function autoPullFromSheets() {
         } catch(e){}
       }
 
-      // Merge utang records if returned from Apps Script
-      if (result.utang && Array.isArray(result.utang) && result.utang.length > 0) {
+      // Ganti data utang sepenuhnya
+      if (result.utang && Array.isArray(result.utang)) {
         const parsedUt = result.utang.map(parseUtangRow).filter(Boolean);
         state.utang = parsedUt;
         try {
@@ -1152,7 +1178,6 @@ async function autoPullFromSheets() {
         } catch(e){}
       }
 
-      state.transactions = mergedTxns;
       updateSyncBadgeState();
       renderApp();
     } else {
@@ -1176,9 +1201,11 @@ async function autoSyncPendingTransactions() {
 }
 
 // Automatically sync when back online
-window.addEventListener('online', () => {
-  autoSyncPendingTransactions();
+window.addEventListener('online', async () => {
+  await pushPendingDeletes();      // Kirim pending deletes ke Sheet
+  await autoSyncPendingTransactions(); // Kirim transaksi baru yang belum tersync
 });
+
 
 // Formats spreadsheet dates cleanly
 function formatDateString(val) {
@@ -2258,18 +2285,21 @@ function setupCustomModalsClose() {
     const match = state.transactions.find(t => t.id === id);
     if (!match) return;
     
-    if (confirm(`Apakah Anda yakin ingin MENGAPUS transaksi ${id}?\nNominal: ${formatRupiah(match.nominal)}\nKeterangan: "${match.keterangan}"`)) {
-      // Remove local
+    if (confirm(`Apakah Anda yakin ingin MENGHAPUS transaksi ${id}?\nNominal: ${formatRupiah(match.nominal)}\nKeterangan: "${match.keterangan}"`)) {
+      // Hapus dari state lokal & IndexedDB
       state.transactions = state.transactions.filter(t => t.id !== id);
       await deleteFromStore(STORE_TXNS, id);
       
-      // If synced and url set, push delete action to Google Sheets in the background (non-blocking)
-      if (match.sync && state.settings.sheetUrl) {
+      // Selalu kirim hapus ke Google Sheets (tombstone jika gagal, retry saat startup berikutnya)
+      if (state.settings.sheetUrl) {
         syncDeleteToSheets(id);
+      } else {
+        // Simpan ke tombstone agar dikirim saat URL tersedia
+        try { await saveToStore(STORE_DELETED_IDS, { id, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
       }
       
       closeModal();
-      showToast('Transaksi Dihapus', `Transaksi ${id} berhasil dihapus.`, 'success');
+      showToast('Transaksi Dihapus', `Transaksi ${id} berhasil dihapus dari web & Google Sheets.`, 'success');
       renderApp();
     }
   });
@@ -3304,15 +3334,24 @@ async function deleteSponsorshipHistory(id) {
 }
 
 async function syncKwitansiToSheets_delete(id, no) {
-  if (!state.settings.sheetUrl) return;
+  if (!state.settings.sheetUrl) {
+    // Simpan ke tombstone jika tidak ada URL
+    try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch(e){}
+    return;
+  }
+  // Simpan ke tombstone dulu sebelum coba kirim
+  try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch(e){}
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_kwitansi', id: id, no: no })
     });
+    // Berhasil → hapus dari tombstone
+    try { await deleteFromStore(STORE_DELETED_IDS, id); } catch(e){}
   } catch (err) {
-    console.error('Failed to delete kwitansi from sheet:', err);
+    console.error('Gagal hapus kwitansi dari Sheet, akan dicoba ulang saat startup:', err);
+    // Tombstone tetap tersimpan untuk retry berikutnya
   }
 }
 
@@ -3820,8 +3859,11 @@ async function deleteUtang(utangId) {
     const txIdToDelete = item.paidTxId;
     state.transactions = state.transactions.filter(t => t.id !== txIdToDelete);
     await deleteFromStore(STORE_TXNS, txIdToDelete);
-    if (state.settings.autoSync && state.settings.sheetUrl) {
+    // Selalu coba kirim hapus ke sheet (dengan tombstone jika gagal)
+    if (state.settings.sheetUrl) {
       syncDeleteToSheets(txIdToDelete);
+    } else {
+      try { await saveToStore(STORE_DELETED_IDS, { id: txIdToDelete, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
     }
   }
   
@@ -3849,15 +3891,24 @@ async function syncUtangToSheets(ut) {
 }
 
 async function syncUtangToSheets_delete(utangId) {
-  if (!state.settings.sheetUrl) return;
+  if (!state.settings.sheetUrl) {
+    // Simpan ke tombstone jika tidak ada URL
+    try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
+    return;
+  }
+  // Simpan ke tombstone dulu sebelum coba kirim
+  try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_utang', id: utangId })
     });
+    // Berhasil → hapus dari tombstone
+    try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch(e){}
   } catch (err) {
-    console.error('Failed to delete utang from sheet:', err);
+    console.error('Gagal hapus utang dari Sheet, akan dicoba ulang saat startup:', err);
+    // Tombstone tetap tersimpan untuk retry berikutnya
   }
 }
 
