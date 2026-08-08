@@ -1080,10 +1080,25 @@ async function pullAllTransactionsFromSheets() {
     const result = await response.json();
     
     if (result.success && Array.isArray(result.data)) {
+      // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
+      const localAttachmentMap = {};
+      for (const txn of state.transactions) {
+        if (txn.attachment && txn.id) {
+          localAttachmentMap[txn.id] = txn.attachment;
+        }
+      }
+      
       // Clear local txns store
       await clearStore(STORE_TXNS);
       
       const newTxns = result.data.map(parseSheetRow);
+      
+      // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
+      for (const txn of newTxns) {
+        if (localAttachmentMap[txn.id]) {
+          txn.attachment = localAttachmentMap[txn.id];
+        }
+      }
       
       // Save all to local DB
       for (const txn of newTxns) {
@@ -1143,7 +1158,23 @@ async function autoPullFromSheets() {
       // Semua data lokal diganti dengan data dari Sheet
       // (pushPendingDeletes & autoSyncPendingTransactions sudah jalan sebelumnya,
       //  jadi data Sheet sudah akurat mencerminkan semua aksi hapus/tambah lokal)
+      
+      // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
+      const localAttachmentMap = {};
+      for (const txn of state.transactions) {
+        if (txn.attachment && txn.id) {
+          localAttachmentMap[txn.id] = txn.attachment;
+        }
+      }
+      
       const remoteTxns = result.data.map(parseSheetRow);
+      
+      // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
+      for (const txn of remoteTxns) {
+        if (localAttachmentMap[txn.id]) {
+          txn.attachment = localAttachmentMap[txn.id];
+        }
+      }
       
       // Ganti data transaksi lokal sepenuhnya
       await clearStore(STORE_TXNS);
