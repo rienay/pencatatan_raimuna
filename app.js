@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbwG2W4toZtjXFk5UmWt9xemdTqyodjqEOfQzXYEs1uMMNzJdqBWtUhW2o4aJ1-aq4W6pQ/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbzDMXx-5t3-FqS6BdIFsTVklieuWYqfTl_qjtFv5t7IxTWxdU_vg-7J79u2wwPPQqyyUg/exec',
     autoSync: true
   },
   filters: {
@@ -216,8 +216,8 @@ const PASTEL_PALETTE = [
 ];
 
 // Document Elements
-let dropzoneIn, dropzoneOut, dropzoneEdit;
-let fileIndicatorIn, fileIndicatorOut, fileIndicatorEdit;
+let dropzoneIn, dropzoneOut, dropzoneEdit, dropzoneAmbil;
+let fileIndicatorIn, fileIndicatorOut, fileIndicatorEdit, fileIndicatorAmbil;
 
 // Initialize Application on Page Load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -261,18 +261,22 @@ function setupDomReferences() {
   dropzoneIn = document.getElementById('in-dropzone');
   dropzoneOut = document.getElementById('out-dropzone');
   dropzoneEdit = document.getElementById('edit-dropzone');
+  dropzoneAmbil = document.getElementById('ambil-dropzone');
   fileIndicatorIn = document.getElementById('in-file-indicator');
   fileIndicatorOut = document.getElementById('out-file-indicator');
   fileIndicatorEdit = document.getElementById('edit-file-indicator');
+  fileIndicatorAmbil = document.getElementById('ambil-file-indicator');
   
   // Drag and Drop listeners
   setupFileDropzone(dropzoneIn, 'in-bukti', fileIndicatorIn);
   setupFileDropzone(dropzoneOut, 'out-nota', fileIndicatorOut);
   if (dropzoneEdit) setupFileDropzone(dropzoneEdit, 'edit-bukti', fileIndicatorEdit);
+  if (dropzoneAmbil) setupFileDropzone(dropzoneAmbil, 'ambil-bukti', fileIndicatorAmbil);
   
   // Numeric Inputs Formatting (Auto Rupiah)
   setupRupiahInput('in-nominal');
   setupRupiahInput('out-nominal');
+  setupRupiahInput('ambil-nominal');
   setupRupiahInput('utang-nominal');
   
   // Sidebar responsive toggle
@@ -682,6 +686,8 @@ function populateDropdowns() {
   const filterSumberSelect = document.getElementById('filter-sumber');
   const editKategoriSelect = document.getElementById('edit-kategori');
   const editSumberSelect = document.getElementById('edit-sumber');
+  const ambilKategoriSelect = document.getElementById('ambil-kategori');
+  const ambilSumberSelect = document.getElementById('ambil-sumber');
   const utangSumberSelect = document.getElementById('utang-sumber-kat');
   const alokasiSumberSelect = document.getElementById('alokasi-sumber-select');
   
@@ -693,6 +699,8 @@ function populateDropdowns() {
   const selectedFilterSumber = filterSumberSelect ? filterSumberSelect.value : 'ALL';
   const selectedEditKat = editKategoriSelect ? editKategoriSelect.value : '';
   const selectedEditSumber = editSumberSelect ? editSumberSelect.value : '';
+  const selectedAmbilKat = ambilKategoriSelect ? ambilKategoriSelect.value : '';
+  const selectedAmbilSumber = ambilSumberSelect ? ambilSumberSelect.value : '';
   const selectedUtangSumber = utangSumberSelect ? utangSumberSelect.value : '';
   const selectedAlokasiSumber = alokasiSumberSelect ? alokasiSumberSelect.value : '';
   
@@ -704,6 +712,8 @@ function populateDropdowns() {
   if (filterSumberSelect) filterSumberSelect.innerHTML = '<option value="ALL">Semua Sumber Dana</option>';
   if (editKategoriSelect) editKategoriSelect.innerHTML = '<option value="-">Tanpa Kategori (-)</option>';
   if (editSumberSelect) editSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
+  if (ambilKategoriSelect) ambilKategoriSelect.innerHTML = '<option value="" disabled selected>Pilih Bidang</option>';
+  if (ambilSumberSelect) ambilSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   if (utangSumberSelect) utangSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana / Kategori</option>';
   if (alokasiSumberSelect) alokasiSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana Resmi</option>';
   
@@ -735,6 +745,13 @@ function populateDropdowns() {
       optEdit.value = src.nama;
       optEdit.textContent = src.nama;
       editSumberSelect.appendChild(optEdit);
+    }
+    
+    if (ambilSumberSelect) {
+      const optAmbil = document.createElement('option');
+      optAmbil.value = src.nama;
+      optAmbil.textContent = src.nama;
+      ambilSumberSelect.appendChild(optAmbil);
     }
 
     if (utangSumberSelect) {
@@ -774,6 +791,13 @@ function populateDropdowns() {
       optEdit.textContent = cat.nama;
       editKategoriSelect.appendChild(optEdit);
     }
+    
+    if (ambilKategoriSelect) {
+      const optAmbilKat = document.createElement('option');
+      optAmbilKat.value = cat.nama;
+      optAmbilKat.textContent = cat.nama;
+      ambilKategoriSelect.appendChild(optAmbilKat);
+    }
   });
   
   // Restore selections
@@ -784,6 +808,8 @@ function populateDropdowns() {
   if (selectedFilterSumber && filterSumberSelect) filterSumberSelect.value = selectedFilterSumber;
   if (selectedEditKat && editKategoriSelect) editKategoriSelect.value = selectedEditKat;
   if (selectedEditSumber && editSumberSelect) editSumberSelect.value = selectedEditSumber;
+  if (selectedAmbilKat && ambilKategoriSelect) ambilKategoriSelect.value = selectedAmbilKat;
+  if (selectedAmbilSumber && ambilSumberSelect) ambilSumberSelect.value = selectedAmbilSumber;
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -827,6 +853,54 @@ function setupFormHandlers() {
     state.currentUpload = null;
   });
   
+  // Pengambilan Uang Form Submit
+  const formAmbil = document.getElementById('form-pengambilan');
+  if (formAmbil) {
+    formAmbil.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const tanggal = document.getElementById('ambil-tanggal').value;
+      const kategori = document.getElementById('ambil-kategori').value;
+      const sumberDana = document.getElementById('ambil-sumber').value;
+      const nama = document.getElementById('ambil-nama').value;
+      const nominal = parseRupiah(document.getElementById('ambil-nominal').value);
+      const keterangan = document.getElementById('ambil-keterangan').value;
+      
+      if (nominal <= 0) {
+        showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
+        return;
+      }
+      
+      if (!state.currentUpload || state.currentUpload.length === 0) {
+        showToast('Input Kurang', 'Dokumentasi pengambilan wajib dilampirkan.', 'error');
+        return;
+      }
+      
+      const newTxn = {
+        id: generateUniqueId('TXN-OUT'), // Saved identically to normal Pengeluaran
+        tanggal,
+        tipe: 'OUT',
+        kategori: kategori,
+        sumberDana: sumberDana,
+        kategoriSumber: kategori,
+        pic: nama,
+        nominal,
+        keterangan: `[PENGAMBILAN] ${keterangan}`,
+        attachment: state.currentUpload,
+        dateCreated: new Date().toISOString(),
+        sync: false
+      };
+      
+      await saveTransaction(newTxn);
+      
+      formAmbil.reset();
+      document.getElementById('ambil-tanggal').value = new Date().toISOString().split('T')[0];
+      const indicator = document.getElementById('ambil-file-indicator');
+      if (indicator) indicator.textContent = '';
+      state.currentUpload = null;
+    });
+  }
+
   // Pengeluaran Form Submit
   const formOut = document.getElementById('form-pengeluaran');
   formOut.addEventListener('submit', async (e) => {
@@ -917,7 +991,7 @@ async function saveTransaction(txn) {
 async function syncTransactionToSheets(txn) {
   if (!state.settings.sheetUrl) return;
   
-  // Create a clean payload without attachment for Google Sheets to avoid cells overflow
+  // We include attachment so the Google Apps Script can upload it to Google Drive
   const cleanTxn = {
     id: txn.id,
     tanggal: txn.tanggal,
@@ -928,6 +1002,7 @@ async function syncTransactionToSheets(txn) {
     pic: txn.pic,
     nominal: txn.nominal,
     keterangan: txn.keterangan,
+    attachment: txn.attachment,
     dateCreated: txn.dateCreated
   };
   
@@ -2114,12 +2189,39 @@ function setupCustomModals() {
   
   document.getElementById('btn-add-kategori-inline').addEventListener('click', () => {
     inlineAddTargetType = 'KATEGORI';
+    triggeredFrom = 'OUT-FORM';
     customTitle.textContent = 'Tambah Kategori Pengeluaran';
     customLabel.textContent = 'Nama Kategori Baru';
     customInput.value = '';
     customInput.placeholder = 'Misal: Bidang Keamanan';
     customModal.classList.add('open');
   });
+
+  const btnAddSumberAmbilInline = document.getElementById('btn-add-sumber-ambil-inline');
+  if (btnAddSumberAmbilInline) {
+    btnAddSumberAmbilInline.addEventListener('click', () => {
+      inlineAddTargetType = 'SUMBER';
+      triggeredFrom = 'AMBIL-FORM';
+      customTitle.textContent = 'Tambah Sumber Dana';
+      customLabel.textContent = 'Nama Sumber Dana Baru';
+      customInput.value = '';
+      customInput.placeholder = 'Misal: Sponsorship Eksternal';
+      customModal.classList.add('open');
+    });
+  }
+
+  const btnAddKategoriAmbilInline = document.getElementById('btn-add-kategori-ambil-inline');
+  if (btnAddKategoriAmbilInline) {
+    btnAddKategoriAmbilInline.addEventListener('click', () => {
+      inlineAddTargetType = 'KATEGORI';
+      triggeredFrom = 'AMBIL-FORM';
+      customTitle.textContent = 'Tambah Bidang Baru';
+      customLabel.textContent = 'Nama Bidang Baru';
+      customInput.value = '';
+      customInput.placeholder = 'Misal: Bidang Keamanan';
+      customModal.classList.add('open');
+    });
+  }
   
   // Close inline dialogs
   const closeInline = () => customModal.classList.remove('open');
@@ -2147,6 +2249,9 @@ function setupCustomModals() {
       if (triggeredFrom === 'OUT-FORM') {
         const outSumber = document.getElementById('out-sumber');
         if (outSumber) outSumber.value = val;
+      } else if (triggeredFrom === 'AMBIL-FORM') {
+        const ambilSumber = document.getElementById('ambil-sumber');
+        if (ambilSumber) ambilSumber.value = val;
       } else {
         document.getElementById('in-sumber').value = val;
       }
@@ -2159,7 +2264,13 @@ function setupCustomModals() {
       state.categories.push(item);
       await saveToStore(STORE_CATS, item);
       populateDropdowns();
-      document.getElementById('out-kategori').value = val;
+      if (triggeredFrom === 'AMBIL-FORM') {
+        const ambilKat = document.getElementById('ambil-kategori');
+        if (ambilKat) ambilKat.value = val;
+      } else {
+        const outKat = document.getElementById('out-kategori');
+        if (outKat) outKat.value = val;
+      }
     }
     
     closeInline();
