@@ -2947,8 +2947,61 @@ function terbilangIndo(angka) {
 
 let isSponsorshipSetupDone = false;
 
+function openKwitansiUploadModal(id) {
+  const kw = state.kwitansi.find(k => k.id === id);
+  if (!kw) return;
+  document.getElementById('kwitansi-upload-id').value = id;
+  const title = document.getElementById('kwitansi-upload-title');
+  if (title) title.textContent = `Upload Nota - No. ${kw.no || '-'}`;
+  if (fileIndicatorKwitansiUpload) {
+    fileIndicatorKwitansiUpload.innerHTML = kw.attachment ? '<span style="color:green;font-weight:bold;">Tanda terima ini sudah memiliki lampiran nota (mengupload file baru akan menimpa yang lama).</span>' : '';
+  }
+  state.currentUpload = null;
+  document.getElementById('kwitansi-upload-modal').classList.add('open');
+}
+
+function closeKwitansiUploadModal() {
+  document.getElementById('kwitansi-upload-modal').classList.remove('open');
+}
+
 function setupSponsorshipHandlers() {
   if (isSponsorshipSetupDone) return;
+  
+  // Setup Kwitansi Upload Modal Event Listeners
+  const btnCloseKwUpload = document.getElementById('btn-close-kwitansi-upload');
+  if (btnCloseKwUpload) btnCloseKwUpload.addEventListener('click', closeKwitansiUploadModal);
+  
+  const btnCancelKwUpload = document.getElementById('btn-cancel-kwitansi-upload');
+  if (btnCancelKwUpload) btnCancelKwUpload.addEventListener('click', closeKwitansiUploadModal);
+  
+  const btnSubmitKwUpload = document.getElementById('btn-submit-kwitansi-upload');
+  if (btnSubmitKwUpload) {
+    btnSubmitKwUpload.addEventListener('click', async () => {
+      const id = document.getElementById('kwitansi-upload-id').value;
+      if (!id) return;
+      
+      if (!state.currentUpload || state.currentUpload.length === 0) {
+        showToast('File Kosong', 'Pilih minimal satu file untuk diupload.', 'error');
+        return;
+      }
+      
+      const kwIdx = state.kwitansi.findIndex(k => k.id === id);
+      if (kwIdx !== -1) {
+        state.kwitansi[kwIdx].attachment = state.currentUpload;
+        state.kwitansi[kwIdx].sync = false;
+        await saveToStore(STORE_KWITANSI, state.kwitansi[kwIdx]);
+        
+        showToast('Berhasil', 'Nota berhasil ditambahkan ke riwayat. Sedang menyinkronkan...', 'success');
+        closeKwitansiUploadModal();
+        
+        // render table to show attached status (maybe change icon later)
+        renderKwitansiHistory();
+        
+        // Trigger sync
+        await syncKwitansiToSheets(state.kwitansi[kwIdx]);
+      }
+    });
+  }
   
   const kwitansiNo = document.getElementById('kwitansi-no');
   const kwitansiTgl = document.getElementById('kwitansi-tgl');
@@ -3415,6 +3468,9 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
           <div class="history-actions">
             <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="loadKwitansiFromHistory('${item.id}')" title="Cetak Ulang / Muat Data">
               🖨️ Muat & Cetak
+            </button>
+            <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Upload Nota">
+              📎 Upload
             </button>
             <button type="button" class="btn btn-small btn-danger btn-icon-small" onclick="deleteSponsorshipHistory('${item.id}')" title="Hapus Riwayat">
               🗑️

@@ -1665,6 +1665,37 @@ function autoMigrateColumns(sheet) {
       </div>
     </div>
   </div>
+  <!-- ================= UPLOAD NOTA KWITANSI MODAL ================= -->
+  <div id="kwitansi-upload-modal" class="modal-overlay">
+    <div class="modal-content style-modal-content">
+      <div class="modal-header">
+        <h3 id="kwitansi-upload-title">Upload Nota / Dokumentasi</h3>
+        <button id="btn-close-kwitansi-upload" class="modal-close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-muted" style="margin-bottom: 15px;">Silakan unggah nota atau dokumentasi untuk riwayat tanda terima ini.</p>
+        <input type="hidden" id="kwitansi-upload-id">
+        <div class="form-group">
+          <label for="kwitansi-upload-file">Pilih File Nota <span class="required">*</span></label>
+          <div class="file-dropzone" id="kwitansi-upload-dropzone">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
+            <p>Klik untuk memilih file atau seret file ke sini</p>
+            <input type="file" id="kwitansi-upload-file" accept="image/png, image/jpeg, application/pdf"
+              class="file-input-hidden" multiple required>
+            <div class="file-preview-indicator" id="kwitansi-file-indicator"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button id="btn-cancel-kwitansi-upload" class="btn btn-secondary" style="margin-right: 10px;">Batal</button>
+        <button id="btn-submit-kwitansi-upload" class="btn btn-success">Upload & Simpan</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ================= EDIT TRANSACTION MODAL ================= -->
   <div id="edit-modal" class="modal-overlay">
