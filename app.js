@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbzDMXx-5t3-FqS6BdIFsTVklieuWYqfTl_qjtFv5t7IxTWxdU_vg-7J79u2wwPPQqyyUg/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbzdufNJJkepcx01PiBrrbLE-vWqVhcZ_Yv_fA5u4grUqUNW32ePX_vK9VrXWOcSYou4tQ/exec',
     autoSync: true
   },
   filters: {
@@ -540,9 +540,14 @@ async function loadStateFromDB() {
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
-  const defaultUrl = 'https://script.google.com/macros/s/AKfycbwG2W4toZtjXFk5UmWt9xemdTqyodjqEOfQzXYEs1uMMNzJdqBWtUhW2o4aJ1-aq4W6pQ/exec';
-  state.settings.sheetUrl = defaultUrl;
-  await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
+  const defaultUrl = defaultSettings.sheetUrl;
+  
+  if (!sheetUrlSetting || sheetUrlSetting.value === '' || sheetUrlSetting.value.includes('AKfycbwG2W4')) {
+    state.settings.sheetUrl = defaultUrl;
+    await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
+  } else {
+    state.settings.sheetUrl = sheetUrlSetting.value;
+  }
   
   if (autoSyncSetting === null || autoSyncSetting === undefined) {
     state.settings.autoSync = true;
@@ -1018,9 +1023,20 @@ async function syncTransactionToSheets(txn) {
       })
     });
     
-    // Since no-cors mode returns an opaque response, we assume it's successful if it doesn't throw.
-    // However, if we want actual response code validation, Apps Script must support proper CORS/JSONP.
-    // No-cors handles writes perfectly but response is unreadable. That is totally fine for one-way push!
+    let responseData = null;
+    try {
+      responseData = await response.json();
+    } catch(e) {
+      // Ignored if opaque
+    }
+
+    if (responseData && responseData.success === false) {
+      throw new Error(responseData.error || 'Terjadi kesalahan di server Google.');
+    }
+    
+    if (!response.ok && response.type !== 'opaque') {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
     txn.sync = true;
     await saveToStore(STORE_TXNS, txn);
     updateSyncBadgeState();
