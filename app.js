@@ -541,8 +541,9 @@ async function loadStateFromDB() {
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
   // ALWAYS force the latest sheet URL from code to avoid cached obsolete URLs
-  state.settings.sheetUrl = defaultSettings.sheetUrl;
-  await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: state.settings.sheetUrl });
+  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbzdufNJJkepcx01PiBrrbLE-vWqVhcZ_Yv_fA5u4grUqUNW32ePX_vK9VrXWOcSYou4tQ/exec';
+  state.settings.sheetUrl = hardcodedUrl;
+  await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: hardcodedUrl });
   
   if (autoSyncSetting === null || autoSyncSetting === undefined) {
     state.settings.autoSync = true;
