@@ -216,8 +216,8 @@ const PASTEL_PALETTE = [
 ];
 
 // Document Elements
-let dropzoneIn, dropzoneOut;
-let fileIndicatorIn, fileIndicatorOut;
+let dropzoneIn, dropzoneOut, dropzoneEdit;
+let fileIndicatorIn, fileIndicatorOut, fileIndicatorEdit;
 
 // Initialize Application on Page Load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -260,12 +260,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 function setupDomReferences() {
   dropzoneIn = document.getElementById('in-dropzone');
   dropzoneOut = document.getElementById('out-dropzone');
+  dropzoneEdit = document.getElementById('edit-dropzone');
   fileIndicatorIn = document.getElementById('in-file-indicator');
   fileIndicatorOut = document.getElementById('out-file-indicator');
+  fileIndicatorEdit = document.getElementById('edit-file-indicator');
   
   // Drag and Drop listeners
   setupFileDropzone(dropzoneIn, 'in-bukti', fileIndicatorIn);
   setupFileDropzone(dropzoneOut, 'out-nota', fileIndicatorOut);
+  if (dropzoneEdit) setupFileDropzone(dropzoneEdit, 'edit-bukti', fileIndicatorEdit);
   
   // Numeric Inputs Formatting (Auto Rupiah)
   setupRupiahInput('in-nominal');
@@ -2436,12 +2439,19 @@ function setupCustomModalsClose() {
           sync: false
         };
         
+        if (state.currentUpload) {
+          updatedTxn.attachment = state.currentUpload;
+        }
+        
         state.transactions[index] = updatedTxn;
         await saveToStore(STORE_TXNS, updatedTxn);
         
         if (state.settings.autoSync && state.settings.sheetUrl) {
           syncTransactionToSheets(updatedTxn);
         }
+        
+        state.currentUpload = null;
+        if (fileIndicatorEdit) fileIndicatorEdit.textContent = '';
         
         closeEditModal();
         showToast('Berhasil Diperbarui', `Transaksi ${id} berhasil diperbarui.`, 'success');
@@ -2478,6 +2488,9 @@ function openEditModal(txn) {
   if (editSumberSelect) {
     editSumberSelect.value = getTxSumber(txn) !== '-' ? getTxSumber(txn) : '';
   }
+  
+  state.currentUpload = null;
+  if (fileIndicatorEdit) fileIndicatorEdit.textContent = '';
   
   editModal.classList.add('open');
 }
