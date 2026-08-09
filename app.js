@@ -540,14 +540,9 @@ async function loadStateFromDB() {
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
-  const defaultUrl = defaultSettings.sheetUrl;
-  
-  if (!sheetUrlSetting || sheetUrlSetting.value === '' || sheetUrlSetting.value.includes('AKfycbwG2W4')) {
-    state.settings.sheetUrl = defaultUrl;
-    await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: defaultUrl });
-  } else {
-    state.settings.sheetUrl = sheetUrlSetting.value;
-  }
+  // ALWAYS force the latest sheet URL from code to avoid cached obsolete URLs
+  state.settings.sheetUrl = defaultSettings.sheetUrl;
+  await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: state.settings.sheetUrl });
   
   if (autoSyncSetting === null || autoSyncSetting === undefined) {
     state.settings.autoSync = true;
