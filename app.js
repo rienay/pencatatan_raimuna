@@ -551,9 +551,12 @@ async function loadStateFromDB() {
     state.settings.autoSync = autoSyncSetting.value;
   }
   
-  // Populate settings form fields
-  document.getElementById('settings-sheet-url').value = state.settings.sheetUrl;
-  document.getElementById('settings-auto-sync').checked = state.settings.autoSync;
+  // Populate settings form fields safely
+  const elSheetUrl = document.getElementById('settings-sheet-url');
+  if (elSheetUrl) elSheetUrl.value = state.settings.sheetUrl;
+  
+  const elAutoSync = document.getElementById('settings-auto-sync');
+  if (elAutoSync) elAutoSync.checked = state.settings.autoSync;
 }
 
 // Database helper operations
