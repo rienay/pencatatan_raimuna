@@ -887,7 +887,7 @@
 
               <div class="form-group">
                 <label for="jelantah-kg">Jumlah Jelantah (KG) <span class="required">*</span></label>
-                <input type="number" id="jelantah-kg" placeholder="Contoh: 150" min="1" step="1" required>
+                <input type="number" id="jelantah-kg" placeholder="Contoh: 100.9" min="0.1" step="any" required>
               </div>
             </div>
 
@@ -1844,6 +1844,76 @@ function autoMigrateColumns(sheet) {
 
     </div>
   </main>
+
+  <!-- ================= RECAP JELANTAH EDIT MODAL ================= -->
+  <div id="modal-edit-jelantah" class="modal-overlay">
+    <div class="modal-card" style="max-width: 580px; width: 92%;">
+      <div class="modal-header">
+        <h3>✏️ Edit Pengambilan Minyak Jelantah</h3>
+        <button id="btn-close-jelantah-edit" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <form id="form-jelantah-edit">
+          <input type="hidden" id="edit-jelantah-id">
+          <div class="form-group mb-15">
+            <label for="edit-jelantah-tanggal">Tanggal Pengambilan <span class="required">*</span></label>
+            <input type="date" id="edit-jelantah-tanggal" required>
+          </div>
+          <div class="form-group mb-15">
+            <label for="edit-jelantah-kwarran">Nama Kwarran <span class="required">*</span></label>
+            <select id="edit-jelantah-kwarran" required>
+              <option value="" disabled selected>Pilih Kwarran</option>
+              <optgroup label="Wilayah Eks-Kotif (Kota)">
+                <option value="Kwarran Cilacap Selatan">Kwarran Cilacap Selatan</option>
+                <option value="Kwarran Cilacap Tengah">Kwarran Cilacap Tengah</option>
+                <option value="Kwarran Cilacap Utara">Kwarran Cilacap Utara</option>
+              </optgroup>
+              <optgroup label="Wilayah Cilacap Timur">
+                <option value="Kwarran Adipala">Kwarran Adipala</option>
+                <option value="Kwarran Binangun">Kwarran Binangun</option>
+                <option value="Kwarran Kesugihan">Kwarran Kesugihan</option>
+                <option value="Kwarran Kroya">Kwarran Kroya</option>
+                <option value="Kwarran Maos">Kwarran Maos</option>
+                <option value="Kwarran Nusawungu">Kwarran Nusawungu</option>
+                <option value="Kwarran Sampang">Kwarran Sampang</option>
+              </optgroup>
+              <optgroup label="Wilayah Cilacap Barat & Tengah">
+                <option value="Kwarran Bantarsari">Kwarran Bantarsari</option>
+                <option value="Kwarran Cimanggu">Kwarran Cimanggu</option>
+                <option value="Kwarran Cipari">Kwarran Cipari</option>
+                <option value="Kwarran Dayeuhluhur">Kwarran Dayeuhluhur</option>
+                <option value="Kwarran Gandrungmangu">Kwarran Gandrungmangu</option>
+                <option value="Kwarran Jeruklegi">Kwarran Jeruklegi</option>
+                <option value="Kwarran Kampung Laut">Kwarran Kampung Laut</option>
+                <option value="Kwarran Karangpucung">Kwarran Karangpucung</option>
+                <option value="Kwarran Kawunganten">Kwarran Kawunganten</option>
+                <option value="Kwarran Kedungreja">Kwarran Kedungreja</option>
+                <option value="Kwarran Majenang">Kwarran Majenang</option>
+                <option value="Kwarran Patimuan">Kwarran Patimuan</option>
+                <option value="Kwarran Sidareja">Kwarran Sidareja</option>
+                <option value="Kwarran Wanareja">Kwarran Wanareja</option>
+              </optgroup>
+              <optgroup label="Lainnya">
+                <option value="Pangkalan / Donatur Lain">Pangkalan / Donatur Lain</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group mb-15">
+            <label for="edit-jelantah-kg">Jumlah Jelantah (KG) <span class="required">*</span></label>
+            <input type="number" id="edit-jelantah-kg" placeholder="Contoh: 100.9" step="any" min="0.1" required>
+          </div>
+          <div class="form-group mb-15">
+            <label for="edit-jelantah-keterangan">Keterangan / Catatan Tambahan</label>
+            <textarea id="edit-jelantah-keterangan" rows="2" placeholder="Catatan..."></textarea>
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-jelantah-edit">Batal</button>
+            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- ================= RECAP JELANTAH DETAIL MODAL ================= -->
   <div id="modal-detail-jelantah" class="modal-overlay">

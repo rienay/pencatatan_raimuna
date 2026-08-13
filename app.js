@@ -1511,11 +1511,7 @@ function renderDashboard() {
   // Total Berat Minyak Jelantah (KG) dari Recap Jelantah
   let totalJelantahKg = 0;
   (state.jelantahRecap || []).forEach(r => {
-    let val = r.kg || r.nominal;
-    if (typeof val === 'string') {
-      val = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
-    }
-    totalJelantahKg += (parseInt(val, 10) || 0);
+    totalJelantahKg += parseKgNumber(r.kg || r.nominal);
   });
 
   // Total Uang Hasil Minyak Jelantah (Rp) dari Pemasukan Transaksi
@@ -1547,7 +1543,7 @@ function renderDashboard() {
   if (document.getElementById('dashboard-total-tenant')) document.getElementById('dashboard-total-tenant').textContent = formatRupiah(totalInTenant);
   if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
-  if (document.getElementById('dashboard-total-jelantah-kg')) document.getElementById('dashboard-total-jelantah-kg').textContent = `${totalJelantahKg.toLocaleString('id-ID')} KG`;
+  if (document.getElementById('dashboard-total-jelantah-kg')) document.getElementById('dashboard-total-jelantah-kg').textContent = `${totalJelantahKg.toLocaleString('id-ID', { maximumFractionDigits: 2 })} KG`;
   if (document.getElementById('dashboard-total-jelantah-rp')) document.getElementById('dashboard-total-jelantah-rp').textContent = formatRupiah(totalJelantahRp);
   if (document.getElementById('dashboard-total-apbd-rp')) document.getElementById('dashboard-total-apbd-rp').textContent = formatRupiah(sisaApbd);
   if (document.getElementById('dashboard-apbd-subtext')) document.getElementById('dashboard-apbd-subtext').textContent = `Masuk: ${formatRupiah(totalApbdIn)} | Keluar: ${formatRupiah(totalApbdOut)}`;
@@ -4383,7 +4379,8 @@ function setupJelantahHandlers() {
 
     const tgl = document.getElementById('jelantah-tanggal').value;
     const kwarran = document.getElementById('jelantah-kwarran').value;
-    const kg = parseInt(document.getElementById('jelantah-kg').value, 10) || 0;
+    const kgStr = document.getElementById('jelantah-kg').value.replace(',', '.');
+    const kg = parseFloat(kgStr) || 0;
     const ket = document.getElementById('jelantah-keterangan').value;
 
     if (!kwarran) {
@@ -4436,6 +4433,44 @@ function setupJelantahHandlers() {
     renderJelantahSection();
     renderDashboard();
   });
+
+  // Edit form submit listener
+  const formEditJelantah = document.getElementById('form-jelantah-edit');
+  if (formEditJelantah) {
+    formEditJelantah.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-jelantah-id').value;
+      const tgl = document.getElementById('edit-jelantah-tanggal').value;
+      const kwarran = document.getElementById('edit-jelantah-kwarran').value;
+      const kgStr = document.getElementById('edit-jelantah-kg').value.replace(',', '.');
+      const kg = parseFloat(kgStr) || 0;
+      const ket = document.getElementById('edit-jelantah-keterangan').value;
+
+      const rec = (state.jelantahRecap || []).find(item => item.id === id);
+      if (rec) {
+        rec.tgl = tgl;
+        rec.tanggal = tgl;
+        rec.kwarran = kwarran;
+        rec.dari = kwarran;
+        rec.kg = kg;
+        rec.nominal = `${kg} KG`;
+        rec.keterangan = ket;
+        rec.guna = ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH';
+
+        try { await saveToStore(STORE_JELANTAH, rec); } catch(err){}
+        try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(err){}
+
+        if (state.settings.sheetUrl) {
+          syncJelantahToSheets(rec);
+        }
+
+        showToast('Perubahan Disimpan!', `Data ${kwarran} berhasil diperbarui.`, 'success');
+        document.getElementById('modal-edit-jelantah').classList.remove('active');
+        renderJelantahSection();
+        renderDashboard();
+      }
+    });
+  }
 
   // Search filter
   const searchInput = document.getElementById('filter-jelantah-search');
@@ -4522,6 +4557,13 @@ function terbilangKg(n) {
   return String(n);
 }
 
+function parseKgNumber(val) {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  let str = String(val).replace(/[^0-9.,]/g, '').replace(',', '.');
+  return parseFloat(str) || 0;
+}
+
 function getJelantahRecords() {
   return state.jelantahRecap || [];
 }
@@ -4534,15 +4576,12 @@ function renderJelantahSection() {
   const kwarrans = new Set();
 
   records.forEach(r => {
-    let nom = r.nominal;
-    if (typeof nom === 'string') {
-      nom = parseInt(nom.replace(/[^0-9]/g, ''), 10) || 0;
-    }
-    totalKg += (parseInt(nom, 10) || 0);
-    if (r.dari) kwarrans.add(r.dari.trim());
+    const kg = parseKgNumber(r.kg || r.nominal);
+    totalKg += kg;
+    if (r.dari || r.kwarran) kwarrans.add((r.dari || r.kwarran).trim());
   });
 
-  if (document.getElementById('jelantah-metric-kg')) document.getElementById('jelantah-metric-kg').textContent = `${totalKg.toLocaleString('id-ID')} KG`;
+  if (document.getElementById('jelantah-metric-kg')) document.getElementById('jelantah-metric-kg').textContent = `${totalKg.toLocaleString('id-ID', { maximumFractionDigits: 2 })} KG`;
   if (document.getElementById('jelantah-metric-kwarran')) document.getElementById('jelantah-metric-kwarran').textContent = `${kwarrans.size} Kwarran`;
   if (document.getElementById('jelantah-metric-count')) document.getElementById('jelantah-metric-count').textContent = `${records.length} Catatan`;
 
@@ -4600,10 +4639,19 @@ function renderJelantahSection() {
       <td>${attHtml}</td>
       <td>${r.guna || r.keterangan || '-'}</td>
       <td class="text-center" style="white-space: nowrap;">
+        <button class="btn-icon btn-edit-jelantah" data-id="${r.id}" title="Edit Recap Jelantah" style="margin-right: 6px;">✏️</button>
         <button class="btn-icon btn-view-jelantah" data-id="${r.id}" title="Lihat Detail Pengambilan Jelantah" style="margin-right: 6px;">👁️</button>
         <button class="btn-icon btn-delete-jelantah" data-id="${r.id}" title="Hapus Recap Jelantah">🗑️</button>
       </td>
     `;
+
+    const btnEdit = tr.querySelector('.btn-edit-jelantah');
+    if (btnEdit) {
+      btnEdit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditJelantahModal(r);
+      });
+    }
 
     const btnView = tr.querySelector('.btn-view-jelantah');
     if (btnView) {
@@ -4713,12 +4761,9 @@ function renderJelantahChart(records) {
 
   const kwarranMap = {};
   records.forEach(r => {
-    const kwName = (r.dari || 'Lainnya').trim();
-    let kg = r.nominal;
-    if (typeof kg === 'string') {
-      kg = parseInt(kg.replace(/[^0-9]/g, ''), 10) || 0;
-    }
-    kwarranMap[kwName] = (kwarranMap[kwName] || 0) + (parseInt(kg, 10) || 0);
+    const kwName = (r.dari || r.kwarran || 'Lainnya').trim();
+    const kg = parseKgNumber(r.kg || r.nominal);
+    kwarranMap[kwName] = (kwarranMap[kwName] || 0) + kg;
   });
 
   const labels = Object.keys(kwarranMap);
@@ -4771,12 +4816,31 @@ function renderJelantahChart(records) {
   });
 }
 
+function openEditJelantahModal(r) {
+  const modal = document.getElementById('modal-edit-jelantah');
+  if (!modal) return;
+
+  document.getElementById('edit-jelantah-id').value = r.id;
+  document.getElementById('edit-jelantah-tanggal').value = r.tgl || r.tanggal;
+  document.getElementById('edit-jelantah-kwarran').value = r.kwarran || r.dari;
+  document.getElementById('edit-jelantah-kg').value = parseKgNumber(r.kg || r.nominal);
+  document.getElementById('edit-jelantah-keterangan').value = r.keterangan || r.guna || '';
+
+  modal.classList.add('active');
+
+  const closeModal = () => modal.classList.remove('active');
+  const btnCloseHeader = document.getElementById('btn-close-jelantah-edit');
+  const btnCloseFooter = document.getElementById('btn-cancel-jelantah-edit');
+  if (btnCloseHeader) btnCloseHeader.onclick = closeModal;
+  if (btnCloseFooter) btnCloseFooter.onclick = closeModal;
+}
+
 function parseJelantahRow(row) {
   if (!row) return null;
   const id = row.id || generateUniqueId('JLT');
   const tanggal = formatDateString(row.tanggal || row.tgl);
   const kwarran = String(row.kwarran || row.dari || row.nama || '-').trim();
-  const kg = typeof row.kg === 'number' ? row.kg : (parseInt(String(row.kg || row.nominal || '0').replace(/[^0-9]/g, ''), 10) || 0);
+  const kg = parseKgNumber(row.kg || row.nominal);
   const keterangan = String(row.keterangan || row.guna || '-').trim();
   const dateCreated = row.dateCreated || new Date().toISOString();
   
