@@ -1469,6 +1469,28 @@ function renderDashboard() {
       totalTalanganPending += (parseInt(t.nominal, 10) || 0);
     }
   });
+
+  // Total Berat Minyak Jelantah (KG) dari Kwitansi / Tanda Terima Jelantah
+  let totalJelantahKg = 0;
+  (state.sponsorshipHistory || []).forEach(kw => {
+    const tipe = String(kw.tipeJenis || kw.tipe || '').toUpperCase();
+    if (tipe.includes('JELANTAH')) {
+      let val = kw.nominal;
+      if (typeof val === 'string') {
+        val = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
+      }
+      totalJelantahKg += (parseInt(val, 10) || 0);
+    }
+  });
+
+  // Total Uang Hasil Minyak Jelantah (Rp) dari Pemasukan Transaksi
+  let totalJelantahRp = 0;
+  (state.transactions || []).forEach(t => {
+    const src = String(getTxSumber(t) || '').trim();
+    if (t.tipe === 'IN' && src.includes('Minyak Jelantah')) {
+      totalJelantahRp += (parseInt(t.nominal, 10) || 0);
+    }
+  });
   
   // Update fields
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
@@ -1477,6 +1499,8 @@ function renderDashboard() {
   if (document.getElementById('dashboard-total-tenant')) document.getElementById('dashboard-total-tenant').textContent = formatRupiah(totalInTenant);
   if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
+  if (document.getElementById('dashboard-total-jelantah-kg')) document.getElementById('dashboard-total-jelantah-kg').textContent = `${totalJelantahKg.toLocaleString('id-ID')} KG`;
+  if (document.getElementById('dashboard-total-jelantah-rp')) document.getElementById('dashboard-total-jelantah-rp').textContent = formatRupiah(totalJelantahRp);
 
   // Render Dashboard Quick Checklist Utang
   renderDashboardQuickUtang();
