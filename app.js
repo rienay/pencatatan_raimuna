@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupSponsorshipHandlers();
   setupUtangHandlers();
   setupAlokasiTalanganModal();
+  setupJelantahHandlers();
   
   // Set default dates on forms
   const today = new Date().toISOString().split('T')[0];
@@ -659,6 +660,7 @@ function setupNavigation() {
         'pengeluaran-section': 'Pencatatan Pengeluaran',
         'kategori-section': 'Manajemen Kategori',
         'utang-section': 'Pencatatan Utang',
+        'jelantah-section': 'Recap Pengambilan Minyak Jelantah',
         'laporan-section': 'Laporan Keuangan',
         'sponsorship-section': 'Cetak Nota Sponsorship',
         'pengaturan-section': 'Integrasi Google Sheets'
@@ -677,6 +679,8 @@ function setupNavigation() {
         renderKategoriPage();
       } else if (targetSectionId === 'utang-section') {
         renderUtangPage();
+      } else if (targetSectionId === 'jelantah-section') {
+        renderJelantahSection();
       } else if (targetSectionId === 'sponsorship-section') {
         renderSponsorshipSection();
       } else if (targetSectionId === 'pemasukan-section' || targetSectionId === 'pengeluaran-section') {
@@ -1422,6 +1426,7 @@ function renderApp() {
     else if (id === 'kategori-section') renderKategoriPage();
     else if (id === 'sponsorship-section') renderSponsorshipSection();
     else if (id === 'utang-section') renderUtangPage();
+    else if (id === 'jelantah-section') renderJelantahSection();
   }
 }
 
@@ -4306,5 +4311,393 @@ async function alokasikanNotaTalangan(txnId, targetSumber) {
   
   showToast('Dana Talangan Dialokasikan', `Transaksi ${txn.id} kini resmi dialokasikan ke ${targetSumber}.`, 'success');
   renderApp();
+}
+
+// ================= RECAP JELANTAH MODULE =================
+let jelantahDokFiles = [];
+let jelantahNotaFiles = [];
+
+function setupJelantahHandlers() {
+  const formJelantah = document.getElementById('form-jelantah-add');
+  if (!formJelantah) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  if (document.getElementById('jelantah-tanggal')) {
+    document.getElementById('jelantah-tanggal').value = today;
+  }
+
+  // Setup Dropzones for Jelantah
+  const dropDok = document.getElementById('jelantah-dok-dropzone');
+  const indDok = document.getElementById('jelantah-dok-indicator');
+  const inputDok = document.getElementById('jelantah-bukti-dok');
+
+  const dropNota = document.getElementById('jelantah-nota-dropzone');
+  const indNota = document.getElementById('jelantah-nota-indicator');
+  const inputNota = document.getElementById('jelantah-bukti-nota');
+
+  if (dropDok && inputDok) {
+    setupCustomMultiFileDropzone(dropDok, inputDok, indDok, (files) => {
+      jelantahDokFiles = files;
+    });
+  }
+
+  if (dropNota && inputNota) {
+    setupCustomMultiFileDropzone(dropNota, inputNota, indNota, (files) => {
+      jelantahNotaFiles = files;
+    });
+  }
+
+  // Form submit listener
+  formJelantah.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const tgl = document.getElementById('jelantah-tanggal').value;
+    const kwarran = document.getElementById('jelantah-kwarran').value;
+    const kg = parseInt(document.getElementById('jelantah-kg').value, 10) || 0;
+    const ket = document.getElementById('jelantah-keterangan').value;
+
+    if (!kwarran) {
+      showToast('Pilih Kwarran', 'Silakan pilih nama kwarran terlebih dahulu.', 'error');
+      return;
+    }
+    if (kg <= 0) {
+      showToast('Jumlah Tidak Valid', 'Jumlah minyak jelantah (KG) harus lebih dari 0.', 'error');
+      return;
+    }
+
+    const allAttachments = [...(jelantahDokFiles || []), ...(jelantahNotaFiles || [])];
+
+    const newRecord = {
+      id: generateUniqueId('KW-JLT'),
+      no: `KW-JLT-${Date.now().toString().slice(-4)}`,
+      tgl: tgl,
+      dari: kwarran,
+      nominal: `${kg} KG`,
+      terbilang: `${terbilangKg(kg)} KILOGRAM`,
+      guna: ket ? `PERSYARATAN MINYAK JELANTAH (${ket})` : 'PERSYARATAN MINYAK JELANTAH',
+      penerima: state.user ? (state.user.nama || 'Petugas Jelantah') : 'Petugas Jelantah',
+      nta: 'Bendahara Raimuna Cabang',
+      tipeJenis: 'JELANTAH',
+      attachment: allAttachments.length > 0 ? allAttachments : null,
+      dateCreated: new Date().toISOString()
+    };
+
+    if (!state.sponsorshipHistory) state.sponsorshipHistory = [];
+    state.sponsorshipHistory.unshift(newRecord);
+
+    try { await saveToStore(STORE_SPONSORSHIPS, newRecord); } catch(err){}
+    try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch(err){}
+
+    if (state.settings.sheetUrl) {
+      syncKwitansiToSheets(newRecord);
+    }
+
+    showToast('Recap Jelantah Disimpan!', `Data pengambilan ${kg} KG dari ${kwarran} berhasil dicatat.`, 'success');
+
+    // Reset Form
+    formJelantah.reset();
+    document.getElementById('jelantah-tanggal').value = today;
+    if (indDok) indDok.textContent = '';
+    if (indNota) indNota.textContent = '';
+    jelantahDokFiles = [];
+    jelantahNotaFiles = [];
+
+    renderJelantahSection();
+    renderDashboard();
+  });
+
+  // Search filter
+  const searchInput = document.getElementById('filter-jelantah-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => renderJelantahSection());
+  }
+
+  // Exports
+  const btnExcel = document.getElementById('btn-export-jelantah-excel');
+  if (btnExcel) btnExcel.addEventListener('click', exportJelantahExcel);
+
+  const btnCsv = document.getElementById('btn-export-jelantah-csv');
+  if (btnCsv) btnCsv.addEventListener('click', exportJelantahCSV);
+}
+
+function setupCustomMultiFileDropzone(dropzone, fileInput, indicator, onFilesReady) {
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+  });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      processSelectedFiles(fileInput.files, indicator, onFilesReady);
+    }
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+      processSelectedFiles(fileInput.files, indicator, onFilesReady);
+    } else {
+      indicator.textContent = '';
+      onFilesReady([]);
+    }
+  });
+}
+
+function processSelectedFiles(files, indicator, callback) {
+  const filesArray = Array.from(files);
+  const uploads = [];
+  let completed = 0;
+  indicator.textContent = `Memproses ${filesArray.length} file...`;
+
+  filesArray.forEach(file => {
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('File Terlalu Besar', `File ${file.name} melebihi 4MB.`, 'error');
+      completed++;
+      if (completed === filesArray.length) callback(uploads);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploads.push({
+        name: file.name,
+        type: file.type,
+        base64: e.target.result
+      });
+      completed++;
+      if (completed === filesArray.length) {
+        indicator.textContent = `${uploads.length} file terpilih (${uploads.map(u=>u.name).join(', ')})`;
+        callback(uploads);
+      }
+    };
+    reader.onerror = function() {
+      completed++;
+      if (completed === filesArray.length) callback(uploads);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function terbilangKg(n) {
+  if (isNaN(n)) return '';
+  const satuan = ['', 'SATU', 'DUA', 'TIGA', 'EMPAT', 'LIMA', 'ENAM', 'TUJUH', 'DELAPAN', 'SEMBILAN', 'SEPULUH', 'SEBELAS'];
+  if (n < 12) return satuan[n];
+  if (n < 20) return terbilangKg(n - 10) + ' BELAS';
+  if (n < 100) return terbilangKg(Math.floor(n / 10)) + ' PULUH ' + terbilangKg(n % 10);
+  if (n < 200) return 'SERATUS ' + terbilangKg(n - 100);
+  if (n < 1000) return terbilangKg(Math.floor(n / 100)) + ' RATUS ' + terbilangKg(n % 100);
+  return String(n);
+}
+
+function getJelantahRecords() {
+  const list = [];
+  (state.sponsorshipHistory || []).forEach(kw => {
+    const tipe = String(kw.tipeJenis || kw.tipe || '').toUpperCase();
+    const guna = String(kw.guna || kw.keterangan || '').toUpperCase();
+    const dari = String(kw.dari || kw.nama || '').toUpperCase();
+    if (tipe.includes('JELANTAH') || guna.includes('JELANTAH') || dari.includes('KWARRAN')) {
+      list.push(kw);
+    }
+  });
+  return list;
+}
+
+function renderJelantahSection() {
+  const records = getJelantahRecords();
+  
+  // 1. Calculate Metrics
+  let totalKg = 0;
+  const kwarrans = new Set();
+
+  records.forEach(r => {
+    let nom = r.nominal;
+    if (typeof nom === 'string') {
+      nom = parseInt(nom.replace(/[^0-9]/g, ''), 10) || 0;
+    }
+    totalKg += (parseInt(nom, 10) || 0);
+    if (r.dari) kwarrans.add(r.dari.trim());
+  });
+
+  if (document.getElementById('jelantah-metric-kg')) document.getElementById('jelantah-metric-kg').textContent = `${totalKg.toLocaleString('id-ID')} KG`;
+  if (document.getElementById('jelantah-metric-kwarran')) document.getElementById('jelantah-metric-kwarran').textContent = `${kwarrans.size} Kwarran`;
+  if (document.getElementById('jelantah-metric-count')) document.getElementById('jelantah-metric-count').textContent = `${records.length} Catatan`;
+
+  // 2. Render Chart Jelantah
+  renderJelantahChart(records);
+
+  // 3. Render Table Jelantah
+  const tbody = document.getElementById('table-jelantah-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const search = String(document.getElementById('filter-jelantah-search')?.value || '').toLowerCase().trim();
+
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    const matchDari = String(r.dari || '').toLowerCase().includes(search);
+    const matchGuna = String(r.guna || '').toLowerCase().includes(search);
+    const matchTgl = String(r.tgl || '').toLowerCase().includes(search);
+    const matchNom = String(r.nominal || '').toLowerCase().includes(search);
+    return matchDari || matchGuna || matchTgl || matchNom;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada data pengambilan jelantah yang cocok.</td></tr>';
+    return;
+  }
+
+  filtered.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    
+    let kgVal = r.nominal;
+    if (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG')) {
+      kgVal = `${kgVal} KG`;
+    }
+
+    // Attachments preview links
+    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">Tidak ada file</span>';
+    if (r.attachment) {
+      const atts = Array.isArray(r.attachment) ? r.attachment : [r.attachment];
+      if (atts.length > 0) {
+        attHtml = atts.map((att, i) => {
+          const isUrl = typeof att === 'string' && att.startsWith('http');
+          const href = isUrl ? att : (att.base64 || '#');
+          const name = isUrl ? `File ${i+1}` : (att.name || `File ${i+1}`);
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;">📎 ${name}</a>`;
+        }).join('');
+      }
+    }
+
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td>${formatIndonesianDate(r.tgl || r.tanggal)}</td>
+      <td class="font-bold">${r.dari || r.nama || '-'}</td>
+      <td class="text-right font-bold text-success" style="font-size:1.05rem;">${kgVal}</td>
+      <td>${attHtml}</td>
+      <td>${r.guna || r.keterangan || '-'}</td>
+      <td class="text-center">
+        <button class="btn-icon btn-delete-jelantah" data-id="${r.id}" title="Hapus Recap Jelantah">🗑️</button>
+      </td>
+    `;
+
+    const btnDel = tr.querySelector('.btn-delete-jelantah');
+    if (btnDel) {
+      btnDel.addEventListener('click', () => deleteJelantahRecord(r.id));
+    }
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderJelantahChart(records) {
+  const canvas = document.getElementById('jelantahChart');
+  if (!canvas) return;
+
+  const kwarranMap = {};
+  records.forEach(r => {
+    const kwName = (r.dari || 'Lainnya').trim();
+    let kg = r.nominal;
+    if (typeof kg === 'string') {
+      kg = parseInt(kg.replace(/[^0-9]/g, ''), 10) || 0;
+    }
+    kwarranMap[kwName] = (kwarranMap[kwName] || 0) + (parseInt(kg, 10) || 0);
+  });
+
+  const labels = Object.keys(kwarranMap);
+  const dataValues = Object.values(kwarranMap);
+
+  if (window.jelantahChartInstance) {
+    window.jelantahChartInstance.destroy();
+  }
+
+  const ctx = canvas.getContext('2d');
+  window.jelantahChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.length > 0 ? labels : ['Belum Ada Data'],
+      datasets: [{
+        label: 'Minyak Jelantah (KG)',
+        data: dataValues.length > 0 ? dataValues : [0],
+        backgroundColor: '#10b981',
+        borderColor: '#059669',
+        borderWidth: 1.5,
+        borderRadius: 8,
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ` Total: ${context.parsed.y} KG`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Jumlah (KG)' },
+          grid: { color: 'rgba(0, 0, 0, 0.05)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+async function deleteJelantahRecord(id) {
+  if (!confirm('Apakah Anda yakin ingin menghapus catatan pengambilan jelantah ini?')) return;
+
+  state.sponsorshipHistory = (state.sponsorshipHistory || []).filter(r => r.id !== id);
+  try { await deleteFromStore(STORE_SPONSORSHIPS, id); } catch(e){}
+  try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch(e){}
+
+  if (state.settings.sheetUrl) {
+    try {
+      await fetch(state.settings.sheetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'delete_kwitansi', id: id })
+      });
+    } catch(err){}
+  }
+
+  showToast('Catatan Dihapus', 'Data recap jelantah berhasil dihapus.', 'info');
+  renderJelantahSection();
+  renderDashboard();
+}
+
+function exportJelantahExcel() {
+  const records = getJelantahRecords();
+  if (records.length === 0) {
+    showToast('Export Gagal', 'Tidak ada data jelantah untuk diekspor.', 'error');
+    return;
+  }
+  const headers = ['No', 'Tanggal', 'Nama Kwarran', 'Jumlah (KG)', 'Keterangan', 'Petugas'];
+  const rows = records.map((r, i) => [
+    i + 1,
+    r.tgl || r.tanggal,
+    r.dari || r.nama,
+    r.nominal,
+    r.guna || r.keterangan,
+    r.penerima || 'Petugas'
+  ]);
+  downloadCSVFile([headers, ...rows], `Recap_Minyak_Jelantah_${new Date().toISOString().split('T')[0]}.csv`);
+  showToast('Ekspor Berhasil', 'Data jelantah siap dibuka di Excel.', 'success');
+}
+
+function exportJelantahCSV() {
+  exportJelantahExcel();
 }
 

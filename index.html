@@ -144,6 +144,15 @@
           </a>
         </li>
         <li>
+          <a href="#" class="nav-link" data-target="jelantah-section">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            <span>Recap Jelantah</span>
+          </a>
+        </li>
+        <li>
           <a href="#" class="nav-link" data-target="laporan-section">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -788,6 +797,179 @@
               <tbody id="table-utang-tbody">
                 <tr>
                   <td colspan="9" class="text-center text-muted">Belum ada catatan utang.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= RECAP JELANTAH SECTION ================= -->
+      <section id="jelantah-section" class="content-section">
+        <!-- Info Metrics Jelantah -->
+        <div class="metrics-grid mb-20">
+          <div class="metric-card balance" style="border-left: 4px solid #059669;">
+            <div class="card-icon">🛢️</div>
+            <div class="card-details">
+              <h3>Total Terkumpul</h3>
+              <p id="jelantah-metric-kg">0 KG</p>
+            </div>
+          </div>
+          <div class="metric-card income" style="border-left: 4px solid #10b981;">
+            <div class="card-icon">🏫</div>
+            <div class="card-details">
+              <h3>Kwarran Setor</h3>
+              <p id="jelantah-metric-kwarran">0 Kwarran</p>
+            </div>
+          </div>
+          <div class="metric-card balance" style="border-left: 4px solid #3b82f6;">
+            <div class="card-icon">📋</div>
+            <div class="card-details">
+              <h3>Total Catatan Jelantah</h3>
+              <p id="jelantah-metric-count">0 Catatan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Tambah Recap Jelantah -->
+        <div class="form-container-card mb-25">
+          <div class="form-header">
+            <h2>Pencatatan Recap Pengambilan Minyak Jelantah</h2>
+            <p>Catat setiap pengambilan minyak jelantah dari Kwarran beserta jumlah (KG), dokumentasi foto, dan nota tanda terima.</p>
+          </div>
+
+          <form id="form-jelantah-add" class="cute-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="jelantah-tanggal">Tanggal Pengambilan <span class="required">*</span></label>
+                <input type="date" id="jelantah-tanggal" required>
+              </div>
+
+              <div class="form-group">
+                <label for="jelantah-kwarran">Nama Kwarran <span class="required">*</span></label>
+                <select id="jelantah-kwarran" required>
+                  <option value="" disabled selected>Pilih Kwarran</option>
+                  <optgroup label="Wilayah Eks-Kotif (Kota)">
+                    <option value="Kwarran Cilacap Selatan">Kwarran Cilacap Selatan</option>
+                    <option value="Kwarran Cilacap Tengah">Kwarran Cilacap Tengah</option>
+                    <option value="Kwarran Cilacap Utara">Kwarran Cilacap Utara</option>
+                  </optgroup>
+                  <optgroup label="Wilayah Cilacap Timur">
+                    <option value="Kwarran Adipala">Kwarran Adipala</option>
+                    <option value="Kwarran Binangun">Kwarran Binangun</option>
+                    <option value="Kwarran Kesugihan">Kwarran Kesugihan</option>
+                    <option value="Kwarran Kroya">Kwarran Kroya</option>
+                    <option value="Kwarran Maos">Kwarran Maos</option>
+                    <option value="Kwarran Nusawungu">Kwarran Nusawungu</option>
+                    <option value="Kwarran Sampang">Kwarran Sampang</option>
+                  </optgroup>
+                  <optgroup label="Wilayah Cilacap Barat & Tengah">
+                    <option value="Kwarran Bantarsari">Kwarran Bantarsari</option>
+                    <option value="Kwarran Cimanggu">Kwarran Cimanggu</option>
+                    <option value="Kwarran Cipari">Kwarran Cipari</option>
+                    <option value="Kwarran Dayeuhluhur">Kwarran Dayeuhluhur</option>
+                    <option value="Kwarran Gandrungmangu">Kwarran Gandrungmangu</option>
+                    <option value="Kwarran Jeruklegi">Kwarran Jeruklegi</option>
+                    <option value="Kwarran Kampung Laut">Kwarran Kampung Laut</option>
+                    <option value="Kwarran Karangpucung">Kwarran Karangpucung</option>
+                    <option value="Kwarran Kawunganten">Kwarran Kawunganten</option>
+                    <option value="Kwarran Kedungreja">Kwarran Kedungreja</option>
+                    <option value="Kwarran Majenang">Kwarran Majenang</option>
+                    <option value="Kwarran Patimuan">Kwarran Patimuan</option>
+                    <option value="Kwarran Sidareja">Kwarran Sidareja</option>
+                    <option value="Kwarran Wanareja">Kwarran Wanareja</option>
+                  </optgroup>
+                  <optgroup label="Lainnya">
+                    <option value="Pangkalan / Donatur Lain">Pangkalan / Donatur Lain</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="jelantah-kg">Jumlah Jelantah (KG) <span class="required">*</span></label>
+                <input type="number" id="jelantah-kg" placeholder="Contoh: 150" min="1" step="1" required>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="jelantah-bukti-dok">Dokumentasi Pengambilan <span class="text-muted">(Foto / PDF)</span></label>
+                <div class="file-dropzone" id="jelantah-dok-dropzone">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+                  <p>Upload Dokumentasi Foto</p>
+                  <input type="file" id="jelantah-bukti-dok" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                  <div class="file-preview-indicator" id="jelantah-dok-indicator"></div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="jelantah-bukti-nota">Upload Nota / Tanda Terima <span class="text-muted">(Bukti Nota)</span></label>
+                <div class="file-dropzone" id="jelantah-nota-dropzone">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+                  <p>Upload Nota / Tanda Terima</p>
+                  <input type="file" id="jelantah-bukti-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                  <div class="file-preview-indicator" id="jelantah-nota-indicator"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="jelantah-keterangan">Keterangan / Catatan Tambahan</label>
+              <textarea id="jelantah-keterangan" rows="2" placeholder="Catatan lokasi pengambilan, nama petugas, info drum..."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">Reset Formulir</button>
+              <button type="submit" class="btn btn-success">Simpan Recap Jelantah</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Chart Jelantah Card -->
+        <div class="chart-card mb-25" style="background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Grafik Pengambilan Minyak Jelantah per Kwarran (KG)</h3>
+          </div>
+          <div style="position: relative; height: 320px; width: 100%;">
+            <canvas id="jelantahChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Tabel Recap Jelantah -->
+        <div class="table-card">
+          <div class="table-card-header" style="flex-wrap: wrap; gap: 15px;">
+            <h3>Daftar Histori Pengambilan Minyak Jelantah</h3>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="filter-jelantah-search" placeholder="Cari kwarran, petugas..." style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+              <button type="button" id="btn-export-jelantah-excel" class="btn btn-success btn-small btn-icon-text">
+                <span>Excel</span>
+              </button>
+              <button type="button" id="btn-export-jelantah-csv" class="btn btn-secondary btn-small btn-icon-text">
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Tanggal</th>
+                  <th>Nama Kwarran</th>
+                  <th class="text-right">Jumlah (KG)</th>
+                  <th>Dokumentasi & Nota</th>
+                  <th>Keterangan</th>
+                  <th class="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-jelantah-tbody">
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Belum ada data pengambilan jelantah.</td>
                 </tr>
               </tbody>
             </table>
