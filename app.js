@@ -1000,7 +1000,6 @@ async function saveTransaction(txn) {
 async function syncTransactionToSheets(txn) {
   if (!state.settings.sheetUrl) return;
   
-  // We include attachment so the Google Apps Script can upload it to Google Drive
   const cleanTxn = {
     id: txn.id,
     tanggal: txn.tanggal,
@@ -1016,8 +1015,9 @@ async function syncTransactionToSheets(txn) {
   };
   
   try {
-    const response = await fetch(state.settings.sheetUrl, {
+    await fetch(state.settings.sheetUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {
         'Content-Type': 'text/plain'
       },
@@ -1027,20 +1027,6 @@ async function syncTransactionToSheets(txn) {
       })
     });
     
-    let responseData = null;
-    try {
-      responseData = await response.json();
-    } catch(e) {
-      // Ignored if opaque
-    }
-
-    if (responseData && responseData.success === false) {
-      throw new Error(responseData.error || 'Terjadi kesalahan di server Google.');
-    }
-    
-    if (!response.ok && response.type !== 'opaque') {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
     txn.sync = true;
     await saveToStore(STORE_TXNS, txn);
     updateSyncBadgeState();
@@ -1059,23 +1045,20 @@ async function syncTransactionToSheets(txn) {
 // Delete transaction from Google Sheets dengan tombstone pattern
 async function syncDeleteToSheets(txnId) {
   if (!state.settings.sheetUrl) {
-    // Simpan ke tombstone jika tidak ada URL (akan dicoba lagi nanti)
     try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
     return;
   }
-  // Simpan ke tombstone dulu (jaga-jaga jika request gagal)
   try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
   try {
-    const resp = await fetch(state.settings.sheetUrl, {
+    await fetch(state.settings.sheetUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_single', id: txnId })
     });
-    // Jika berhasil, hapus dari tombstone
     try { await deleteFromStore(STORE_DELETED_IDS, txnId); } catch(e){}
   } catch (err) {
     console.error('Gagal hapus dari Sheet, akan dicoba ulang saat startup:', err);
-    // Tombstone tetap tersimpan untuk retry berikutnya
   }
 }
 
@@ -1107,10 +1090,10 @@ async function pushPendingDeletes() {
                      item.type === 'kwitansi' ? 'delete_kwitansi' : 'delete_single';
       await fetch(state.settings.sheetUrl, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action, id: item.id, no: item.no || '' })
       });
-      // Berhasil → hapus dari tombstone
       try { await deleteFromStore(STORE_DELETED_IDS, item.id); } catch(e){}
     } catch (err) {
       console.error('Gagal push pending delete:', item.id, err);
@@ -1146,6 +1129,7 @@ async function pushAllTransactionsToSheets() {
     // otherwise fallback to no-cors. For bulk push, let's use no-cors to be safe.
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: {
         'Content-Type': 'text/plain'
       },
@@ -4164,6 +4148,7 @@ async function syncUtangToSheets(ut) {
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'sync_utang', utang: ut })
     });
@@ -4173,17 +4158,16 @@ async function syncUtangToSheets(ut) {
 }
 
 async function syncUtangToSheets_delete(utangId) {
-  // Simpan ke tombstone dulu sebelum coba kirim (mencegah autoPull mengambilnya kembali)
   try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
   if (!state.settings.sheetUrl) return;
 
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_utang', id: utangId })
     });
-    // Jika API berhasil merespons, hapus dari tombstone setelah jeda singkat
     setTimeout(async () => {
       try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch(e){}
     }, 1500);
