@@ -1429,27 +1429,27 @@ function renderApp() {
 // ================= RENDER: DASHBOARD =================
 function renderDashboard() {
   // 1. Calculate Metrics
-  let totalInKas = 0; // Kas masuk dari Pemasukan Kas Utama (NON-Sponsorship, NON-Tenant)
-  let totalInSponsorTenant = 0; // Pemasukan khusus Rekap Sponsorship & Tenant
-  let totalOutKas = 0; // Kas keluar dari Sumber Dana Kas Resmi (NON-Sponsorship, NON-Tenant, NON-Talangan)
+  let totalInKas = 0; // Kas masuk dari Pemasukan Kas Utama (Termasuk Sponsor/Sponsorship, APBD, Jelantah, dll; TIDAK termasuk Tenant)
+  let totalInTenant = 0; // Pemasukan khusus Rekap Pembayaran Tenant
+  let totalOutKas = 0; // Kas keluar dari Kas Resmi (TIDAK termasuk Tenant & Dana Talangan)
   let totalOutAll = 0; // Total pengeluaran keseluruhan
   let txnCount = (state.transactions || []).length;
   
   (state.transactions || []).forEach(t => {
     const nom = parseInt(t.nominal, 10) || 0;
     const src = String(getTxSumber(t) || '').trim();
-    const isSponsorOrTenant = src === 'Sponsor' || src === 'Sponsorship' || src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
+    const isTenant = src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
     const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
 
     if (t.tipe === 'IN') {
-      if (isSponsorOrTenant) {
-        totalInSponsorTenant += nom;
+      if (isTenant) {
+        totalInTenant += nom;
       } else {
-        totalInKas += nom;
+        totalInKas += nom; // Sponsorship disatukan ke Kas Utama!
       }
     } else if (t.tipe === 'OUT') {
       totalOutAll += nom;
-      if (!isTalangan && !isSponsorOrTenant) {
+      if (!isTalangan && !isTenant) {
         totalOutKas += nom;
       }
     }
@@ -1475,7 +1475,7 @@ function renderDashboard() {
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
   if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalInKas);
   if (document.getElementById('dashboard-total-pengeluaran')) document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOutKas);
-  if (document.getElementById('dashboard-total-sponsor-tenant')) document.getElementById('dashboard-total-sponsor-tenant').textContent = formatRupiah(totalInSponsorTenant);
+  if (document.getElementById('dashboard-total-tenant')) document.getElementById('dashboard-total-tenant').textContent = formatRupiah(totalInTenant);
   if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
 
@@ -1852,13 +1852,13 @@ function renderLaporan() {
     let overallOutKas = 0;
     state.transactions.forEach(t => {
       const src = String(getTxSumber(t) || '').trim();
-      const isSponsorOrTenant = src === 'Sponsor' || src === 'Sponsorship' || src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
+      const isTenant = src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
       const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
 
       if (t.tipe === 'IN') {
-        if (!isSponsorOrTenant) overallInKas += t.nominal;
+        if (!isTenant) overallInKas += t.nominal; // Sponsorship disatukan ke Kas Utama!
       } else {
-        if (!isTalangan && !isSponsorOrTenant) overallOutKas += t.nominal;
+        if (!isTalangan && !isTenant) overallOutKas += t.nominal;
       }
     });
     
