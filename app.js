@@ -2891,6 +2891,17 @@ function setupLoginHandler() {
   const loginForm = document.getElementById('login-form');
   const errorMsg = document.getElementById('login-error-message');
   
+  const togglePwBtn = document.getElementById('toggle-login-password');
+  const pwInput = document.getElementById('login-password');
+  if (togglePwBtn && pwInput) {
+    togglePwBtn.addEventListener('click', () => {
+      const currentType = pwInput.getAttribute('type');
+      const newType = currentType === 'password' ? 'text' : 'password';
+      pwInput.setAttribute('type', newType);
+      togglePwBtn.style.color = newType === 'text' ? 'var(--pastel-pink-dark)' : 'var(--text-muted)';
+    });
+  }
+
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
