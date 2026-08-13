@@ -1289,9 +1289,13 @@ async function autoPullFromSheets() {
         } catch(e){}
       }
 
-      // Ganti data utang sepenuhnya
+      // Ganti data utang sepenuhnya (filter utang yang sedang ada di antrean tombstone hapus)
       if (result.utang && Array.isArray(result.utang)) {
-        const parsedUt = result.utang.map(parseUtangRow).filter(Boolean);
+        let pendingDeletes = [];
+        try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch(e){}
+        const deletedUtangIds = (pendingDeletes || []).filter(d => d.type === 'utang').map(d => d.id);
+
+        const parsedUt = result.utang.map(parseUtangRow).filter(Boolean).filter(u => !deletedUtangIds.includes(u.id));
         state.utang = parsedUt;
         try {
           await clearStore(STORE_UTANG);
@@ -4098,16 +4102,23 @@ async function deleteUtang(utangId) {
     await deleteFromStore(STORE_TXNS, txIdToDelete);
     // Selalu coba kirim hapus ke sheet (dengan tombstone jika gagal)
     if (state.settings.sheetUrl) {
-      syncDeleteToSheets(txIdToDelete);
+      await syncDeleteToSheets(txIdToDelete);
     } else {
       try { await saveToStore(STORE_DELETED_IDS, { id: txIdToDelete, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
     }
   }
   
+  // Hapus dari state memori dan DB lokal
   state.utang = state.utang.filter(u => u.id !== utangId);
   try { await deleteFromStore(STORE_UTANG, utangId); } catch(e){}
   try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
-  if (state.settings.sheetUrl) { syncUtangToSheets_delete(utangId); }
+
+  // Selalu catat ke tombstone DULU agar tidak balik saat autoPull, lalu kirim hapus ke Google Sheets
+  if (state.settings.sheetUrl) { 
+    await syncUtangToSheets_delete(utangId); 
+  } else {
+    try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
+  }
   
   showToast('Catatan Utang Dihapus', 'Data utang berhasil dihapus.', 'info');
   renderUtangPage();
@@ -4128,24 +4139,22 @@ async function syncUtangToSheets(ut) {
 }
 
 async function syncUtangToSheets_delete(utangId) {
-  if (!state.settings.sheetUrl) {
-    // Simpan ke tombstone jika tidak ada URL
-    try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
-    return;
-  }
-  // Simpan ke tombstone dulu sebelum coba kirim
+  // Simpan ke tombstone dulu sebelum coba kirim (mencegah autoPull mengambilnya kembali)
   try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
+  if (!state.settings.sheetUrl) return;
+
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_utang', id: utangId })
     });
-    // Berhasil → hapus dari tombstone
-    try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch(e){}
+    // Jika API berhasil merespons, hapus dari tombstone setelah jeda singkat
+    setTimeout(async () => {
+      try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch(e){}
+    }, 1500);
   } catch (err) {
     console.error('Gagal hapus utang dari Sheet, akan dicoba ulang saat startup:', err);
-    // Tombstone tetap tersimpan untuk retry berikutnya
   }
 }
 
