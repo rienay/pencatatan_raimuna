@@ -1845,6 +1845,22 @@ function autoMigrateColumns(sheet) {
     </div>
   </main>
 
+  <!-- ================= RECAP JELANTAH DETAIL MODAL ================= -->
+  <div id="modal-detail-jelantah" class="modal-overlay">
+    <div class="modal-card" style="max-width: 580px; width: 92%;">
+      <div class="modal-header">
+        <h3 id="jelantah-modal-title">👁️ Detail Pengambilan Minyak Jelantah</h3>
+        <button id="btn-close-jelantah-detail" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body" id="jelantah-detail-body" style="padding: 20px;">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 15px 20px; gap: 10px; background: var(--bg-body, #f9fafb); border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" id="btn-close-jelantah-detail-footer">Tutup Modal</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= TRANSACTION DETAIL MODAL ================= -->
   <div id="detail-modal" class="modal-overlay">
     <div class="modal-card">

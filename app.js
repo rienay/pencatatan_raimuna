@@ -4599,18 +4599,112 @@ function renderJelantahSection() {
       <td class="text-right font-bold text-success" style="font-size:1.05rem;">${kgVal}</td>
       <td>${attHtml}</td>
       <td>${r.guna || r.keterangan || '-'}</td>
-      <td class="text-center">
+      <td class="text-center" style="white-space: nowrap;">
+        <button class="btn-icon btn-view-jelantah" data-id="${r.id}" title="Lihat Detail Pengambilan Jelantah" style="margin-right: 6px;">👁️</button>
         <button class="btn-icon btn-delete-jelantah" data-id="${r.id}" title="Hapus Recap Jelantah">🗑️</button>
       </td>
     `;
 
+    const btnView = tr.querySelector('.btn-view-jelantah');
+    if (btnView) {
+      btnView.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showJelantahDetailModal(r);
+      });
+    }
+
     const btnDel = tr.querySelector('.btn-delete-jelantah');
     if (btnDel) {
-      btnDel.addEventListener('click', () => deleteJelantahRecord(r.id));
+      btnDel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteJelantahRecord(r.id);
+      });
     }
 
     tbody.appendChild(tr);
   });
+}
+
+function showJelantahDetailModal(r) {
+  const modal = document.getElementById('modal-detail-jelantah');
+  const body = document.getElementById('jelantah-detail-body');
+  if (!modal || !body) return;
+
+  let kgVal = r.nominal || r.kg;
+  if (typeof kgVal === 'number' || (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG'))) {
+    kgVal = `${kgVal} KG`;
+  }
+
+  // Attachments html
+  let attHtml = '<p class="text-muted" style="font-size:0.85rem;">Tidak ada berkas dokumentasi / nota.</p>';
+  if (r.attachment) {
+    const atts = Array.isArray(r.attachment) ? r.attachment : [r.attachment];
+    if (atts.length > 0) {
+      attHtml = '<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px;">';
+      atts.forEach((att, i) => {
+        const isUrl = typeof att === 'string' && att.startsWith('http');
+        const src = isUrl ? att : (att.base64 || '');
+        const name = isUrl ? `Berkas ${i+1}` : (att.name || `Berkas ${i+1}`);
+        const isImg = isUrl || (att.type && att.type.startsWith('image/')) || (att.base64 && att.base64.startsWith('data:image/'));
+
+        if (isImg && src) {
+          attHtml += `
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: #fafafa; text-align: center; max-width: 160px;">
+              <a href="${src}" target="_blank" title="Klik untuk mengunduh / membuka ukuran penuh">
+                <img src="${src}" alt="${name}" style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 6px;" />
+              </a>
+              <p style="font-size: 0.75rem; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</p>
+            </div>
+          `;
+        } else if (src) {
+          attHtml += `
+            <a href="${src}" target="_blank" class="badge-tag info" style="padding: 8px 12px; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+              📄 ${name}
+            </a>
+          `;
+        }
+      });
+      attHtml += '</div>';
+    }
+  }
+
+  body.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+      <div style="background: var(--bg-body, #f9fafb); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600;">ID CATATAN</span>
+        <strong style="font-size: 0.95rem;">${r.id}</strong>
+      </div>
+      <div style="background: var(--bg-body, #f9fafb); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600;">TANGGAL PENGAMBILAN</span>
+        <strong style="font-size: 0.95rem;">${formatIndonesianDate(r.tgl || r.tanggal)}</strong>
+      </div>
+      <div style="background: var(--bg-body, #f9fafb); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); grid-column: span 2;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600;">NAMA KWARRAN</span>
+        <strong style="font-size: 1.1rem; color: var(--color-primary, #2563eb);">${r.kwarran || r.dari || '-'}</strong>
+      </div>
+      <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981; grid-column: span 2;">
+        <span style="font-size: 0.75rem; color: #047857; display: block; font-weight: 600;">JUMLAH MINYAK JELANTAH</span>
+        <strong style="font-size: 1.25rem; color: #065f46;">${kgVal}</strong>
+      </div>
+      <div style="background: var(--bg-body, #f9fafb); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); grid-column: span 2;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600;">KETERANGAN / DESKRIPSI</span>
+        <p style="margin-top: 4px; font-size: 0.9rem; margin-bottom: 0;">${r.keterangan || r.guna || '-'}</p>
+      </div>
+    </div>
+    <div style="border-top: 1px solid var(--border-color); padding-top: 12px;">
+      <h4 style="font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;">📸 Dokumentasi & Lampiran Nota:</h4>
+      ${attHtml}
+    </div>
+  `;
+
+  modal.classList.add('active');
+
+  const btnCloseHeader = document.getElementById('btn-close-jelantah-detail');
+  const btnCloseFooter = document.getElementById('btn-close-jelantah-detail-footer');
+
+  const closeModal = () => modal.classList.remove('active');
+  if (btnCloseHeader) btnCloseHeader.onclick = closeModal;
+  if (btnCloseFooter) btnCloseFooter.onclick = closeModal;
 }
 
 function renderJelantahChart(records) {
