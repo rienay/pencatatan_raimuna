@@ -57,28 +57,34 @@ function getTxCategory(tx) {
 
 function getTxSumber(tx) {
   if (!tx) return '-';
-  if (tx.sumberDana && tx.sumberDana !== '' && tx.sumberDana !== 'ALL') return tx.sumberDana;
-  if (tx.sumber && tx.sumber !== '' && tx.sumber !== 'ALL') return tx.sumber;
-  if (tx.tipe === 'IN') return tx.kategoriSumber || '-';
-  return '-';
+  let raw = tx.sumberDana;
+  if (!raw || raw === '' || raw === 'ALL') raw = tx.sumber;
+  if ((!raw || raw === '' || raw === 'ALL') && tx.tipe === 'IN') raw = tx.kategoriSumber;
+  if (!raw) return '-';
+  if (raw === 'Pembayaran Stand') return 'Pembayaran Tenant';
+  return raw;
 }
 
 function parseSheetRow(row) {
   let tipe = row.tipe;
   let kategori = row.kategori;
   let sumberDana = row.sumberDana;
+  if (sumberDana === 'Pembayaran Stand') sumberDana = 'Pembayaran Tenant';
   let pic = row.pic;
-  let nominal = parseInt(row.nominal, 10);
-  let keterangan = row.keterangan || '';
+  let nominal = row.nominal;
+  let keterangan = row.keterangan || '-';
 
-  // Check if row has blank column shift (Column F in Google Sheets is blank):
-  // When shifted: row.pic contains numeric nominal (e.g. 500000), row.nominal contains text keterangan, row[""] or row.col5 contains real pic (e.g. "said")
+  if (!tipe) {
+    if (String(row.id || '').indexOf('TXN-IN') !== -1) tipe = 'IN';
+    else if (String(row.id || '').indexOf('TXN-OUT') !== -1) tipe = 'OUT';
+    else tipe = 'IN';
+  }
+
   const rawPic = String(pic || '').trim();
-  const rawNominal = String(row.nominal || '').trim();
-  const blankCol = row[''] || row['col5'] || row['COL5'] || '';
+  const rawNominal = row.nominal;
 
+  const blankCol = row[''];
   if (/^\d+$/.test(rawPic) && (isNaN(nominal) || !/^\d+$/.test(rawNominal))) {
-    // Row is shifted due to extra blank column!
     nominal = parseInt(rawPic, 10) || 0;
     pic = blankCol ? String(blankCol).trim() : '-';
     keterangan = row.nominal ? String(row.nominal).trim() : keterangan;
@@ -86,7 +92,6 @@ function parseSheetRow(row) {
     nominal = isNaN(nominal) ? (parseInt(rawNominal, 10) || 0) : nominal;
   }
 
-  // Fallbacks for Kategori & Sumber Dana
   if (!kategori || kategori === '' || kategori === '-') {
     if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
     else kategori = '-';
@@ -1424,27 +1429,34 @@ function renderApp() {
 // ================= RENDER: DASHBOARD =================
 function renderDashboard() {
   // 1. Calculate Metrics
-  let totalIn = 0;
-  let totalOutKas = 0; // Kas keluar dari Sumber Dana resmi
-  let totalOutAll = 0; // Total pengeluaran termasuk Dana Talangan
+  let totalInKas = 0; // Kas masuk dari Pemasukan Kas Utama (NON-Sponsorship, NON-Tenant)
+  let totalInSponsorTenant = 0; // Pemasukan khusus Rekap Sponsorship & Tenant
+  let totalOutKas = 0; // Kas keluar dari Sumber Dana Kas Resmi (NON-Sponsorship, NON-Tenant, NON-Talangan)
+  let totalOutAll = 0; // Total pengeluaran keseluruhan
   let txnCount = (state.transactions || []).length;
   
   (state.transactions || []).forEach(t => {
     const nom = parseInt(t.nominal, 10) || 0;
+    const src = String(getTxSumber(t) || '').trim();
+    const isSponsorOrTenant = src === 'Sponsor' || src === 'Sponsorship' || src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
+    const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
+
     if (t.tipe === 'IN') {
-      totalIn += nom;
+      if (isSponsorOrTenant) {
+        totalInSponsorTenant += nom;
+      } else {
+        totalInKas += nom;
+      }
     } else if (t.tipe === 'OUT') {
       totalOutAll += nom;
-      const src = String(getTxSumber(t) || '');
-      const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
-      if (!isTalangan) {
+      if (!isTalangan && !isSponsorOrTenant) {
         totalOutKas += nom;
       }
     }
   });
   
-  // Saldo Kas HANYA dikurangi oleh pengeluaran dari Sumber Dana Resmi (kas keluar)
-  let saldo = Math.max(0, totalIn - totalOutKas);
+  // Saldo Kas Utama HANYA dihitung dari Kas Pemasukan Utama - Kas Pengeluaran Utama
+  let saldoKas = Math.max(0, totalInKas - totalOutKas);
 
   let totalUtangPending = 0;
   (state.utang || []).forEach(u => {
@@ -1460,10 +1472,10 @@ function renderDashboard() {
   });
   
   // Update fields
-  if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldo);
-  if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalIn);
+  if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
+  if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalInKas);
   if (document.getElementById('dashboard-total-pengeluaran')) document.getElementById('dashboard-total-pengeluaran').textContent = formatRupiah(totalOutKas);
-  if (document.getElementById('dashboard-total-transaksi')) document.getElementById('dashboard-total-transaksi').textContent = txnCount;
+  if (document.getElementById('dashboard-total-sponsor-tenant')) document.getElementById('dashboard-total-sponsor-tenant').textContent = formatRupiah(totalInSponsorTenant);
   if (document.getElementById('dashboard-total-utang-pending')) document.getElementById('dashboard-total-utang-pending').textContent = formatRupiah(totalUtangPending);
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
 
@@ -1836,15 +1848,22 @@ function renderLaporan() {
     // Display total summary for filtered list
     // Use the actual current running balance of the very last chronologically filtered transaction
     // Or let's calculate final total from complete dataset
-    let overallIn = 0;
-    let overallOut = 0;
+    let overallInKas = 0;
+    let overallOutKas = 0;
     state.transactions.forEach(t => {
-      if (t.tipe === 'IN') overallIn += t.nominal;
-      else overallOut += t.nominal;
+      const src = String(getTxSumber(t) || '').trim();
+      const isSponsorOrTenant = src === 'Sponsor' || src === 'Sponsorship' || src === 'Pembayaran Tenant' || src === 'Pembayaran Stand';
+      const isTalangan = src.includes('Dana Talangan') || src.includes('Tanpa Sumber Dana');
+
+      if (t.tipe === 'IN') {
+        if (!isSponsorOrTenant) overallInKas += t.nominal;
+      } else {
+        if (!isTalangan && !isSponsorOrTenant) overallOutKas += t.nominal;
+      }
     });
     
     document.getElementById('report-filtered-nominal-sum').textContent = formatRupiah(filteredNominalSum);
-    document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(Math.max(0, overallIn - overallOut));
+    document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(Math.max(0, overallInKas - overallOutKas));
   }
 }
 
