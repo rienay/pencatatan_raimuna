@@ -1492,14 +1492,18 @@ function renderDashboard() {
     }
   });
 
-  // Total Uang Dana APBD (Rp) dari Pemasukan Transaksi
-  let totalApbdRp = 0;
+  // Total Pemasukan & Pengeluaran Dana APBD
+  let totalApbdIn = 0;
+  let totalApbdOut = 0;
   (state.transactions || []).forEach(t => {
-    const src = String(getTxSumber(t) || '').trim();
-    if (t.tipe === 'IN' && src.includes('APBD')) {
-      totalApbdRp += (parseInt(t.nominal, 10) || 0);
+    const src = String(getTxSumber(t) || '').trim().toUpperCase();
+    if (src.includes('APBD')) {
+      const nom = parseInt(t.nominal, 10) || 0;
+      if (t.tipe === 'IN') totalApbdIn += nom;
+      else if (t.tipe === 'OUT') totalApbdOut += nom;
     }
   });
+  let sisaApbd = Math.max(0, totalApbdIn - totalApbdOut);
   
   // Update fields
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
@@ -1510,7 +1514,8 @@ function renderDashboard() {
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
   if (document.getElementById('dashboard-total-jelantah-kg')) document.getElementById('dashboard-total-jelantah-kg').textContent = `${totalJelantahKg.toLocaleString('id-ID')} KG`;
   if (document.getElementById('dashboard-total-jelantah-rp')) document.getElementById('dashboard-total-jelantah-rp').textContent = formatRupiah(totalJelantahRp);
-  if (document.getElementById('dashboard-total-apbd-rp')) document.getElementById('dashboard-total-apbd-rp').textContent = formatRupiah(totalApbdRp);
+  if (document.getElementById('dashboard-total-apbd-rp')) document.getElementById('dashboard-total-apbd-rp').textContent = formatRupiah(sisaApbd);
+  if (document.getElementById('dashboard-apbd-subtext')) document.getElementById('dashboard-apbd-subtext').textContent = `Masuk: ${formatRupiah(totalApbdIn)} | Keluar: ${formatRupiah(totalApbdOut)}`;
 
   // Render Dashboard Quick Checklist Utang
   renderDashboardQuickUtang();
