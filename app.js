@@ -33,6 +33,7 @@ const state = {
     category: null
   },
   sponsorshipHistory: [],
+  jelantahRecap: [],
   db: null
 };
 
@@ -45,6 +46,7 @@ const STORE_SRCS = 'sources';
 const STORE_SETTINGS = 'settings';
 const STORE_SPONSORSHIPS = 'sponsorship_history';
 const STORE_UTANG = 'utang';
+const STORE_JELANTAH = 'jelantah_recap';
 const STORE_DELETED_IDS = 'deleted_ids'; // Tombstone: ID yang dihapus lokal tapi belum terkirim ke Sheet
 
 // Helper functions for Kategori & Sumber Dana
@@ -472,6 +474,11 @@ function initIndexedDB() {
       if (!db.objectStoreNames.contains(STORE_DELETED_IDS)) {
         db.createObjectStore(STORE_DELETED_IDS, { keyPath: 'id' });
       }
+
+      // Jelantah Recap store
+      if (!db.objectStoreNames.contains(STORE_JELANTAH)) {
+        db.createObjectStore(STORE_JELANTAH, { keyPath: 'id' });
+      }
     };
   });
 }
@@ -505,6 +512,19 @@ async function loadStateFromDB() {
     try {
       const saved = localStorage.getItem('sponsorship_history');
       if (saved) state.sponsorshipHistory = JSON.parse(saved);
+    } catch (e) {}
+  }
+
+  try {
+    state.jelantahRecap = await getAllFromStore(STORE_JELANTAH);
+  } catch (err) {
+    state.jelantahRecap = [];
+  }
+
+  if (!state.jelantahRecap || state.jelantahRecap.length === 0) {
+    try {
+      const savedJelantah = localStorage.getItem('jelantah_recap_data');
+      if (savedJelantah) state.jelantahRecap = JSON.parse(savedJelantah);
     } catch (e) {}
   }
   
@@ -1314,6 +1334,19 @@ async function autoPullFromSheets() {
         } catch(e){}
       }
 
+      // Ganti data jelantah recap sepenuhnya
+      if (result.jelantah && Array.isArray(result.jelantah)) {
+        const parsedJlt = result.jelantah.map(parseJelantahRow).filter(Boolean);
+        state.jelantahRecap = parsedJlt;
+        try {
+          await clearStore(STORE_JELANTAH);
+          for (const jlt of parsedJlt) {
+            await saveToStore(STORE_JELANTAH, jlt);
+          }
+          localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap));
+        } catch(e){}
+      }
+
       updateSyncBadgeState();
       renderApp();
     } else {
@@ -1475,17 +1508,14 @@ function renderDashboard() {
     }
   });
 
-  // Total Berat Minyak Jelantah (KG) dari Kwitansi / Tanda Terima Jelantah
+  // Total Berat Minyak Jelantah (KG) dari Recap Jelantah
   let totalJelantahKg = 0;
-  (state.sponsorshipHistory || []).forEach(kw => {
-    const tipe = String(kw.tipeJenis || kw.tipe || '').toUpperCase();
-    if (tipe.includes('JELANTAH')) {
-      let val = kw.nominal;
-      if (typeof val === 'string') {
-        val = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
-      }
-      totalJelantahKg += (parseInt(val, 10) || 0);
+  (state.jelantahRecap || []).forEach(r => {
+    let val = r.kg || r.nominal;
+    if (typeof val === 'string') {
+      val = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
     }
+    totalJelantahKg += (parseInt(val, 10) || 0);
   });
 
   // Total Uang Hasil Minyak Jelantah (Rp) dari Pemasukan Transaksi
@@ -4368,28 +4398,29 @@ function setupJelantahHandlers() {
     const allAttachments = [...(jelantahDokFiles || []), ...(jelantahNotaFiles || [])];
 
     const newRecord = {
-      id: generateUniqueId('KW-JLT'),
-      no: `KW-JLT-${Date.now().toString().slice(-4)}`,
+      id: generateUniqueId('JLT'),
+      tanggal: tgl,
       tgl: tgl,
+      kwarran: kwarran,
       dari: kwarran,
+      kg: kg,
       nominal: `${kg} KG`,
       terbilang: `${terbilangKg(kg)} KILOGRAM`,
-      guna: ket ? `PERSYARATAN MINYAK JELANTAH (${ket})` : 'PERSYARATAN MINYAK JELANTAH',
+      keterangan: ket,
+      guna: ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH',
       penerima: state.user ? (state.user.nama || 'Petugas Jelantah') : 'Petugas Jelantah',
-      nta: 'Bendahara Raimuna Cabang',
-      tipeJenis: 'JELANTAH',
       attachment: allAttachments.length > 0 ? allAttachments : null,
       dateCreated: new Date().toISOString()
     };
 
-    if (!state.sponsorshipHistory) state.sponsorshipHistory = [];
-    state.sponsorshipHistory.unshift(newRecord);
+    if (!state.jelantahRecap) state.jelantahRecap = [];
+    state.jelantahRecap.unshift(newRecord);
 
-    try { await saveToStore(STORE_SPONSORSHIPS, newRecord); } catch(err){}
-    try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch(err){}
+    try { await saveToStore(STORE_JELANTAH, newRecord); } catch(err){}
+    try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(err){}
 
     if (state.settings.sheetUrl) {
-      syncKwitansiToSheets(newRecord);
+      syncJelantahToSheets(newRecord);
     }
 
     showToast('Recap Jelantah Disimpan!', `Data pengambilan ${kg} KG dari ${kwarran} berhasil dicatat.`, 'success');
@@ -4492,16 +4523,7 @@ function terbilangKg(n) {
 }
 
 function getJelantahRecords() {
-  const list = [];
-  (state.sponsorshipHistory || []).forEach(kw => {
-    const tipe = String(kw.tipeJenis || kw.tipe || '').toUpperCase();
-    const guna = String(kw.guna || kw.keterangan || '').toUpperCase();
-    const dari = String(kw.dari || kw.nama || '').toUpperCase();
-    if (tipe.includes('JELANTAH') || guna.includes('JELANTAH') || dari.includes('KWARRAN')) {
-      list.push(kw);
-    }
-  });
-  return list;
+  return state.jelantahRecap || [];
 }
 
 function renderJelantahSection() {
@@ -4655,12 +4677,44 @@ function renderJelantahChart(records) {
   });
 }
 
+function parseJelantahRow(row) {
+  if (!row) return null;
+  const id = row.id || generateUniqueId('JLT');
+  const tanggal = formatDateString(row.tanggal || row.tgl);
+  const kwarran = String(row.kwarran || row.dari || row.nama || '-').trim();
+  const kg = typeof row.kg === 'number' ? row.kg : (parseInt(String(row.kg || row.nominal || '0').replace(/[^0-9]/g, ''), 10) || 0);
+  const keterangan = String(row.keterangan || row.guna || '-').trim();
+  const dateCreated = row.dateCreated || new Date().toISOString();
+  
+  let attachment = null;
+  if (row.bukti) {
+    const urls = String(row.bukti).split(',').map(s => s.trim()).filter(Boolean);
+    if (urls.length > 0) attachment = urls;
+  }
+
+  return {
+    id: String(id),
+    tanggal: tanggal,
+    tgl: tanggal,
+    kwarran: kwarran,
+    dari: kwarran,
+    kg: kg,
+    nominal: `${kg} KG`,
+    terbilang: `${terbilangKg(kg)} KILOGRAM`,
+    keterangan: keterangan,
+    guna: keterangan !== '-' ? `PENGAMBILAN MINYAK JELANTAH (${keterangan})` : 'PENGAMBILAN MINYAK JELANTAH',
+    penerima: 'Petugas Jelantah',
+    attachment: attachment,
+    dateCreated: dateCreated
+  };
+}
+
 async function deleteJelantahRecord(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus catatan pengambilan jelantah ini?')) return;
 
-  state.sponsorshipHistory = (state.sponsorshipHistory || []).filter(r => r.id !== id);
-  try { await deleteFromStore(STORE_SPONSORSHIPS, id); } catch(e){}
-  try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch(e){}
+  state.jelantahRecap = (state.jelantahRecap || []).filter(r => r.id !== id);
+  try { await deleteFromStore(STORE_JELANTAH, id); } catch(e){}
+  try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(e){}
 
   if (state.settings.sheetUrl) {
     try {
@@ -4668,7 +4722,7 @@ async function deleteJelantahRecord(id) {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'delete_kwitansi', id: id })
+        body: JSON.stringify({ action: 'delete_jelantah', id: id })
       });
     } catch(err){}
   }
@@ -4676,6 +4730,20 @@ async function deleteJelantahRecord(id) {
   showToast('Catatan Dihapus', 'Data recap jelantah berhasil dihapus.', 'info');
   renderJelantahSection();
   renderDashboard();
+}
+
+async function syncJelantahToSheets(rec) {
+  if (!state.settings.sheetUrl) return;
+  try {
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'sync_jelantah', jelantah: rec })
+    });
+  } catch (err) {
+    console.error('Failed to sync jelantah to sheet:', err);
+  }
 }
 
 function exportJelantahExcel() {
