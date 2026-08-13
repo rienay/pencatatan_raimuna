@@ -1163,7 +1163,8 @@ input:disabled, select:disabled, textarea:disabled {
   transition: opacity var(--transition-speed) ease;
 }
 
-.modal-overlay.open {
+.modal-overlay.open,
+.modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1183,7 +1184,8 @@ input:disabled, select:disabled, textarea:disabled {
   overflow: hidden;
 }
 
-.modal-overlay.open .modal-card {
+.modal-overlay.open .modal-card,
+.modal-overlay.active .modal-card {
   transform: scale(1);
 }
 

@@ -4465,6 +4465,7 @@ function setupJelantahHandlers() {
         }
 
         showToast('Perubahan Disimpan!', `Data ${kwarran} berhasil diperbarui.`, 'success');
+        document.getElementById('modal-edit-jelantah').classList.remove('open');
         document.getElementById('modal-edit-jelantah').classList.remove('active');
         renderJelantahSection();
         renderDashboard();
@@ -4745,12 +4746,16 @@ function showJelantahDetailModal(r) {
     </div>
   `;
 
+  modal.classList.add('open');
   modal.classList.add('active');
 
+  const closeModal = () => {
+    modal.classList.remove('open');
+    modal.classList.remove('active');
+  };
   const btnCloseHeader = document.getElementById('btn-close-jelantah-detail');
   const btnCloseFooter = document.getElementById('btn-close-jelantah-detail-footer');
 
-  const closeModal = () => modal.classList.remove('active');
   if (btnCloseHeader) btnCloseHeader.onclick = closeModal;
   if (btnCloseFooter) btnCloseFooter.onclick = closeModal;
 }
@@ -4826,9 +4831,13 @@ function openEditJelantahModal(r) {
   document.getElementById('edit-jelantah-kg').value = parseKgNumber(r.kg || r.nominal);
   document.getElementById('edit-jelantah-keterangan').value = r.keterangan || r.guna || '';
 
+  modal.classList.add('open');
   modal.classList.add('active');
 
-  const closeModal = () => modal.classList.remove('active');
+  const closeModal = () => {
+    modal.classList.remove('open');
+    modal.classList.remove('active');
+  };
   const btnCloseHeader = document.getElementById('btn-close-jelantah-edit');
   const btnCloseFooter = document.getElementById('btn-cancel-jelantah-edit');
   if (btnCloseHeader) btnCloseHeader.onclick = closeModal;
