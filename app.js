@@ -1491,6 +1491,15 @@ function renderDashboard() {
       totalJelantahRp += (parseInt(t.nominal, 10) || 0);
     }
   });
+
+  // Total Uang Dana APBD (Rp) dari Pemasukan Transaksi
+  let totalApbdRp = 0;
+  (state.transactions || []).forEach(t => {
+    const src = String(getTxSumber(t) || '').trim();
+    if (t.tipe === 'IN' && src.includes('APBD')) {
+      totalApbdRp += (parseInt(t.nominal, 10) || 0);
+    }
+  });
   
   // Update fields
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
@@ -1501,6 +1510,7 @@ function renderDashboard() {
   if (document.getElementById('dashboard-total-talangan-pending')) document.getElementById('dashboard-total-talangan-pending').textContent = formatRupiah(totalTalanganPending);
   if (document.getElementById('dashboard-total-jelantah-kg')) document.getElementById('dashboard-total-jelantah-kg').textContent = `${totalJelantahKg.toLocaleString('id-ID')} KG`;
   if (document.getElementById('dashboard-total-jelantah-rp')) document.getElementById('dashboard-total-jelantah-rp').textContent = formatRupiah(totalJelantahRp);
+  if (document.getElementById('dashboard-total-apbd-rp')) document.getElementById('dashboard-total-apbd-rp').textContent = formatRupiah(totalApbdRp);
 
   // Render Dashboard Quick Checklist Utang
   renderDashboardQuickUtang();
