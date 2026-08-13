@@ -546,7 +546,7 @@ async function loadStateFromDB() {
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
   
   // ALWAYS force the latest sheet URL from code to avoid cached obsolete URLs
-  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbzdufNJJkepcx01PiBrrbLE-vWqVhcZ_Yv_fA5u4grUqUNW32ePX_vK9VrXWOcSYou4tQ/exec';
+  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbzgu-4Ar1zwcxYeamYo0EdERWPrBsgCr_diAf_obA2vMYsDj0upY0nnRmmklzBi77DeDw/exec';
   state.settings.sheetUrl = hardcodedUrl;
   await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: hardcodedUrl });
   
@@ -1076,6 +1076,21 @@ async function syncDeleteToSheets(txnId) {
   } catch (err) {
     console.error('Gagal hapus dari Sheet, akan dicoba ulang saat startup:', err);
     // Tombstone tetap tersimpan untuk retry berikutnya
+  }
+}
+
+// Kirim semua transaksi lokal yang belum tersinkronisasi (sync === false) ke Google Sheets
+async function autoSyncPendingTransactions() {
+  if (!state.settings.sheetUrl) return;
+  const unsyncedTxns = (state.transactions || []).filter(t => !t.sync);
+  if (!unsyncedTxns || unsyncedTxns.length === 0) return;
+
+  for (const txn of unsyncedTxns) {
+    try {
+      await syncTransactionToSheets(txn);
+    } catch (err) {
+      console.error('Gagal auto-sync transaksi:', txn.id, err);
+    }
   }
 }
 
