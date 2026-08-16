@@ -262,6 +262,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     await autoSyncPendingTransactions();
     await autoPullFromSheets();
   }
+
+  // Auto re-sync saat user kembali fokus ke tab/window (misal setelah input data dari HP)
+  window.addEventListener('focus', async () => {
+    if (state.settings.sheetUrl && state.settings.autoSync) {
+      await pushPendingDeletes();
+      await autoSyncPendingTransactions();
+      await autoPullFromSheets();
+    }
+  });
+
+  // Auto polling berkala setiap 30 detik agar data HP & Laptop selalu sinkron otomatis tanpa perlu refresh manual
+  setInterval(async () => {
+    if (state.settings.sheetUrl && state.settings.autoSync && document.visibilityState === 'visible') {
+      await pushPendingDeletes();
+      await autoSyncPendingTransactions();
+      await autoPullFromSheets();
+    }
+  }, 30000);
 });
 
 // Setup References to DOM elements
