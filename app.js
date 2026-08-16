@@ -1128,14 +1128,36 @@ async function pushPendingDeletes() {
 
   for (const item of pendingDeletes) {
     try {
-      const action = item.type === 'utang' ? 'delete_utang' :
-        item.type === 'kwitansi' ? 'delete_kwitansi' : 'delete_single';
-      await fetch(state.settings.sheetUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action, id: item.id, no: item.no || '' })
-      });
+      if (item.type === 'utang') {
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'delete_utang', id: item.id })
+        });
+      } else if (item.type === 'jelantah') {
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'delete_jelantah', id: item.id })
+        });
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'delete_kwitansi', id: item.id })
+        });
+      } else if (item.type === 'kwitansi') {
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'delete_kwitansi', id: item.id, no: item.no || '' })
+        });
+      } else {
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'delete_single', id: item.id })
+        });
+      }
       try { await deleteFromStore(STORE_DELETED_IDS, item.id); } catch (e) { }
     } catch (err) {
       console.error('Gagal push pending delete:', item.id, err);
@@ -1270,6 +1292,17 @@ async function pullAllTransactionsFromSheets() {
       }
 
       // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
+      const localJelantahAttachmentMapPull = {};
+      for (const jlt of (state.jelantahRecap || [])) {
+        if (jlt.attachment && jlt.id) {
+          localJelantahAttachmentMapPull[jlt.id] = jlt.attachment;
+        }
+      }
+
+      let pendingDeletesPull = [];
+      try { pendingDeletesPull = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { }
+      const deletedJelantahIdsPull = (pendingDeletesPull || []).filter(d => d.type === 'jelantah' || d.type === 'kwitansi').map(d => String(d.id).trim());
+
       let rawJelantahPull = Array.isArray(result.jelantah) ? [...result.jelantah] : [];
       if (result.kwitansi && Array.isArray(result.kwitansi)) {
         const kwJlt = result.kwitansi.filter(row => {
@@ -1283,7 +1316,12 @@ async function pullAllTransactionsFromSheets() {
         const mapJlt = new Map();
         rawJelantahPull.forEach(row => {
           const parsed = parseJelantahRow(row);
-          if (parsed && parsed.id) mapJlt.set(parsed.id, parsed);
+          if (parsed && parsed.id && !deletedJelantahIdsPull.includes(parsed.id)) {
+            if (localJelantahAttachmentMapPull[parsed.id] && !parsed.attachment) {
+              parsed.attachment = localJelantahAttachmentMapPull[parsed.id];
+            }
+            mapJlt.set(parsed.id, parsed);
+          }
         });
         const parsedJlt = Array.from(mapJlt.values());
         state.jelantahRecap = parsedJlt;
@@ -1326,6 +1364,9 @@ async function autoPullFromSheets() {
       // (pushPendingDeletes & autoSyncPendingTransactions sudah jalan sebelumnya,
       //  jadi data Sheet sudah akurat mencerminkan semua aksi hapus/tambah lokal)
 
+      let pendingDeletes = [];
+      try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { }
+
       // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
       const localAttachmentMap = {};
       for (const txn of state.transactions) {
@@ -1365,8 +1406,6 @@ async function autoPullFromSheets() {
 
       // Ganti data utang sepenuhnya (filter utang yang sedang ada di antrean tombstone hapus)
       if (result.utang && Array.isArray(result.utang)) {
-        let pendingDeletes = [];
-        try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { }
         const deletedUtangIds = (pendingDeletes || []).filter(d => d.type === 'utang').map(d => d.id);
 
         const parsedUt = result.utang.map(parseUtangRow).filter(Boolean).filter(u => !deletedUtangIds.includes(u.id));
@@ -1380,7 +1419,17 @@ async function autoPullFromSheets() {
         } catch (e) { }
       }
 
-      // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
+      // Simpan attachment lokal jelantah sebelum diganti
+      const localJelantahAttachmentMap = {};
+      for (const jlt of (state.jelantahRecap || [])) {
+        if (jlt.attachment && jlt.id) {
+          localJelantahAttachmentMap[jlt.id] = jlt.attachment;
+        }
+      }
+
+      // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah, filter deleted tombstones)
+      const deletedJelantahIds = (pendingDeletes || []).filter(d => d.type === 'jelantah' || d.type === 'kwitansi').map(d => String(d.id).trim());
+
       let rawJelantah = Array.isArray(result.jelantah) ? [...result.jelantah] : [];
       if (result.kwitansi && Array.isArray(result.kwitansi)) {
         const kwJlt = result.kwitansi.filter(row => {
@@ -1394,7 +1443,12 @@ async function autoPullFromSheets() {
         const mapJlt = new Map();
         rawJelantah.forEach(row => {
           const parsed = parseJelantahRow(row);
-          if (parsed && parsed.id) mapJlt.set(parsed.id, parsed);
+          if (parsed && parsed.id && !deletedJelantahIds.includes(parsed.id)) {
+            if (localJelantahAttachmentMap[parsed.id] && !parsed.attachment) {
+              parsed.attachment = localJelantahAttachmentMap[parsed.id];
+            }
+            mapJlt.set(parsed.id, parsed);
+          }
         });
         const parsedJlt = Array.from(mapJlt.values());
         state.jelantahRecap = parsedJlt;
@@ -3704,6 +3758,7 @@ async function deleteSponsorshipHistory(id) {
 
   const item = state.sponsorshipHistory.find(h => h.id === id);
   const kwNo = item ? item.no : null;
+  const isJelantah = item && (item.tipeJenis === 'JELANTAH' || (item.guna && item.guna.toUpperCase().includes('JELANTAH')));
 
   try {
     await deleteFromStore(STORE_SPONSORSHIPS, id);
@@ -3713,6 +3768,15 @@ async function deleteSponsorshipHistory(id) {
   try {
     localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
   } catch (e) { }
+
+  if (isJelantah) {
+    state.jelantahRecap = (state.jelantahRecap || []).filter(r => r.id !== id);
+    try { await deleteFromStore(STORE_JELANTAH, id); } catch (e) { }
+    try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (e) { }
+    try { await saveToStore(STORE_DELETED_IDS, { id, type: 'jelantah', deletedAt: new Date().toISOString() }); } catch (e) { }
+    renderJelantahSection();
+    renderDashboard();
+  }
 
   if (state.settings.sheetUrl) {
     syncKwitansiToSheets_delete(id, kwNo);
@@ -4402,6 +4466,7 @@ async function alokasikanNotaTalangan(txnId, targetSumber) {
 // ================= RECAP JELANTAH MODULE =================
 let jelantahDokFiles = [];
 let jelantahNotaFiles = [];
+let jelantahEditFiles = [];
 
 function setupJelantahHandlers() {
   const formJelantah = document.getElementById('form-jelantah-add');
@@ -4412,7 +4477,7 @@ function setupJelantahHandlers() {
     document.getElementById('jelantah-tanggal').value = today;
   }
 
-  // Setup Dropzones for Jelantah
+  // Setup Dropzones for Jelantah (Add form)
   const dropDok = document.getElementById('jelantah-dok-dropzone');
   const indDok = document.getElementById('jelantah-dok-indicator');
   const inputDok = document.getElementById('jelantah-bukti-dok');
@@ -4420,6 +4485,11 @@ function setupJelantahHandlers() {
   const dropNota = document.getElementById('jelantah-nota-dropzone');
   const indNota = document.getElementById('jelantah-nota-indicator');
   const inputNota = document.getElementById('jelantah-bukti-nota');
+
+  // Setup Dropzone for Jelantah (Edit form)
+  const dropEdit = document.getElementById('edit-jelantah-dropzone');
+  const indEdit = document.getElementById('edit-jelantah-file-indicator');
+  const inputEdit = document.getElementById('edit-jelantah-bukti');
 
   if (dropDok && inputDok) {
     setupCustomMultiFileDropzone(dropDok, inputDok, indDok, (files) => {
@@ -4433,7 +4503,13 @@ function setupJelantahHandlers() {
     });
   }
 
-  // Form submit listener
+  if (dropEdit && inputEdit) {
+    setupCustomMultiFileDropzone(dropEdit, inputEdit, indEdit, (files) => {
+      jelantahEditFiles = files;
+    });
+  }
+
+  // Form submit listener (Add Jelantah)
   formJelantah.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -4465,7 +4541,8 @@ function setupJelantahHandlers() {
       terbilang: `${terbilangKg(kg)} KILOGRAM`,
       keterangan: ket,
       guna: ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH',
-      penerima: state.user ? (state.user.nama || 'Petugas Jelantah') : 'Petugas Jelantah',
+      penerima: state.user ? (state.user.nama || 'Tri Soma Ananta Rahman') : 'Tri Soma Ananta Rahman',
+      nta: 'Ketua Panitia',
       attachment: allAttachments.length > 0 ? allAttachments : null,
       dateCreated: new Date().toISOString()
     };
@@ -4475,6 +4552,26 @@ function setupJelantahHandlers() {
 
     try { await saveToStore(STORE_JELANTAH, newRecord); } catch (err) { }
     try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (err) { }
+
+    // Synchronize to sponsorshipHistory / Kwitansi list as well
+    const kwEntry = {
+      id: newRecord.id,
+      tipeJenis: 'JELANTAH',
+      no: newRecord.id,
+      tgl: newRecord.tgl,
+      dari: newRecord.kwarran,
+      nominal: newRecord.nominal,
+      terbilang: newRecord.terbilang,
+      guna: newRecord.guna,
+      penerima: newRecord.penerima,
+      nta: 'Ketua Panitia',
+      attachment: newRecord.attachment,
+      dateCreated: newRecord.dateCreated
+    };
+    if (!state.sponsorshipHistory) state.sponsorshipHistory = [];
+    state.sponsorshipHistory.unshift(kwEntry);
+    try { await saveToStore(STORE_SPONSORSHIPS, kwEntry); } catch (err) { }
+    try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch (err) { }
 
     if (state.settings.sheetUrl) {
       syncJelantahToSheets(newRecord);
@@ -4491,6 +4588,7 @@ function setupJelantahHandlers() {
     jelantahNotaFiles = [];
 
     renderJelantahSection();
+    renderSponsorshipHistoryTable();
     renderDashboard();
   });
 
@@ -4506,7 +4604,7 @@ function setupJelantahHandlers() {
       const kg = parseFloat(kgStr) || 0;
       const ket = document.getElementById('edit-jelantah-keterangan').value;
 
-      const rec = (state.jelantahRecap || []).find(item => item.id === id);
+      const rec = (state.jelantahRecap || []).find(item => String(item.id) === String(id));
       if (rec) {
         rec.tgl = tgl;
         rec.tanggal = tgl;
@@ -4514,20 +4612,45 @@ function setupJelantahHandlers() {
         rec.dari = kwarran;
         rec.kg = kg;
         rec.nominal = `${kg} KG`;
+        rec.terbilang = `${terbilangKg(kg)} KILOGRAM`;
         rec.keterangan = ket;
         rec.guna = ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH';
 
+        if (jelantahEditFiles && jelantahEditFiles.length > 0) {
+          rec.attachment = jelantahEditFiles;
+        }
+
         try { await saveToStore(STORE_JELANTAH, rec); } catch (err) { }
         try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (err) { }
+
+        // Also update matching item in sponsorshipHistory
+        const kwItem = (state.sponsorshipHistory || []).find(h => String(h.id) === String(id));
+        if (kwItem) {
+          kwItem.tgl = tgl;
+          kwItem.dari = kwarran;
+          kwItem.nominal = `${kg} KG`;
+          kwItem.terbilang = `${terbilangKg(kg)} KILOGRAM`;
+          kwItem.guna = rec.guna;
+          if (jelantahEditFiles && jelantahEditFiles.length > 0) {
+            kwItem.attachment = jelantahEditFiles;
+          }
+          try { await saveToStore(STORE_SPONSORSHIPS, kwItem); } catch (err) { }
+          try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch (err) { }
+        }
 
         if (state.settings.sheetUrl) {
           syncJelantahToSheets(rec);
         }
 
-        showToast('Perubahan Disimpan!', `Data ${kwarran} berhasil diperbarui.`, 'success');
-        document.getElementById('modal-edit-jelantah').classList.remove('open');
-        document.getElementById('modal-edit-jelantah').classList.remove('active');
+        showToast('Perubahan Disimpan!', `Data ${kwarran} (${kg} KG) berhasil diperbarui.`, 'success');
+        const modalEdit = document.getElementById('modal-edit-jelantah');
+        if (modalEdit) {
+          modalEdit.classList.remove('open');
+          modalEdit.classList.remove('active');
+        }
+        jelantahEditFiles = [];
         renderJelantahSection();
+        renderSponsorshipHistoryTable();
         renderDashboard();
       }
     });
@@ -4608,13 +4731,17 @@ function processSelectedFiles(files, indicator, callback) {
 }
 
 function terbilangKg(n) {
-  if (isNaN(n)) return '';
+  if (isNaN(n) || n === null || n === undefined) return '';
+  n = Math.floor(n);
+  if (n === 0) return 'NOL';
   const satuan = ['', 'SATU', 'DUA', 'TIGA', 'EMPAT', 'LIMA', 'ENAM', 'TUJUH', 'DELAPAN', 'SEMBILAN', 'SEPULUH', 'SEBELAS'];
   if (n < 12) return satuan[n];
   if (n < 20) return terbilangKg(n - 10) + ' BELAS';
-  if (n < 100) return terbilangKg(Math.floor(n / 10)) + ' PULUH ' + terbilangKg(n % 10);
-  if (n < 200) return 'SERATUS ' + terbilangKg(n - 100);
-  if (n < 1000) return terbilangKg(Math.floor(n / 100)) + ' RATUS ' + terbilangKg(n % 100);
+  if (n < 100) return (terbilangKg(Math.floor(n / 10)) + ' PULUH ' + terbilangKg(n % 10)).trim();
+  if (n < 200) return ('SERATUS ' + terbilangKg(n - 100)).trim();
+  if (n < 1000) return (terbilangKg(Math.floor(n / 100)) + ' RATUS ' + terbilangKg(n % 100)).trim();
+  if (n < 2000) return ('SERIBU ' + terbilangKg(n - 1000)).trim();
+  if (n < 1000000) return (terbilangKg(Math.floor(n / 1000)) + ' RIBU ' + terbilangKg(n % 1000)).trim();
   return String(n);
 }
 
@@ -4658,35 +4785,35 @@ function renderJelantahSection() {
 
   const filtered = records.filter(r => {
     if (!search) return true;
-    const matchDari = String(r.dari || '').toLowerCase().includes(search);
-    const matchGuna = String(r.guna || '').toLowerCase().includes(search);
-    const matchTgl = String(r.tgl || '').toLowerCase().includes(search);
-    const matchNom = String(r.nominal || '').toLowerCase().includes(search);
+    const matchDari = String(r.dari || r.kwarran || '').toLowerCase().includes(search);
+    const matchGuna = String(r.guna || r.keterangan || '').toLowerCase().includes(search);
+    const matchTgl = String(r.tgl || r.tanggal || '').toLowerCase().includes(search);
+    const matchNom = String(r.nominal || r.kg || '').toLowerCase().includes(search);
     return matchDari || matchGuna || matchTgl || matchNom;
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada data pengambilan jelantah yang cocok.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding: 24px;">Tidak ada data pengambilan jelantah yang cocok.</td></tr>';
     return;
   }
 
   filtered.forEach((r, idx) => {
     const tr = document.createElement('tr');
 
-    let kgVal = r.nominal;
-    if (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG')) {
+    let kgVal = r.nominal || `${r.kg || 0} KG`;
+    if (typeof kgVal === 'number' || (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG'))) {
       kgVal = `${kgVal} KG`;
     }
 
     // Attachments preview links
-    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">Tidak ada file</span>';
+    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">Tidak ada berkas</span>';
     if (r.attachment) {
       const atts = Array.isArray(r.attachment) ? r.attachment : [r.attachment];
       if (atts.length > 0) {
         attHtml = atts.map((att, i) => {
           const isUrl = typeof att === 'string' && att.startsWith('http');
           const href = isUrl ? att : (att.base64 || '#');
-          const name = isUrl ? `File ${i + 1}` : (att.name || `File ${i + 1}`);
+          const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
           return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;">📎 ${name}</a>`;
         }).join('');
       }
@@ -4695,7 +4822,7 @@ function renderJelantahSection() {
     tr.innerHTML = `
       <td>${idx + 1}</td>
       <td>${formatIndonesianDate(r.tgl || r.tanggal)}</td>
-      <td class="font-bold">${r.dari || r.nama || '-'}</td>
+      <td class="font-bold">${r.dari || r.kwarran || '-'}</td>
       <td class="text-right font-bold text-success" style="font-size:1.05rem;">${kgVal}</td>
       <td>${attHtml}</td>
       <td>${r.guna || r.keterangan || '-'}</td>
@@ -4794,6 +4921,7 @@ function showJelantahDetailModal(r) {
       <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; border-left: 4px solid #10b981; grid-column: span 2;">
         <span style="font-size: 0.75rem; color: #047857; display: block; font-weight: 600;">JUMLAH MINYAK JELANTAH</span>
         <strong style="font-size: 1.25rem; color: #065f46;">${kgVal}</strong>
+        <span style="font-size: 0.8rem; color: #047857; display: block; margin-top: 2px; font-weight: 600;">(${r.terbilang || (terbilangKg(parseKgNumber(r.kg || r.nominal)) + ' KILOGRAM')})</span>
       </div>
       <div style="background: var(--bg-body, #f9fafb); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); grid-column: span 2;">
         <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600;">KETERANGAN / DESKRIPSI</span>
@@ -4887,9 +5015,43 @@ function openEditJelantahModal(r) {
 
   document.getElementById('edit-jelantah-id').value = r.id;
   document.getElementById('edit-jelantah-tanggal').value = r.tgl || r.tanggal;
-  document.getElementById('edit-jelantah-kwarran').value = r.kwarran || r.dari;
+
+  const kwSelect = document.getElementById('edit-jelantah-kwarran');
+  const kwVal = String(r.kwarran || r.dari || '').trim();
+  if (kwSelect) {
+    let found = false;
+    for (let i = 0; i < kwSelect.options.length; i++) {
+      const optVal = kwSelect.options[i].value.trim().toLowerCase();
+      const optText = kwSelect.options[i].text.trim().toLowerCase();
+      const targetVal = kwVal.toLowerCase();
+      if (optVal === targetVal || optText === targetVal || (targetVal && optVal.includes(targetVal)) || (targetVal && targetVal.includes(optVal))) {
+        kwSelect.selectedIndex = i;
+        found = true;
+        break;
+      }
+    }
+    if (!found && kwVal) {
+      const newOpt = document.createElement('option');
+      newOpt.value = kwVal;
+      newOpt.textContent = kwVal;
+      newOpt.selected = true;
+      kwSelect.appendChild(newOpt);
+    }
+  }
+
   document.getElementById('edit-jelantah-kg').value = parseKgNumber(r.kg || r.nominal);
-  document.getElementById('edit-jelantah-keterangan').value = r.keterangan || r.guna || '';
+  document.getElementById('edit-jelantah-keterangan').value = r.keterangan || (r.guna && !r.guna.startsWith('PENGAMBILAN MINYAK JELANTAH') ? r.guna : '') || '';
+
+  const editInd = document.getElementById('edit-jelantah-file-indicator');
+  if (editInd) {
+    if (r.attachment && (Array.isArray(r.attachment) ? r.attachment.length > 0 : true)) {
+      const count = Array.isArray(r.attachment) ? r.attachment.length : 1;
+      editInd.innerHTML = `<span style="color: #059669; font-size: 0.8rem;">Sudah ada ${count} berkas lampiran tersimpan. (Pilih file baru jika ingin mengganti)</span>`;
+    } else {
+      editInd.textContent = '';
+    }
+  }
+  jelantahEditFiles = [];
 
   modal.classList.add('open');
   modal.classList.add('active');
@@ -4906,17 +5068,23 @@ function openEditJelantahModal(r) {
 
 function parseJelantahRow(row) {
   if (!row) return null;
-  const id = row.id || generateUniqueId('JLT');
-  const tanggal = formatDateString(row.tanggal || row.tgl);
-  const kwarran = String(row.kwarran || row.dari || row.nama || '-').trim();
-  const kg = parseKgNumber(row.kg || row.nominal);
-  const keterangan = String(row.keterangan || row.guna || '-').trim();
+  // Ignore blank rows
+  if (!row.id && !row.tanggal && !row.tgl && !row.kwarran && !row.dari && !row.kg && !row.nominal) return null;
+
+  const id = row.id || row.ID || row.no || generateUniqueId('JLT');
+  const tanggal = formatDateString(row.tanggal || row.tgl || row.Tanggal || row.Tgl);
+  const kwarran = String(row.kwarran || row.dari || row.nama || row['Nama Kwarran'] || row['Diterima Dari'] || '-').trim();
+  const kg = parseKgNumber(row.kg || row.nominal || row.Jumlah || row['Jumlah (KG)']);
+  const keterangan = String(row.keterangan || row.guna || row.Keperluan || row.Catatan || '-').trim();
   const dateCreated = row.dateCreated || new Date().toISOString();
 
   let attachment = null;
   if (row.bukti) {
     const urls = String(row.bukti).split(',').map(s => s.trim()).filter(Boolean);
     if (urls.length > 0) attachment = urls;
+  }
+  if (!attachment && row.attachment) {
+    attachment = row.attachment;
   }
 
   return {
@@ -4929,8 +5097,9 @@ function parseJelantahRow(row) {
     nominal: `${kg} KG`,
     terbilang: `${terbilangKg(kg)} KILOGRAM`,
     keterangan: keterangan,
-    guna: keterangan !== '-' ? `PENGAMBILAN MINYAK JELANTAH (${keterangan})` : 'PENGAMBILAN MINYAK JELANTAH',
-    penerima: 'Petugas Jelantah',
+    guna: (keterangan && keterangan !== '-') ? `PENGAMBILAN MINYAK JELANTAH (${keterangan})` : 'PENGAMBILAN MINYAK JELANTAH',
+    penerima: row.penerima || 'Tri Soma Ananta Rahman',
+    nta: 'Ketua Panitia',
     attachment: attachment,
     dateCreated: dateCreated
   };
@@ -4939,29 +5108,45 @@ function parseJelantahRow(row) {
 async function deleteJelantahRecord(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus catatan pengambilan jelantah ini?')) return;
 
-  state.jelantahRecap = (state.jelantahRecap || []).filter(r => r.id !== id);
-  try { await deleteFromStore(STORE_JELANTAH, id); } catch (e) { }
+  const idStr = String(id);
+
+  // 1. Simpan ke tombstone agar autoPull tidak menarik kembali
+  try {
+    await saveToStore(STORE_DELETED_IDS, { id: idStr, type: 'jelantah', deletedAt: new Date().toISOString() });
+  } catch (e) { }
+
+  // 2. Hapus dari state jelantah & storage
+  state.jelantahRecap = (state.jelantahRecap || []).filter(r => String(r.id) !== idStr);
+  try { await deleteFromStore(STORE_JELANTAH, idStr); } catch (e) { }
   try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (e) { }
 
+  // 3. Hapus dari state kwitansi / sponsorship & storage
+  state.sponsorshipHistory = (state.sponsorshipHistory || []).filter(h => String(h.id) !== idStr);
+  try { await deleteFromStore(STORE_SPONSORSHIPS, idStr); } catch (e) { }
+  try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch (e) { }
+
+  // 4. Kirim ke Google Sheets
   if (state.settings.sheetUrl) {
     try {
       await fetch(state.settings.sheetUrl, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'delete_jelantah', id: id })
+        body: JSON.stringify({ action: 'delete_jelantah', id: idStr })
       });
       await fetch(state.settings.sheetUrl, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'delete_kwitansi', id: id })
+        body: JSON.stringify({ action: 'delete_kwitansi', id: idStr })
       });
-    } catch (err) { }
+      try { await deleteFromStore(STORE_DELETED_IDS, idStr); } catch (e) { }
+    } catch (err) {
+      console.warn('Gagal delete jelantah di Sheet langsung, tombstone tersimpan:', err);
+    }
   }
 
   showToast('Catatan Dihapus', 'Data recap jelantah berhasil dihapus.', 'info');
   renderJelantahSection();
+  renderSponsorshipHistoryTable();
   renderDashboard();
 }
 
@@ -4979,36 +5164,13 @@ async function syncJelantahToSheets(rec) {
       terbilang: rec.terbilang || `${terbilangKg(rec.kg)} KILOGRAM`,
       keterangan: rec.keterangan || rec.guna || '-',
       guna: rec.guna || (rec.keterangan ? `PENGAMBILAN MINYAK JELANTAH (${rec.keterangan})` : 'PENGAMBILAN MINYAK JELANTAH'),
-      penerima: rec.penerima || 'Petugas Jelantah',
+      penerima: rec.penerima || 'Tri Soma Ananta Rahman',
+      attachment: rec.attachment || null,
       dateCreated: rec.dateCreated || new Date().toISOString()
     };
 
-    // 1. Send as sync_kwitansi format (Google Apps Script stores jelantah under kwitansi sheet)
-    const kwRecord = {
-      id: rec.id,
-      tipeJenis: 'JELANTAH',
-      no: rec.id,
-      tgl: rec.tgl || rec.tanggal,
-      dari: rec.dari || rec.kwarran,
-      nominal: `${rec.kg} KG`,
-      terbilang: rec.terbilang || `${terbilangKg(rec.kg)} KILOGRAM`,
-      guna: rec.guna || 'PERSYARATAN MINYAK JELANTAH',
-      penerima: rec.penerima || 'Tri Soma Ananta Rahman',
-      nta: 'Ketua Panitia',
-      dateCreated: rec.dateCreated
-    };
-
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'sync_kwitansi', kwitansi: kwRecord })
-    });
-
-    // 2. Send as sync_jelantah format
-    await fetch(state.settings.sheetUrl, {
-      method: 'POST',
-      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'sync_jelantah', jelantah: cleanJlt })
     });
@@ -5027,10 +5189,10 @@ function exportJelantahExcel() {
   const rows = records.map((r, i) => [
     i + 1,
     r.tgl || r.tanggal,
-    r.dari || r.nama,
-    r.nominal,
+    r.dari || r.kwarran || r.nama,
+    r.nominal || `${r.kg || 0} KG`,
     r.guna || r.keterangan,
-    r.penerima || 'Petugas'
+    r.penerima || 'Tri Soma Ananta Rahman'
   ]);
   downloadCSVFile([headers, ...rows], `Recap_Minyak_Jelantah_${new Date().toISOString().split('T')[0]}.csv`);
   showToast('Ekspor Berhasil', 'Data jelantah siap dibuka di Excel.', 'success');
