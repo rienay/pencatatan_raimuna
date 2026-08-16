@@ -31,7 +31,8 @@
         <div class="form-group">
           <label for="login-email">Email</label>
           <div class="input-icon-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
@@ -41,13 +42,16 @@
         <div class="form-group">
           <label for="login-password">Kata Sandi</label>
           <div class="input-icon-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
             <input type="password" id="login-password" required placeholder="Masukkan kata sandi...">
-            <button type="button" id="toggle-login-password" class="btn-toggle-pw" title="Tampilkan/Sembunyikan kata sandi">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button type="button" id="toggle-login-password" class="btn-toggle-pw"
+              title="Tampilkan/Sembunyikan kata sandi">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
@@ -300,7 +304,9 @@
             <div class="card-details">
               <h3>Sisa Dana APBD</h3>
               <p id="dashboard-total-apbd-rp">Rp 0</p>
-              <small id="dashboard-apbd-subtext" style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px; font-weight: 500;">Masuk: Rp 0 | Keluar: Rp 0</small>
+              <small id="dashboard-apbd-subtext"
+                style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px; font-weight: 500;">Masuk:
+                Rp 0 | Keluar: Rp 0</small>
             </div>
           </div>
         </div>
@@ -699,7 +705,8 @@
         <div class="form-container-card mb-25">
           <div class="form-header">
             <h2>Tambah Pencatatan Utang / Piutang</h2>
-            <p>Catat daftar utang atau tagihan yang perlu dilunasi. Ketika dicentang (LUNAS), nilainya otomatis masuk ke Dashboard Keuangan.</p>
+            <p>Catat daftar utang atau tagihan yang perlu dilunasi. Ketika dicentang (LUNAS), nilainya otomatis masuk ke
+              Dashboard Keuangan.</p>
           </div>
 
           <form id="form-utang-add" class="cute-form">
@@ -738,7 +745,8 @@
 
             <div class="form-group">
               <label for="utang-keterangan">Keterangan / Deskripsi Utang <span class="required">*</span></label>
-              <textarea id="utang-keterangan" rows="2" placeholder="Detail keperluan atau info jatuh tempo..." required></textarea>
+              <textarea id="utang-keterangan" rows="2" placeholder="Detail keperluan atau info jatuh tempo..."
+                required></textarea>
             </div>
 
             <div class="form-actions">
@@ -759,16 +767,20 @@
                 <button class="btn-pill" data-filter="LUNAS">Sudah Lunas</button>
               </div>
               <div class="utang-download-actions" style="display: flex; gap: 10px;">
-                <button type="button" id="btn-export-utang-excel" class="btn btn-success btn-small btn-icon-text" style="padding: 8px 14px; font-weight: 600;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" id="btn-export-utang-excel" class="btn btn-success btn-small btn-icon-text"
+                  style="padding: 8px 14px; font-weight: 600;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
                   <span>Unduh Rekap Excel</span>
                 </button>
-                <button type="button" id="btn-export-utang-csv" class="btn btn-secondary btn-small btn-icon-text" style="padding: 8px 14px; font-weight: 600;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" id="btn-export-utang-csv" class="btn btn-secondary btn-small btn-icon-text"
+                  style="padding: 8px 14px; font-weight: 600;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -835,7 +847,8 @@
         <div class="form-container-card mb-25">
           <div class="form-header">
             <h2>Pencatatan Recap Pengambilan Minyak Jelantah</h2>
-            <p>Catat setiap pengambilan minyak jelantah dari Kwarran beserta jumlah (KG), dokumentasi foto, dan nota tanda terima.</p>
+            <p>Catat setiap pengambilan minyak jelantah dari Kwarran beserta jumlah (KG), dokumentasi foto, dan nota
+              tanda terima.</p>
           </div>
 
           <form id="form-jelantah-add" class="cute-form">
@@ -893,25 +906,29 @@
 
             <div class="form-grid">
               <div class="form-group">
-                <label for="jelantah-bukti-dok">Dokumentasi Pengambilan <span class="text-muted">(Foto / PDF)</span></label>
+                <label for="jelantah-bukti-dok">Dokumentasi Pengambilan <span class="text-muted">(Foto /
+                    PDF)</span></label>
                 <div class="file-dropzone" id="jelantah-dok-dropzone">
                   <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                   </svg>
                   <p>Upload Dokumentasi Foto</p>
-                  <input type="file" id="jelantah-bukti-dok" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                  <input type="file" id="jelantah-bukti-dok" accept="image/png, image/jpeg, application/pdf"
+                    class="file-input-hidden" multiple>
                   <div class="file-preview-indicator" id="jelantah-dok-indicator"></div>
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="jelantah-bukti-nota">Upload Nota / Tanda Terima <span class="text-muted">(Bukti Nota)</span></label>
+                <label for="jelantah-bukti-nota">Upload Nota / Tanda Terima <span class="text-muted">(Bukti
+                    Nota)</span></label>
                 <div class="file-dropzone" id="jelantah-nota-dropzone">
                   <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                   </svg>
                   <p>Upload Nota / Tanda Terima</p>
-                  <input type="file" id="jelantah-bukti-nota" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+                  <input type="file" id="jelantah-bukti-nota" accept="image/png, image/jpeg, application/pdf"
+                    class="file-input-hidden" multiple>
                   <div class="file-preview-indicator" id="jelantah-nota-indicator"></div>
                 </div>
               </div>
@@ -919,7 +936,8 @@
 
             <div class="form-group">
               <label for="jelantah-keterangan">Keterangan / Catatan Tambahan</label>
-              <textarea id="jelantah-keterangan" rows="2" placeholder="Catatan lokasi pengambilan, nama petugas, info drum..."></textarea>
+              <textarea id="jelantah-keterangan" rows="2"
+                placeholder="Catatan lokasi pengambilan, nama petugas, info drum..."></textarea>
             </div>
 
             <div class="form-actions">
@@ -930,7 +948,8 @@
         </div>
 
         <!-- Chart Jelantah Card -->
-        <div class="chart-card mb-25" style="background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+        <div class="chart-card mb-25"
+          style="background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3>Grafik Pengambilan Minyak Jelantah per Kwarran (KG)</h3>
           </div>
@@ -944,7 +963,8 @@
           <div class="table-card-header" style="flex-wrap: wrap; gap: 15px;">
             <h3>Daftar Histori Pengambilan Minyak Jelantah</h3>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="filter-jelantah-search" placeholder="Cari kwarran, petugas..." style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+              <input type="text" id="filter-jelantah-search" placeholder="Cari kwarran, petugas..."
+                style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
               <button type="button" id="btn-export-jelantah-excel" class="btn btn-success btn-small btn-icon-text">
                 <span>Excel</span>
               </button>
@@ -1214,7 +1234,8 @@
               <ol>
                 <li>Buat spreadsheet baru di Google Sheets Anda.</li>
                 <li>Buat tab lembar kerja dengan nama <strong>"Transaksi"</strong>, <strong>"Kategori"</strong>, dan
-                  <strong>"Sumber"</strong> (opsional).</li>
+                  <strong>"Sumber"</strong> (opsional).
+                </li>
                 <li>Pada menu bar atas, klik <strong>Ekstensi</strong> &raquo; <strong>Apps Script</strong>.</li>
                 <li>Hapus kode bawaan, lalu salin dan tempelkan kode di bawah ini.</li>
                 <li>Klik tombol <strong>Terapkan (Deploy)</strong> di bagian kanan atas &raquo; <strong>Penerapan baru
@@ -1230,10 +1251,26 @@
                 <span>Kode Google Apps Script</span>
                 <button id="btn-copy-code" class="btn btn-small btn-secondary">Salin Kode</button>
               </div>
-              <pre class="code-box" id="code-script-content"><code>// KODE APPS SCRIPT - VERSI CASE-INSENSITIVE (Bisa deteksi tab 'utang', 'Utang', 'Transaksi', dll)
+              <pre class="code-box" id="code-script-content"><code>// ============================================================================
+// KODE GOOGLE APPS SCRIPT - RAIMUNA CABANG CILACAP (VERSI MULTI-SHEET LENGKAP)
+// Mendukung Semua Tab: Transaksi, Utang, Kwitansi, Sponsorship, Tenant, Jelantah
+// Fitur: Auto Case-Insensitive, Upload Google Drive, Hapus Pintar, Bulk Sync
+// ============================================================================
+
 var FOLDER_PENGAMBILAN_UANG = '13yzUOz2qknJZ9fAHFmj9DeS3_p9riiID';
 var FOLDER_NOTA = '1p7Tp1a_SyNlMaj95IfaLJ95z5bmezzGg';
 
+// Definisi Header Standar untuk Tiap Tab
+var HEADERS = {
+  transaksi: ["id", "tanggal", "tipe", "kategori", "sumberDana", "pic", "nominal", "keterangan", "dateCreated", "bukti"],
+  utang: ["id", "tanggal", "tipe", "nama", "sumberDana", "kategori", "nominal", "keterangan", "status", "paidTxId", "tanggalLunas", "dateCreated"],
+  kwitansi: ["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated", "bukti"],
+  sponsorship: ["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated", "bukti"],
+  tenant: ["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated", "bukti"],
+  jelantah: ["id", "tanggal", "kwarran", "kg", "nominal", "terbilang", "keterangan", "guna", "penerima", "dateCreated", "bukti"]
+};
+
+// ── FUNGSI PENCARIAN & PEMBUATAN TAB CASE-INSENSITIVE ────────────────────────
 function getSheetCaseInsensitive(ss, name) {
   var sheets = ss.getSheets();
   var target = String(name).trim().toLowerCase();
@@ -1245,111 +1282,272 @@ function getSheetCaseInsensitive(ss, name) {
   return null;
 }
 
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetTx = getSheetCaseInsensitive(ss, "Transaksi");
-  var sheetKw = getSheetCaseInsensitive(ss, "Kwitansi") || getSheetCaseInsensitive(ss, "sponsorship");
-  var sheetUt = getSheetCaseInsensitive(ss, "Utang");
+function getOrCreateSheet(ss, name, defaultHeaders) {
+  var sheet = getSheetCaseInsensitive(ss, name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  if (sheet.getLastRow() === 0 && defaultHeaders && defaultHeaders.length > 0) {
+    sheet.appendRow(defaultHeaders);
+  }
+  return sheet;
+}
+
+// ── BACA DATA DARI SHEET MENJADI ARRAY OF OBJECTS ────────────────────────────
+function readSheetData(sheet) {
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+  var headers = rows[0].map(function(h) { return String(h).trim(); });
+  var result = [];
   
-  var txData = [];
-  if (sheetTx && sheetTx.getLastRow() > 1) {
-    autoMigrateColumns(sheetTx);
-    var rows = sheetTx.getDataRange().getValues();
-    var headers = rows[0];
-    for (var i = 1; i < rows.length; i++) {
-      var row = rows[i];
-      var obj = {};
-      for (var j = 0; j < headers.length; j++) {
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    var isBlank = row.every(function(cell) { return cell === "" || cell === null || cell === undefined; });
+    if (isBlank) continue;
+    
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      if (headers[j]) {
         obj[headers[j]] = row[j];
       }
-      txData.push(obj);
     }
+    result.push(obj);
   }
+  return result;
+}
 
-  var kwData = [];
-  if (sheetKw && sheetKw.getLastRow() > 1) {
-    var rowsKw = sheetKw.getDataRange().getValues();
-    var headersKw = rowsKw[0];
-    for (var k = 1; k < rowsKw.length; k++) {
-      var rowKw = rowsKw[k];
-      var objKw = {};
-      for (var m = 0; m < headersKw.length; m++) {
-        objKw[headersKw[m]] = rowKw[m];
+// ── AUTO MIGRATE KOLOM TRANSAKSI JIKA FORMAT LAMA ───────────────────────────
+function autoMigrateColumns(sheet) {
+  if (!sheet) return;
+  var lastRow = sheet.getLastRow();
+  if (lastRow === 0) return;
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var catIndex = headers.indexOf("kategoriSumber");
+  if (catIndex === -1) return;
+  
+  var values = sheet.getDataRange().getValues();
+  sheet.insertColumnAfter(catIndex + 1);
+  sheet.getRange(1, catIndex + 1).setValue("kategori");
+  sheet.getRange(1, catIndex + 2).setValue("sumberDana");
+  
+  for (var i = 1; i < values.length; i++) {
+    var tipe = values[i][2];
+    var val = values[i][catIndex];
+    var kategoriVal = (tipe === "OUT") ? (val || "-") : "-";
+    var sumberVal = (tipe === "IN") ? (val || "-") : "-";
+    sheet.getRange(i + 1, catIndex + 1).setValue(kategoriVal);
+    sheet.getRange(i + 1, catIndex + 2).setValue(sumberVal);
+  }
+}
+
+// ── UPLOAD LAMPIRAN KE GOOGLE DRIVE ─────────────────────────────────────────
+function uploadAttachmentsToDrive(attachments, prefixId, folderId) {
+  var urls = [];
+  if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
+    return urls;
+  }
+  try {
+    var folder = DriveApp.getFolderById(folderId);
+    for (var i = 0; i < attachments.length; i++) {
+      var item = attachments[i];
+      var base64Data = item.base64 || '';
+      var contentType = item.type || 'image/jpeg';
+      var fileName = (prefixId || 'lampiran') + '_' + (item.name || ('file_' + (i + 1)));
+
+      if (base64Data.indexOf('base64,') !== -1) {
+        base64Data = base64Data.split('base64,')[1];
       }
-      kwData.push(objKw);
+      if (!base64Data) continue;
+
+      var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, fileName);
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      urls.push(file.getUrl());
     }
+  } catch (err) {
+    Logger.log("Gagal upload Drive: " + err.toString());
   }
+  return urls;
+}
 
-  var utData = [];
-  if (sheetUt && sheetUt.getLastRow() > 1) {
-    var rowsUt = sheetUt.getDataRange().getValues();
-    var headersUt = rowsUt[0];
-    for (var u = 1; u < rowsUt.length; u++) {
-      var rowUt = rowsUt[u];
-      var objUt = {};
-      for (var v = 0; v < headersUt.length; v++) {
-        objUt[headersUt[v]] = rowUt[v];
+// ── UPSERT BARIS BY ID ──────────────────────────────────────────────────────
+function upsertRowById(sheet, idValue, rowData, existingBuktiColIndex) {
+  var idStr = String(idValue || '').trim();
+  var foundRow = -1;
+  var existingBukti = "";
+  
+  if (sheet.getLastRow() > 1) {
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      var rowId = String(rows[i][0] || '').trim();
+      var rowNo = (rows[i].length > 2) ? String(rows[i][2] || '').trim() : '';
+      if (idStr !== '' && (rowId === idStr || rowNo === idStr)) {
+        foundRow = i + 1;
+        if (existingBuktiColIndex !== undefined && rows[i][existingBuktiColIndex]) {
+          existingBukti = rows[i][existingBuktiColIndex];
+        }
+        break;
       }
-      utData.push(objUt);
     }
   }
   
+  if (foundRow !== -1) {
+    sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+  return existingBukti;
+}
+
+// ── DELETE BARIS BY ID / NO PINTAR ──────────────────────────────────────────
+function deleteRowFromSheet(sheet, idValue, secondaryValue) {
+  if (!sheet || sheet.getLastRow() <= 1) return false;
+  var idStr = String(idValue || '').trim();
+  var secStr = String(secondaryValue || '').trim();
+  if (idStr === '' && secStr === '') return false;
+  
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    var rowId = String(rows[i][0] || '').trim();
+    var rowSec = (rows[i].length > 2) ? String(rows[i][2] || '').trim() : '';
+    var rowContent = rows[i].join(" ");
+    
+    var match = false;
+    if (idStr !== '' && (rowId === idStr || rowContent.indexOf(idStr) !== -1)) match = true;
+    if (!match && secStr !== '' && (rowSec === secStr || rowContent.indexOf(secStr) !== -1)) match = true;
+    
+    if (match) {
+      sheet.deleteRow(i + 1);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ============================================================================
+// doGet: Mengambil Semua Data dari Seluruh Sheet (Transaksi, Kwitansi, Utang,
+// Sponsorship, Tenant, Jelantah)
+// ============================================================================
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var sheetTx = getSheetCaseInsensitive(ss, "Transaksi");
+  if (sheetTx) autoMigrateColumns(sheetTx);
+  
+  var sheetUt = getSheetCaseInsensitive(ss, "Utang");
+  var sheetKw = getSheetCaseInsensitive(ss, "Kwitansi");
+  var sheetSp = getSheetCaseInsensitive(ss, "Sponsorship");
+  var sheetTenant = getSheetCaseInsensitive(ss, "Tenant") || getSheetCaseInsensitive(ss, "Stand");
+  var sheetJlt = getSheetCaseInsensitive(ss, "Jelantah");
+
+  // 1. Data Transaksi
+  var txData = readSheetData(sheetTx);
+
+  // 2. Data Utang
+  var utData = readSheetData(sheetUt);
+
+  // 3. Data Kwitansi Master & Tab Khusus
+  var kwData = readSheetData(sheetKw);
+  var spData = readSheetData(sheetSp);
+  var tenantData = readSheetData(sheetTenant);
+  var jltData = readSheetData(sheetJlt);
+
+  // Gabungkan ke master kwitansi jika ada input langsung di sheet individual
+  var kwIdMap = {};
+  for (var k = 0; k < kwData.length; k++) {
+    if (kwData[k].id) kwIdMap[String(kwData[k].id).trim()] = true;
+  }
+
+  // Tambahkan data dari tab Sponsorship jika belum ada di master kwitansi
+  for (var s = 0; s < spData.length; s++) {
+    var spItem = spData[s];
+    var sId = String(spItem.id || ('SP-' + (s + 1))).trim();
+    if (!kwIdMap[sId]) {
+      if (!spItem.tipeJenis) spItem.tipeJenis = "SPONSORSHIP";
+      kwData.push(spItem);
+      kwIdMap[sId] = true;
+    }
+  }
+
+  // Tambahkan data dari tab Tenant jika belum ada di master kwitansi
+  for (var t = 0; t < tenantData.length; t++) {
+    var tItem = tenantData[t];
+    var tId = String(tItem.id || ('TNT-' + (t + 1))).trim();
+    if (!kwIdMap[tId]) {
+      if (!tItem.tipeJenis) tItem.tipeJenis = "STAND";
+      kwData.push(tItem);
+      kwIdMap[tId] = true;
+    }
+  }
+
+  // Tambahkan data dari tab Jelantah jika belum ada di master kwitansi
+  for (var j = 0; j < jltData.length; j++) {
+    var jItem = jltData[j];
+    var jId = String(jItem.id || ('JLT-' + (j + 1))).trim();
+    if (!kwIdMap[jId]) {
+      var jKw = {
+        id: jId,
+        tipeJenis: "JELANTAH",
+        no: jItem.no || jId,
+        tgl: jItem.tanggal || jItem.tgl || "",
+        dari: jItem.kwarran || jItem.dari || "",
+        nominal: jItem.nominal || (jItem.kg ? (jItem.kg + " KG") : "0 KG"),
+        terbilang: jItem.terbilang || "",
+        guna: jItem.guna || jItem.keterangan || "PERSYARATAN MINYAK JELANTAH",
+        penerima: jItem.penerima || "Petugas Jelantah",
+        nta: jItem.nta || "Ketua Panitia",
+        dateCreated: jItem.dateCreated || "",
+        bukti: jItem.bukti || ""
+      };
+      kwData.push(jKw);
+      kwIdMap[jId] = true;
+    }
+  }
+
   return ContentService.createTextOutput(JSON.stringify({ 
     success: true, 
     data: txData,
     kwitansi: kwData,
-    utang: utData
+    utang: utData,
+    sponsorship: spData,
+    tenant: tenantData,
+    jelantah: jltData
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
+// ============================================================================
+// doPost: Menangani Sinkronisasi Data Masuk, Update, Hapus, & Upload
+// ============================================================================
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
     var action = payload.action;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    var sheet = getSheetCaseInsensitive(ss, "Transaksi") || ss.insertSheet("Transaksi");
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["id", "tanggal", "tipe", "kategori", "sumberDana", "pic", "nominal", "keterangan", "dateCreated", "bukti"]);
-    } else {
-      autoMigrateColumns(sheet);
-      if (sheet.getLastColumn() < 10) {
-        sheet.getRange(1, 10).setValue("bukti");
-      }
-    }
-    
-    if (action === "test") {
-      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Koneksi Berhasil!" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    if (action === "sync_single") {
-      var tx = payload.transaction;
-      var fileUrls = [];
 
+    // ── 0. TEST KONEKSI ───────────────────────────────────────────────────────
+    if (action === "test") {
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        message: "Koneksi Berhasil! Semua tab sheet aktif dan siap digunakan." 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── 1. TRANSAKSI (SYNC 1) ─────────────────────────────────────────────────
+    if (action === "sync_single") {
+      var sheetTx = getOrCreateSheet(ss, "Transaksi", HEADERS.transaksi);
+      autoMigrateColumns(sheetTx);
+      var tx = payload.transaction;
+      
+      var fileUrls = [];
       if (tx.attachment && Array.isArray(tx.attachment) && tx.attachment.length > 0) {
         var folderId = (tx.tipe === 'OUT') ? FOLDER_PENGAMBILAN_UANG : FOLDER_NOTA;
-        var folder = DriveApp.getFolderById(folderId);
-
-        for (var i = 0; i < tx.attachment.length; i++) {
-          var fileData = tx.attachment[i];
-          var contentType = fileData.type || 'image/jpeg';
-          var base64Data = fileData.base64;
-          
-          if (base64Data.indexOf('base64,') !== -1) {
-            base64Data = base64Data.split('base64,')[1];
-          }
-
-          var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, tx.id + '_' + fileData.name);
-          var file = folder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          fileUrls.push(file.getUrl());
-        }
+        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, folderId);
       }
 
-      var rows = sheet.getDataRange().getValues();
-      var foundRow = -1;
       var existingBukti = "";
+      var rows = sheetTx.getDataRange().getValues();
+      var foundRow = -1;
       for (var i = 1; i < rows.length; i++) {
         if (String(rows[i][0]).trim() === String(tx.id).trim()) {
           foundRow = i + 1;
@@ -1359,230 +1557,364 @@ function doPost(e) {
       }
 
       var finalBukti = fileUrls.length > 0 ? fileUrls.join(', ') : existingBukti;
-      var rowData = [tx.id, tx.tanggal, tx.tipe, tx.kategori || "-", tx.sumberDana || "-", tx.pic, tx.nominal, tx.keterangan, tx.dateCreated, finalBukti];
-      
+      var rowData = [
+        tx.id, 
+        tx.tanggal, 
+        tx.tipe, 
+        tx.kategori || "-", 
+        tx.sumberDana || "-", 
+        tx.pic, 
+        tx.nominal, 
+        tx.keterangan, 
+        tx.dateCreated, 
+        finalBukti
+      ];
+
       if (foundRow !== -1) {
-        sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
+        sheetTx.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
       } else {
-        sheet.appendRow(rowData);
+        sheetTx.appendRow(rowData);
       }
+
       return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (action === "push_bulk") {
-      var transactions = payload.transactions || [];
-      if (sheet.getLastRow() > 1) {
-        sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-      }
-      if (transactions.length > 0) {
-        var txRows = transactions.map(function(tx) {
-          return [tx.id, tx.tanggal, tx.tipe, tx.kategori || "-", tx.sumberDana || "-", tx.pic, tx.nominal, tx.keterangan, tx.dateCreated, ""];
-        });
-        sheet.getRange(2, 1, txRows.length, txRows[0].length).setValues(txRows);
-      }
-
-      var kwitansiList = payload.kwitansi || [];
-      var kwSheet = getSheetCaseInsensitive(ss, "Kwitansi") || getSheetCaseInsensitive(ss, "sponsorship") || ss.insertSheet("Kwitansi");
-      if (kwSheet.getLastRow() === 0) {
-        kwSheet.appendRow(["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated", "bukti"]);
-      } else if (kwSheet.getLastRow() > 1) {
-        kwSheet.getRange(2, 1, kwSheet.getLastRow() - 1, kwSheet.getLastColumn()).clearContent();
-      }
-      if (kwitansiList.length > 0) {
-        var kwRows = kwitansiList.map(function(kw) {
-          return [kw.id, kw.tipeJenis, kw.no, kw.tgl, kw.dari, kw.nominal, kw.terbilang, kw.guna, kw.penerima, kw.nta, kw.dateCreated, ""];
-        });
-        kwSheet.getRange(2, 1, kwRows.length, kwRows[0].length).setValues(kwRows);
-      }
-
-      var utangList = payload.utang || [];
-      var utSheet = getSheetCaseInsensitive(ss, "Utang") || ss.insertSheet("Utang");
-      if (utSheet.getLastRow() === 0) {
-        utSheet.appendRow(["id", "tanggal", "tipe", "nama", "sumberDana", "kategori", "nominal", "keterangan", "status", "paidTxId", "tanggalLunas", "dateCreated"]);
-      } else if (utSheet.getLastRow() > 1) {
-        utSheet.getRange(2, 1, utSheet.getLastRow() - 1, utSheet.getLastColumn()).clearContent();
-      }
-      if (utangList.length > 0) {
-        var utRows = utangList.map(function(ut) {
-          return [ut.id, ut.tanggal, ut.tipe, ut.nama, ut.sumberDana || "-", ut.kategori || "-", ut.nominal, ut.keterangan, ut.status, ut.paidTxId || "-", ut.tanggalLunas || "-", ut.dateCreated];
-        });
-        utSheet.getRange(2, 1, utRows.length, utRows[0].length).setValues(utRows);
-      }
-
-      return ContentService.createTextOutput(JSON.stringify({ success: true, count: transactions.length }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
+    // ── 2. TRANSAKSI (HAPUS 1) ────────────────────────────────────────────────
     if (action === "delete_single") {
-      var txId = String(payload.id || '').trim();
-      var rows = sheet.getDataRange().getValues();
-      for (var i = 1; i < rows.length; i++) {
-        var rowId = String(rows[i][0] || '').trim();
-        var rowStr = rows[i].join(" ");
-        if (txId !== '' && (rowId === txId || rowStr.indexOf(txId) !== -1)) {
-          sheet.deleteRow(i + 1);
-          break;
-        }
-      }
+      var sheetTx = getSheetCaseInsensitive(ss, "Transaksi");
+      deleteRowFromSheet(sheetTx, payload.id);
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
         .setMimeType(ContentService.MimeType.JSON);
     }
-    
+
+    // ── 3. KWITANSI (SYNC 1) ──────────────────────────────────────────────────
     if (action === "sync_kwitansi") {
-      var kwSheet = getSheetCaseInsensitive(ss, "Kwitansi") || getSheetCaseInsensitive(ss, "sponsorship") || ss.insertSheet("Kwitansi");
-      if (kwSheet.getLastRow() === 0) {
-        kwSheet.appendRow(["id", "tipeJenis", "no", "tgl", "dari", "nominal", "terbilang", "guna", "penerima", "nta", "dateCreated", "bukti"]);
-      } else {
-        if (kwSheet.getLastColumn() < 12) {
-          kwSheet.getRange(1, 12).setValue("bukti");
-        }
-      }
-      
       var kw = payload.kwitansi;
       var fileUrls = [];
-
       if (kw.attachment && Array.isArray(kw.attachment) && kw.attachment.length > 0) {
-        var folder = DriveApp.getFolderById(FOLDER_NOTA);
-
-        for (var i = 0; i < kw.attachment.length; i++) {
-          var fileData = kw.attachment[i];
-          var contentType = fileData.type || 'image/jpeg';
-          var base64Data = fileData.base64;
-          
-          if (base64Data.indexOf('base64,') !== -1) {
-            base64Data = base64Data.split('base64,')[1];
-          }
-
-          var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, kw.id + '_' + fileData.name);
-          var file = folder.createFile(blob);
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          fileUrls.push(file.getUrl());
-        }
+        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA);
       }
 
-      var kwRows = kwSheet.getDataRange().getValues();
-      var foundKwRow = -1;
+      var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
       var existingBukti = "";
-      for (var k = 1; k < kwRows.length; k++) {
-        if (String(kwRows[k][0]).trim() === String(kw.id).trim()) {
-          foundKwRow = k + 1;
-          existingBukti = kwRows[k][11] || "";
-          break;
-        }
-      }
-      
-      var finalBukti = fileUrls.length > 0 ? fileUrls.join(', ') : existingBukti;
-      var kwRowData = [kw.id, kw.tipeJenis, kw.no, kw.tgl, kw.dari, kw.nominal, kw.terbilang, kw.guna, kw.penerima, kw.nta, kw.dateCreated, finalBukti];
-      
-      if (foundKwRow !== -1) {
-        kwSheet.getRange(foundKwRow, 1, 1, kwRowData.length).setValues([kwRowData]);
-      } else {
-        kwSheet.appendRow(kwRowData);
-      }
-      return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    if (action === "delete_kwitansi") {
-      var kwSheetDel = getSheetCaseInsensitive(ss, "Kwitansi") || getSheetCaseInsensitive(ss, "sponsorship");
-      if (kwSheetDel && kwSheetDel.getLastRow() > 1) {
-        var kwId = String(payload.id || '').trim();
-        var kwNo = String(payload.no || '').trim();
-        var kwRowsDel = kwSheetDel.getDataRange().getValues();
-        for (var kd = 1; kd < kwRowsDel.length; kd++) {
-          var rowId = String(kwRowsDel[kd][0] || '').trim();
-          var rowNo = String(kwRowsDel[kd][2] || '').trim();
-          var rowStr = kwRowsDel[kd].join(" ");
-          if ((kwId !== '' && (rowId === kwId || rowStr.indexOf(kwId) !== -1)) ||
-              (kwNo !== '' && (rowNo === kwNo || rowStr.indexOf(kwNo) !== -1))) {
-            kwSheetDel.deleteRow(kd + 1);
+      if (sheetKw.getLastRow() > 1) {
+        var kRows = sheetKw.getDataRange().getValues();
+        for (var k = 1; k < kRows.length; k++) {
+          if (String(kRows[k][0]).trim() === String(kw.id).trim() || 
+              String(kRows[k][2]).trim() === String(kw.no).trim()) {
+            existingBukti = kRows[k][11] || "";
             break;
           }
         }
       }
-      return ContentService.createTextOutput(JSON.stringify({ success: true }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+      var finalBukti = fileUrls.length > 0 ? fileUrls.join(', ') : existingBukti;
 
-    if (action === "sync_utang") {
-      var utSheet = getSheetCaseInsensitive(ss, "Utang") || ss.insertSheet("Utang");
-      if (utSheet.getLastRow() === 0) {
-        utSheet.appendRow(["id", "tanggal", "tipe", "nama", "sumberDana", "kategori", "nominal", "keterangan", "status", "paidTxId", "tanggalLunas", "dateCreated"]);
+      var kwRowData = [
+        kw.id, 
+        kw.tipeJenis || "SPONSORSHIP", 
+        kw.no, 
+        kw.tgl, 
+        kw.dari, 
+        kw.nominal, 
+        kw.terbilang, 
+        kw.guna, 
+        kw.penerima, 
+        kw.nta, 
+        kw.dateCreated, 
+        finalBukti
+      ];
+      upsertRowById(sheetKw, kw.id, kwRowData);
+
+      var tipeUpper = String(kw.tipeJenis || '').toUpperCase();
+      
+      // Tab Sponsorship
+      if (tipeUpper.indexOf('SPONSOR') !== -1 || (tipeUpper.indexOf('STAND') === -1 && tipeUpper.indexOf('JELANTAH') === -1 && tipeUpper.indexOf('TENANT') === -1)) {
+        var sheetSp = getSheetCaseInsensitive(ss, "Sponsorship");
+        if (sheetSp) upsertRowById(sheetSp, kw.id, kwRowData);
       }
-      var ut = payload.utang;
-      var utRows = utSheet.getDataRange().getValues();
-      var foundUtRow = -1;
-      for (var u = 1; u < utRows.length; u++) {
-        if (String(utRows[u][0]).trim() === String(ut.id).trim()) {
-          foundUtRow = u + 1;
-          break;
+      
+      // Tab Tenant
+      if (tipeUpper.indexOf('STAND') !== -1 || tipeUpper.indexOf('TENANT') !== -1) {
+        var sheetTenant = getSheetCaseInsensitive(ss, "Tenant") || getSheetCaseInsensitive(ss, "Stand");
+        if (sheetTenant) upsertRowById(sheetTenant, kw.id, kwRowData);
+      }
+
+      // Tab Jelantah
+      if (tipeUpper.indexOf('JELANTAH') !== -1) {
+        var sheetJlt = getSheetCaseInsensitive(ss, "Jelantah");
+        if (sheetJlt) {
+          var jltRow = [
+            kw.id, 
+            kw.tgl || "", 
+            kw.dari || "", 
+            kw.nominal || "", 
+            kw.nominal || "", 
+            kw.terbilang || "", 
+            kw.guna || "", 
+            kw.guna || "", 
+            kw.penerima || "", 
+            kw.dateCreated || "", 
+            finalBukti
+          ];
+          upsertRowById(sheetJlt, kw.id, jltRow);
         }
       }
-      var utRowData = [ut.id, ut.tanggal, ut.tipe, ut.nama, ut.sumberDana || "-", ut.kategori || "-", ut.nominal, ut.keterangan, ut.status, ut.paidTxId || "-", ut.tanggalLunas || "-", ut.dateCreated];
-      if (foundUtRow !== -1) {
-        utSheet.getRange(foundUtRow, 1, 1, utRowData.length).setValues([utRowData]);
-      } else {
-        utSheet.appendRow(utRowData);
-      }
+
+      return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── 4. KWITANSI (HAPUS 1) ─────────────────────────────────────────────────
+    if (action === "delete_kwitansi") {
+      var id = payload.id;
+      var no = payload.no;
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Kwitansi"), id, no);
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Sponsorship"), id, no);
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Tenant") || getSheetCaseInsensitive(ss, "Stand"), id, no);
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Jelantah"), id, no);
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (action === "delete_utang") {
-      var utSheetDel = getSheetCaseInsensitive(ss, "Utang");
-      if (utSheetDel && utSheetDel.getLastRow() > 1) {
-        var utId = String(payload.id || '').trim();
-        if (utId !== '') {
-          var utRowsDel = utSheetDel.getDataRange().getValues();
-          for (var d = 1; d < utRowsDel.length; d++) {
-            var rowId = String(utRowsDel[d][0] || '').trim();
-            var rowStr = utRowsDel[d].join(" ");
-            if (rowId === utId || rowStr.indexOf(utId) !== -1) {
-              utSheetDel.deleteRow(d + 1);
-              break;
-            }
+    // ── 5. RECAP JELANTAH (SYNC 1) ────────────────────────────────────────────
+    if (action === "sync_jelantah") {
+      var jlt = payload.jelantah;
+      var fileUrls = [];
+      if (jlt.attachment && Array.isArray(jlt.attachment) && jlt.attachment.length > 0) {
+        fileUrls = uploadAttachmentsToDrive(jlt.attachment, jlt.id, FOLDER_NOTA);
+      }
+
+      var sheetJlt = getOrCreateSheet(ss, "Jelantah", HEADERS.jelantah);
+      var existingBukti = "";
+      if (sheetJlt.getLastRow() > 1) {
+        var jRows = sheetJlt.getDataRange().getValues();
+        for (var j = 1; j < jRows.length; j++) {
+          if (String(jRows[j][0]).trim() === String(jlt.id).trim()) {
+            existingBukti = jRows[j][10] || "";
+            break;
           }
         }
       }
+      var finalBukti = fileUrls.length > 0 ? fileUrls.join(', ') : existingBukti;
+
+      var jltRowData = [
+        jlt.id,
+        jlt.tanggal || jlt.tgl,
+        jlt.kwarran || jlt.dari || "-",
+        jlt.kg || "",
+        jlt.nominal || (jlt.kg ? (jlt.kg + " KG") : ""),
+        jlt.terbilang || "",
+        jlt.keterangan || "-",
+        jlt.guna || "PENGAMBILAN MINYAK JELANTAH",
+        jlt.penerima || "Petugas Jelantah",
+        jlt.dateCreated,
+        finalBukti
+      ];
+      upsertRowById(sheetJlt, jlt.id, jltRowData);
+
+      var sheetKw = getSheetCaseInsensitive(ss, "Kwitansi");
+      if (sheetKw) {
+        var kwRow = [
+          jlt.id,
+          "JELANTAH",
+          jlt.id,
+          jlt.tanggal || jlt.tgl,
+          jlt.kwarran || jlt.dari || "-",
+          jlt.nominal || (jlt.kg ? (jlt.kg + " KG") : ""),
+          jlt.terbilang || "",
+          jlt.guna || "PERSYARATAN MINYAK JELANTAH",
+          jlt.penerima || "Tri Soma Ananta Rahman",
+          "Ketua Panitia",
+          jlt.dateCreated,
+          finalBukti
+        ];
+        upsertRowById(sheetKw, jlt.id, kwRow);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── 6. RECAP JELANTAH (HAPUS 1) ───────────────────────────────────────────
+    if (action === "delete_jelantah") {
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Jelantah"), payload.id);
+      deleteRowFromSheet(getSheetCaseInsensitive(ss, "Kwitansi"), payload.id);
       return ContentService.createTextOutput(JSON.stringify({ success: true }))
         .setMimeType(ContentService.MimeType.JSON);
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Action tidak dikenal: " + action }))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
 
-function autoMigrateColumns(sheet) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow === 0) return;
-  var range = sheet.getRange(1, 1, lastRow, sheet.getLastColumn());
-  var values = range.getValues();
-  var headers = values[0];
-  var catIndex = headers.indexOf("kategoriSumber");
-  if (catIndex === -1) return;
-  sheet.insertColumnAfter(catIndex + 1);
-  sheet.getRange(1, catIndex + 1).setValue("kategori");
-  sheet.getRange(1, catIndex + 2).setValue("sumberDana");
-  for (var i = 1; i < values.length; i++) {
-    var tipe = values[i][2];
-    var val = values[i][catIndex];
-    var kategoriVal = "-";
-    var sumberVal = "-";
-    if (tipe === "IN") {
-      kategoriVal = "-";
-      sumberVal = val || "-";
-    } else {
-      kategoriVal = val || "-";
-      sumberVal = "-";
+    // ── 7. UTANG / PIUTANG (SYNC 1) ───────────────────────────────────────────
+    if (action === "sync_utang") {
+      var utSheet = getOrCreateSheet(ss, "Utang", HEADERS.utang);
+      var ut = payload.utang;
+      var utRowData = [
+        ut.id, 
+        ut.tanggal, 
+        ut.tipe, 
+        ut.nama, 
+        ut.sumberDana || "-", 
+        ut.kategori || "-", 
+        ut.nominal, 
+        ut.keterangan, 
+        ut.status, 
+        ut.paidTxId || "-", 
+        ut.tanggalLunas || "-", 
+        ut.dateCreated
+      ];
+      upsertRowById(utSheet, ut.id, utRowData);
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
-    sheet.getRange(i + 1, catIndex + 1).setValue(kategoriVal);
-    sheet.getRange(i + 1, catIndex + 2).setValue(sumberVal);
+
+    // ── 8. UTANG / PIUTANG (HAPUS 1) ──────────────────────────────────────────
+    if (action === "delete_utang") {
+      var utSheetDel = getSheetCaseInsensitive(ss, "Utang");
+      deleteRowFromSheet(utSheetDel, payload.id);
+      return ContentService.createTextOutput(JSON.stringify({ success: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── 9. PUSH BULK (Sinkronkan Seluruh Data ke Semua Tab Sekaligus) ──────────
+    if (action === "push_bulk") {
+      // 9.1 Transaksi
+      var transactions = payload.transactions || [];
+      var sheetTx = getOrCreateSheet(ss, "Transaksi", HEADERS.transaksi);
+      if (sheetTx.getLastRow() > 1) {
+        sheetTx.getRange(2, 1, sheetTx.getLastRow() - 1, sheetTx.getLastColumn()).clearContent();
+      }
+      if (transactions.length > 0) {
+        var txRows = transactions.map(function(t) {
+          return [t.id, t.tanggal, t.tipe, t.kategori || "-", t.sumberDana || "-", t.pic, t.nominal, t.keterangan, t.dateCreated, ""];
+        });
+        sheetTx.getRange(2, 1, txRows.length, txRows[0].length).setValues(txRows);
+      }
+
+      // 9.2 Utang
+      var utangList = payload.utang || [];
+      var sheetUt = getOrCreateSheet(ss, "Utang", HEADERS.utang);
+      if (sheetUt.getLastRow() > 1) {
+        sheetUt.getRange(2, 1, sheetUt.getLastRow() - 1, sheetUt.getLastColumn()).clearContent();
+      }
+      if (utangList.length > 0) {
+        var utRows = utangList.map(function(u) {
+          return [u.id, u.tanggal, u.tipe, u.nama, u.sumberDana || "-", u.kategori || "-", u.nominal, u.keterangan, u.status, u.paidTxId || "-", u.tanggalLunas || "-", u.dateCreated];
+        });
+        sheetUt.getRange(2, 1, utRows.length, utRows[0].length).setValues(utRows);
+      }
+
+      // 9.3 Kwitansi Master
+      var kwitansiList = payload.kwitansi || [];
+      var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
+      if (sheetKw.getLastRow() > 1) {
+        sheetKw.getRange(2, 1, sheetKw.getLastRow() - 1, sheetKw.getLastColumn()).clearContent();
+      }
+      if (kwitansiList.length > 0) {
+        var kwRows = kwitansiList.map(function(k) {
+          return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+        });
+        sheetKw.getRange(2, 1, kwRows.length, kwRows[0].length).setValues(kwRows);
+      }
+
+      // 9.4 Tab Sponsorship Khusus
+      var sheetSp = getSheetCaseInsensitive(ss, "Sponsorship");
+      if (sheetSp) {
+        if (sheetSp.getLastRow() === 0) sheetSp.appendRow(HEADERS.sponsorship);
+        else if (sheetSp.getLastRow() > 1) sheetSp.getRange(2, 1, sheetSp.getLastRow() - 1, sheetSp.getLastColumn()).clearContent();
+        
+        var spItems = kwitansiList.filter(function(k) {
+          var tp = String(k.tipeJenis || '').toUpperCase();
+          return tp.indexOf('SPONSOR') !== -1 || (tp.indexOf('STAND') === -1 && tp.indexOf('TENANT') === -1 && tp.indexOf('JELANTAH') === -1);
+        });
+        if (spItems.length > 0) {
+          var spRows = spItems.map(function(k) {
+            return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+          });
+          sheetSp.getRange(2, 1, spRows.length, spRows[0].length).setValues(spRows);
+        }
+      }
+
+      // 9.5 Tab Tenant Khusus
+      var sheetTenant = getSheetCaseInsensitive(ss, "Tenant") || getSheetCaseInsensitive(ss, "Stand");
+      if (sheetTenant) {
+        if (sheetTenant.getLastRow() === 0) sheetTenant.appendRow(HEADERS.tenant);
+        else if (sheetTenant.getLastRow() > 1) sheetTenant.getRange(2, 1, sheetTenant.getLastRow() - 1, sheetTenant.getLastColumn()).clearContent();
+        
+        var tenantItems = kwitansiList.filter(function(k) {
+          var tp = String(k.tipeJenis || '').toUpperCase();
+          return tp.indexOf('STAND') !== -1 || tp.indexOf('TENANT') !== -1;
+        });
+        if (tenantItems.length > 0) {
+          var tntRows = tenantItems.map(function(k) {
+            return [k.id, k.tipeJenis || "STAND", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+          });
+          sheetTenant.getRange(2, 1, tntRows.length, tntRows[0].length).setValues(tntRows);
+        }
+      }
+
+      // 9.6 Tab Jelantah Khusus
+      var sheetJlt = getSheetCaseInsensitive(ss, "Jelantah");
+      if (sheetJlt) {
+        if (sheetJlt.getLastRow() === 0) sheetJlt.appendRow(HEADERS.jelantah);
+        else if (sheetJlt.getLastRow() > 1) sheetJlt.getRange(2, 1, sheetJlt.getLastRow() - 1, sheetJlt.getLastColumn()).clearContent();
+        
+        var jelantahList = payload.jelantah || [];
+        if (jelantahList.length === 0) {
+          jelantahList = kwitansiList.filter(function(k) {
+            return String(k.tipeJenis || '').toUpperCase().indexOf('JELANTAH') !== -1;
+          }).map(function(k) {
+            return {
+              id: k.id,
+              tanggal: k.tgl,
+              kwarran: k.dari,
+              kg: k.nominal,
+              nominal: k.nominal,
+              terbilang: k.terbilang,
+              keterangan: k.guna,
+              guna: k.guna,
+              penerima: k.penerima,
+              dateCreated: k.dateCreated
+            };
+          });
+        }
+        
+        if (jelantahList.length > 0) {
+          var jltRows = jelantahList.map(function(j) {
+            return [
+              j.id, 
+              j.tanggal || j.tgl, 
+              j.kwarran || j.dari || "-", 
+              j.kg || "", 
+              j.nominal || (j.kg ? (j.kg + " KG") : ""), 
+              j.terbilang || "", 
+              j.keterangan || "-", 
+              j.guna || "PENGAMBILAN MINYAK JELANTAH", 
+              j.penerima || "Petugas Jelantah", 
+              j.dateCreated, 
+              ""
+            ];
+          });
+          sheetJlt.getRange(2, 1, jltRows.length, jltRows[0].length).setValues(jltRows);
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        count: transactions.length,
+        message: "Berhasil mengekspor semua data ke seluruh tab sheet!"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ 
+      success: false, 
+      error: "Action tidak dikenal: " + action 
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      success: false, 
+      error: err.toString() 
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 }</code></pre>
             </div>
@@ -1617,7 +1949,8 @@ function autoMigrateColumns(sheet) {
                   <option value="">-- Buat Kwitansi Manual / Custom --</option>
                   <!-- Populated dynamically -->
                 </select>
-                <small class="form-help-text">Pilih transaksi untuk menggabungkan data sponsor atau tenant otomatis</small>
+                <small class="form-help-text">Pilih transaksi untuk menggabungkan data sponsor atau tenant
+                  otomatis</small>
               </div>
 
               <div class="form-grid">
@@ -1637,7 +1970,8 @@ function autoMigrateColumns(sheet) {
                 </div>
 
                 <div class="form-group">
-                  <label for="kwitansi-nominal" id="label-kwitansi-nominal">Nominal Uang (Rp) <span class="required">*</span></label>
+                  <label for="kwitansi-nominal" id="label-kwitansi-nominal">Nominal Uang (Rp) <span
+                      class="required">*</span></label>
                   <input type="text" id="kwitansi-nominal" placeholder="Contoh: 300.000" required>
                 </div>
 
@@ -1707,7 +2041,8 @@ function autoMigrateColumns(sheet) {
         <div class="kwitansi-history-container no-print mt-25" style="margin-top: 25px;">
 
           <!-- Filter Pills Bar -->
-          <div class="kwitansi-history-filter-bar mb-20" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div class="kwitansi-history-filter-bar mb-20"
+            style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <div class="filter-pills" id="kwitansi-history-filter-pills">
               <button type="button" class="btn-pill active" data-kw-filter="ALL">📊 Semua Riwayat</button>
               <button type="button" class="btn-pill" data-kw-filter="SPONSORSHIP">💼 Sponsorship</button>
@@ -1715,16 +2050,20 @@ function autoMigrateColumns(sheet) {
               <button type="button" class="btn-pill" data-kw-filter="JELANTAH">🛢️ Minyak Jelantah</button>
             </div>
             <div class="history-download-actions" style="display: flex; gap: 10px;">
-              <button type="button" id="btn-export-kwitansi-excel" class="btn btn-success btn-small btn-icon-text" style="padding: 8px 14px; font-weight: 600;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button type="button" id="btn-export-kwitansi-excel" class="btn btn-success btn-small btn-icon-text"
+                style="padding: 8px 14px; font-weight: 600;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
                 <span>Unduh Rekap Excel</span>
               </button>
-              <button type="button" id="btn-export-kwitansi-csv" class="btn btn-secondary btn-small btn-icon-text" style="padding: 8px 14px; font-weight: 600;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button type="button" id="btn-export-kwitansi-csv" class="btn btn-secondary btn-small btn-icon-text"
+                style="padding: 8px 14px; font-weight: 600;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
                   <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -1736,18 +2075,22 @@ function autoMigrateColumns(sheet) {
           </div>
 
           <!-- CARD 1: SPONSORSHIP HISTORY -->
-          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-sponsorship" style="margin-bottom: 25px;">
+          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-sponsorship"
+            style="margin-bottom: 25px;">
             <div class="table-card-header">
               <div>
                 <h3>💼 Riwayat Kwitansi Sponsorship / Donatur</h3>
-                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi sponsorship & donatur yang telah diterbitkan</p>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi sponsorship & donatur yang
+                  telah diterbitkan</p>
               </div>
               <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
-                <span class="badge badge-primary" id="sponsorship-count-badge" style="font-size: 13px; padding: 6px 12px;">0 Kwitansi</span>
-                <span class="badge badge-success" id="sponsorship-amount-badge" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+                <span class="badge badge-primary" id="sponsorship-count-badge"
+                  style="font-size: 13px; padding: 6px 12px;">0 Kwitansi</span>
+                <span class="badge badge-success" id="sponsorship-amount-badge"
+                  style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
               </div>
             </div>
-            
+
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -1769,18 +2112,23 @@ function autoMigrateColumns(sheet) {
           </div>
 
           <!-- CARD 2: TENANT HISTORY -->
-          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-tenant" style="margin-bottom: 25px;">
+          <div class="table-card style-history-card kw-card-section mb-25" id="kw-card-tenant"
+            style="margin-bottom: 25px;">
             <div class="table-card-header">
               <div>
                 <h3>🏢 Riwayat Kwitansi Pembayaran Tenant</h3>
-                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi pembayaran sewa tenant booth yang telah diterbitkan</p>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi pembayaran sewa tenant
+                  booth yang telah diterbitkan</p>
               </div>
               <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
-                <span class="badge badge-info" id="tenant-count-badge" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Kwitansi</span>
-                <span class="badge badge-success" id="tenant-amount-badge" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+                <span class="badge badge-info" id="tenant-count-badge"
+                  style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0
+                  Kwitansi</span>
+                <span class="badge badge-success" id="tenant-amount-badge"
+                  style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
               </div>
             </div>
-            
+
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -1806,14 +2154,18 @@ function autoMigrateColumns(sheet) {
             <div class="table-card-header">
               <div>
                 <h3>🛢️ Riwayat Tanda Terima Minyak Jelantah</h3>
-                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar tanda terima pengumpulan minyak jelantah (berdasarkan berat KG)</p>
+                <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar tanda terima pengumpulan minyak
+                  jelantah (berdasarkan berat KG)</p>
               </div>
               <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
-                <span class="badge badge-warning" id="jelantah-count-badge" style="font-size: 13px; padding: 6px 12px; background-color: #fef3c7; color: #92400e;">0 Tanda Terima</span>
-                <span class="badge badge-primary" id="jelantah-amount-badge" style="font-size: 13px; padding: 6px 12px;">0 KG</span>
+                <span class="badge badge-warning" id="jelantah-count-badge"
+                  style="font-size: 13px; padding: 6px 12px; background-color: #fef3c7; color: #92400e;">0 Tanda
+                  Terima</span>
+                <span class="badge badge-primary" id="jelantah-amount-badge"
+                  style="font-size: 13px; padding: 6px 12px;">0 KG</span>
               </div>
             </div>
-            
+
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -1906,7 +2258,8 @@ function autoMigrateColumns(sheet) {
             <label for="edit-jelantah-keterangan">Keterangan / Catatan Tambahan</label>
             <textarea id="edit-jelantah-keterangan" rows="2" placeholder="Catatan..."></textarea>
           </div>
-          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+          <div class="modal-footer"
+            style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border-color);">
             <button type="button" class="btn btn-secondary" id="btn-cancel-jelantah-edit">Batal</button>
             <button type="submit" class="btn btn-success">Simpan Perubahan</button>
           </div>
@@ -1925,7 +2278,8 @@ function autoMigrateColumns(sheet) {
       <div class="modal-body" id="jelantah-detail-body" style="padding: 20px;">
         <!-- Populated dynamically -->
       </div>
-      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 15px 20px; gap: 10px; background: var(--bg-body, #f9fafb); border-top: 1px solid var(--border-color);">
+      <div class="modal-footer"
+        style="display: flex; justify-content: flex-end; padding: 15px 20px; gap: 10px; background: var(--bg-body, #f9fafb); border-top: 1px solid var(--border-color);">
         <button class="btn btn-secondary" id="btn-close-jelantah-detail-footer">Tutup Modal</button>
       </div>
     </div>
@@ -2018,7 +2372,8 @@ function autoMigrateColumns(sheet) {
       </div>
 
       <div class="modal-body">
-        <p class="text-muted" style="margin-bottom: 15px;">Silakan unggah nota atau dokumentasi untuk riwayat tanda terima ini.</p>
+        <p class="text-muted" style="margin-bottom: 15px;">Silakan unggah nota atau dokumentasi untuk riwayat tanda
+          terima ini.</p>
         <input type="hidden" id="kwitansi-upload-id">
         <div class="form-group">
           <label for="kwitansi-upload-file">Pilih File Nota <span class="required">*</span></label>
@@ -2100,13 +2455,15 @@ function autoMigrateColumns(sheet) {
           </div>
 
           <div class="form-group">
-            <label for="edit-bukti">Upload Bukti Baru <span class="text-muted">(Akan menimpa bukti lama jika ada, Opsional)</span></label>
+            <label for="edit-bukti">Upload Bukti Baru <span class="text-muted">(Akan menimpa bukti lama jika ada,
+                Opsional)</span></label>
             <div class="file-dropzone" id="edit-dropzone">
               <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
               </svg>
               <p>Klik untuk memilih file atau seret file ke sini</p>
-              <input type="file" id="edit-bukti" accept="image/png, image/jpeg, application/pdf" class="file-input-hidden" multiple>
+              <input type="file" id="edit-bukti" accept="image/png, image/jpeg, application/pdf"
+                class="file-input-hidden" multiple>
               <div class="file-preview-indicator" id="edit-file-indicator"></div>
             </div>
           </div>

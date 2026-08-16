@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbzgu-4Ar1zwcxYeamYo0EdERWPrBsgCr_diAf_obA2vMYsDj0upY0nnRmmklzBi77DeDw/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbx3qo3XCHQjO9fDkX8jR81ogZqKDARA7E05Ey1s6iRkPBKoL-qzbNm3yFGkqAGQa5nE/exec',
     autoSync: true
   },
   filters: {
@@ -98,7 +98,7 @@ function parseSheetRow(row) {
     if (tipe === 'OUT') kategori = row.kategoriSumber || '-';
     else kategori = '-';
   }
-  
+
   if (!sumberDana || sumberDana === '' || sumberDana === '-') {
     if (tipe === 'IN') sumberDana = row.kategoriSumber || '-';
     else sumberDana = '-';
@@ -218,7 +218,7 @@ const DEFAULT_CATEGORIES = [
 
 // Pastel Chart Colors Palette
 const PASTEL_PALETTE = [
-  '#ffb7b2', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', 
+  '#ffb7b2', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff',
   '#e8dbfc', '#ffcbd1', '#f5d6eb', '#d0f4de', '#fcf6bd'
 ];
 
@@ -243,16 +243,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupUtangHandlers();
   setupAlokasiTalanganModal();
   setupJelantahHandlers();
-  
+
   // Set default dates on forms
   const today = new Date().toISOString().split('T')[0];
   if (document.getElementById('in-tanggal')) document.getElementById('in-tanggal').value = today;
   if (document.getElementById('out-tanggal')) document.getElementById('out-tanggal').value = today;
   if (document.getElementById('utang-tanggal')) document.getElementById('utang-tanggal').value = today;
-  
+
   // Render application
   renderApp();
-  
+
   // Auto test connection and background sync if URL exists
   if (state.settings.sheetUrl) {
     updateSyncBadge('unsynced', 'Menghubungkan...');
@@ -292,28 +292,28 @@ function setupDomReferences() {
   fileIndicatorOut = document.getElementById('out-file-indicator');
   fileIndicatorEdit = document.getElementById('edit-file-indicator');
   fileIndicatorAmbil = document.getElementById('ambil-file-indicator');
-  
+
   // Drag and Drop listeners
   setupFileDropzone(dropzoneIn, 'in-bukti', fileIndicatorIn);
   setupFileDropzone(dropzoneOut, 'out-nota', fileIndicatorOut);
   if (dropzoneEdit) setupFileDropzone(dropzoneEdit, 'edit-bukti', fileIndicatorEdit);
   if (dropzoneAmbil) setupFileDropzone(dropzoneAmbil, 'ambil-bukti', fileIndicatorAmbil);
-  
+
   // Numeric Inputs Formatting (Auto Rupiah)
   setupRupiahInput('in-nominal');
   setupRupiahInput('out-nominal');
   setupRupiahInput('ambil-nominal');
   setupRupiahInput('utang-nominal');
-  
+
   // Sidebar responsive toggle
   const sidebar = document.querySelector('.sidebar');
   const toggleBtn = document.getElementById('sidebar-toggle');
-  
+
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     sidebar.classList.toggle('open');
   });
-  
+
   document.addEventListener('click', (e) => {
     if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
       sidebar.classList.remove('open');
@@ -324,16 +324,16 @@ function setupDomReferences() {
 // Setup File drag and drop dropzone logic
 function setupFileDropzone(dropzone, inputId, indicator) {
   const fileInput = document.getElementById(inputId);
-  
+
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropzone.classList.add('dragover');
   });
-  
+
   dropzone.addEventListener('dragleave', () => {
     dropzone.classList.remove('dragover');
   });
-  
+
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
@@ -342,7 +342,7 @@ function setupFileDropzone(dropzone, inputId, indicator) {
       handleMultipleFilesSelected(fileInput.files, indicator);
     }
   });
-  
+
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length) {
       handleMultipleFilesSelected(fileInput.files, indicator);
@@ -357,14 +357,14 @@ function setupFileDropzone(dropzone, inputId, indicator) {
 function handleMultipleFilesSelected(files, indicator) {
   if (!files || files.length === 0) return;
   const maxIndividualSize = 4 * 1024 * 1024; // 4MB limit per file
-  
+
   const filesArray = Array.from(files);
   const uploads = [];
   let completed = 0;
-  
+
   indicator.textContent = `Memproses ${filesArray.length} file...`;
   state.currentUpload = null;
-  
+
   filesArray.forEach(file => {
     if (file.size > maxIndividualSize) {
       showToast('Ukuran File Terlalu Besar', `File "${file.name}" melebihi batas 4MB.`, 'error');
@@ -374,9 +374,9 @@ function handleMultipleFilesSelected(files, indicator) {
       }
       return;
     }
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       uploads.push({
         name: file.name,
         type: file.type,
@@ -387,7 +387,7 @@ function handleMultipleFilesSelected(files, indicator) {
         finishUploadProcessing(uploads, indicator);
       }
     };
-    reader.onerror = function() {
+    reader.onerror = function () {
       completed++;
       if (completed === filesArray.length) {
         finishUploadProcessing(uploads, indicator);
@@ -444,35 +444,35 @@ function parseRupiah(rupiahString) {
 function initIndexedDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
+
     request.onerror = (e) => {
       showToast('Gagal Membuka Database', 'Aplikasi berjalan tanpa database lokal.', 'error');
       reject(e);
     };
-    
+
     request.onsuccess = (e) => {
       state.db = e.target.result;
       resolve(state.db);
     };
-    
+
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      
+
       // Transactions store
       if (!db.objectStoreNames.contains(STORE_TXNS)) {
         db.createObjectStore(STORE_TXNS, { keyPath: 'id' });
       }
-      
+
       // Categories store
       if (!db.objectStoreNames.contains(STORE_CATS)) {
         db.createObjectStore(STORE_CATS, { keyPath: 'id' });
       }
-      
+
       // Sources store
       if (!db.objectStoreNames.contains(STORE_SRCS)) {
         db.createObjectStore(STORE_SRCS, { keyPath: 'id' });
       }
-      
+
       // Settings store
       if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
         db.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
@@ -506,7 +506,7 @@ async function loadStateFromDB() {
   state.transactions = await getAllFromStore(STORE_TXNS);
   state.categories = await getAllFromStore(STORE_CATS);
   state.sources = await getAllFromStore(STORE_SRCS);
-  
+
   try {
     state.utang = await getAllFromStore(STORE_UTANG);
   } catch (err) {
@@ -517,20 +517,20 @@ async function loadStateFromDB() {
     try {
       const savedUtang = localStorage.getItem('raimuna_utang_data');
       if (savedUtang) state.utang = JSON.parse(savedUtang);
-    } catch (e) {}
+    } catch (e) { }
   }
-  
+
   try {
     state.sponsorshipHistory = await getAllFromStore(STORE_SPONSORSHIPS);
   } catch (err) {
     state.sponsorshipHistory = [];
   }
-  
+
   if (!state.sponsorshipHistory || state.sponsorshipHistory.length === 0) {
     try {
       const saved = localStorage.getItem('sponsorship_history');
       if (saved) state.sponsorshipHistory = JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   try {
@@ -543,9 +543,9 @@ async function loadStateFromDB() {
     try {
       const savedJelantah = localStorage.getItem('jelantah_recap_data');
       if (savedJelantah) state.jelantahRecap = JSON.parse(savedJelantah);
-    } catch (e) {}
+    } catch (e) { }
   }
-  
+
   // Seed default categories & sources if empty
   if (state.categories.length === 0) {
     for (const cat of DEFAULT_CATEGORIES) {
@@ -554,7 +554,7 @@ async function loadStateFromDB() {
       state.categories.push(item);
     }
   }
-  
+
   if (state.sources.length === 0) {
     for (const src of DEFAULT_SOURCES) {
       const item = { id: generateUniqueId('SRC'), nama: src, isDefault: true };
@@ -579,27 +579,27 @@ async function loadStateFromDB() {
     oldStandSrc.nama = 'Pembayaran Tenant';
     await saveToStore(STORE_SRCS, oldStandSrc);
   }
-  
+
   // Load settings
   const sheetUrlSetting = await getFromStore(STORE_SETTINGS, 'sheetUrl');
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
-  
+
   // ALWAYS force the latest sheet URL from code to avoid cached obsolete URLs
-  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbzgu-4Ar1zwcxYeamYo0EdERWPrBsgCr_diAf_obA2vMYsDj0upY0nnRmmklzBi77DeDw/exec';
+  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbx3qo3XCHQjO9fDkX8jR81ogZqKDARA7E05Ey1s6iRkPBKoL-qzbNm3yFGkqAGQa5nE/exec';
   state.settings.sheetUrl = hardcodedUrl;
   await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: hardcodedUrl });
-  
+
   if (autoSyncSetting === null || autoSyncSetting === undefined) {
     state.settings.autoSync = true;
     await saveToStore(STORE_SETTINGS, { key: 'autoSync', value: true });
   } else {
     state.settings.autoSync = autoSyncSetting.value;
   }
-  
+
   // Populate settings form fields safely
   const elSheetUrl = document.getElementById('settings-sheet-url');
   if (elSheetUrl) elSheetUrl.value = state.settings.sheetUrl;
-  
+
   const elAutoSync = document.getElementById('settings-auto-sync');
   if (elAutoSync) elAutoSync.checked = state.settings.autoSync;
 }
@@ -662,7 +662,7 @@ function clearStore(storeName) {
 
 // Generate unique ID with prefix
 function generateUniqueId(prefix) {
-  const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `${prefix}-${dateStr}-${randomChars}`;
 }
@@ -670,12 +670,12 @@ function generateUniqueId(prefix) {
 // ================= NAVIGATION LOGIC =================
 function setupNavigation() {
   const links = document.querySelectorAll('.sidebar-nav .nav-link, .nav-link-btn');
-  
+
   links.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const targetSectionId = link.getAttribute('data-target');
-      
+
       // Update sidebar active link states
       document.querySelectorAll('.sidebar-nav .nav-link').forEach(nav => {
         if (nav.getAttribute('data-target') === targetSectionId) {
@@ -684,13 +684,13 @@ function setupNavigation() {
           nav.classList.remove('active');
         }
       });
-      
+
       // Switch active section with fade animation
       document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.remove('active');
       });
       document.getElementById(targetSectionId).classList.add('active');
-      
+
       // Update page title
       const titles = {
         'dashboard-section': 'Dashboard Keuangan',
@@ -704,10 +704,10 @@ function setupNavigation() {
         'pengaturan-section': 'Integrasi Google Sheets'
       };
       document.getElementById('page-title').textContent = titles[targetSectionId] || 'Keuangan Raimuna';
-      
+
       // Close mobile sidebar on navigation
       document.querySelector('.sidebar').classList.remove('open');
-      
+
       // Trigger section-specific renders
       if (targetSectionId === 'dashboard-section') {
         renderDashboard();
@@ -741,7 +741,7 @@ function populateDropdowns() {
   const ambilSumberSelect = document.getElementById('ambil-sumber');
   const utangSumberSelect = document.getElementById('utang-sumber-kat');
   const alokasiSumberSelect = document.getElementById('alokasi-sumber-select');
-  
+
   // Keep selected values if any
   const selectedSumber = inSumberSelect ? inSumberSelect.value : '';
   const selectedKategori = outKategoriSelect ? outKategoriSelect.value : '';
@@ -754,7 +754,7 @@ function populateDropdowns() {
   const selectedAmbilSumber = ambilSumberSelect ? ambilSumberSelect.value : '';
   const selectedUtangSumber = utangSumberSelect ? utangSumberSelect.value : '';
   const selectedAlokasiSumber = alokasiSumberSelect ? alokasiSumberSelect.value : '';
-  
+
   // Clear
   if (inSumberSelect) inSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   if (outKategoriSelect) outKategoriSelect.innerHTML = '<option value="" disabled selected>Pilih Kategori Bidang</option>';
@@ -767,7 +767,7 @@ function populateDropdowns() {
   if (ambilSumberSelect) ambilSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana</option>';
   if (utangSumberSelect) utangSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana / Kategori</option>';
   if (alokasiSumberSelect) alokasiSumberSelect.innerHTML = '<option value="" disabled selected>Pilih Sumber Dana Resmi</option>';
-  
+
   // Populate Sources
   state.sources.forEach(src => {
     if (inSumberSelect) {
@@ -783,7 +783,7 @@ function populateDropdowns() {
       optOut.textContent = src.nama;
       outSumberSelect.appendChild(optOut);
     }
-    
+
     if (filterSumberSelect) {
       const filterOpt = document.createElement('option');
       filterOpt.value = src.nama;
@@ -797,7 +797,7 @@ function populateDropdowns() {
       optEdit.textContent = src.nama;
       editSumberSelect.appendChild(optEdit);
     }
-    
+
     if (ambilSumberSelect) {
       const optAmbil = document.createElement('option');
       optAmbil.value = src.nama;
@@ -819,7 +819,7 @@ function populateDropdowns() {
       alokasiSumberSelect.appendChild(optAlokasi);
     }
   });
-  
+
   // Populate Categories
   state.categories.forEach(cat => {
     if (outKategoriSelect) {
@@ -828,7 +828,7 @@ function populateDropdowns() {
       opt.textContent = cat.nama;
       outKategoriSelect.appendChild(opt);
     }
-    
+
     if (filterKategoriSelect) {
       const filterOpt = document.createElement('option');
       filterOpt.value = cat.nama;
@@ -842,7 +842,7 @@ function populateDropdowns() {
       optEdit.textContent = cat.nama;
       editKategoriSelect.appendChild(optEdit);
     }
-    
+
     if (ambilKategoriSelect) {
       const optAmbilKat = document.createElement('option');
       optAmbilKat.value = cat.nama;
@@ -850,7 +850,7 @@ function populateDropdowns() {
       ambilKategoriSelect.appendChild(optAmbilKat);
     }
   });
-  
+
   // Restore selections
   if (selectedSumber && inSumberSelect) inSumberSelect.value = selectedSumber;
   if (selectedKategori && outKategoriSelect) outKategoriSelect.value = selectedKategori;
@@ -869,18 +869,18 @@ function setupFormHandlers() {
   const formIn = document.getElementById('form-pemasukan');
   formIn.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const tanggal = document.getElementById('in-tanggal').value;
     const sumber = document.getElementById('in-sumber').value;
     const pemberi = document.getElementById('in-pemberi').value;
     const nominal = parseRupiah(document.getElementById('in-nominal').value);
     const keterangan = document.getElementById('in-keterangan').value;
-    
+
     if (nominal <= 0) {
       showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
       return;
     }
-    
+
     const newTxn = {
       id: generateUniqueId('TXN-IN'),
       tanggal,
@@ -895,38 +895,38 @@ function setupFormHandlers() {
       dateCreated: new Date().toISOString(),
       sync: false
     };
-    
+
     await saveTransaction(newTxn);
-    
+
     formIn.reset();
     document.getElementById('in-tanggal').value = new Date().toISOString().split('T')[0];
     fileIndicatorIn.textContent = '';
     state.currentUpload = null;
   });
-  
+
   // Pengambilan Uang Form Submit
   const formAmbil = document.getElementById('form-pengambilan');
   if (formAmbil) {
     formAmbil.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const tanggal = document.getElementById('ambil-tanggal').value;
       const kategori = document.getElementById('ambil-kategori').value;
       const sumberDana = document.getElementById('ambil-sumber').value;
       const nama = document.getElementById('ambil-nama').value;
       const nominal = parseRupiah(document.getElementById('ambil-nominal').value);
       const keterangan = document.getElementById('ambil-keterangan').value;
-      
+
       if (nominal <= 0) {
         showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
         return;
       }
-      
+
       if (!state.currentUpload || state.currentUpload.length === 0) {
         showToast('Input Kurang', 'Dokumentasi pengambilan wajib dilampirkan.', 'error');
         return;
       }
-      
+
       const newTxn = {
         id: generateUniqueId('TXN-OUT'), // Saved identically to normal Pengeluaran
         tanggal,
@@ -941,9 +941,9 @@ function setupFormHandlers() {
         dateCreated: new Date().toISOString(),
         sync: false
       };
-      
+
       await saveTransaction(newTxn);
-      
+
       formAmbil.reset();
       document.getElementById('ambil-tanggal').value = new Date().toISOString().split('T')[0];
       const indicator = document.getElementById('ambil-file-indicator');
@@ -956,20 +956,20 @@ function setupFormHandlers() {
   const formOut = document.getElementById('form-pengeluaran');
   formOut.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const tanggal = document.getElementById('out-tanggal').value;
     const kategori = document.getElementById('out-kategori').value;
     const sumberDana = document.getElementById('out-sumber').value;
     const pengambil = document.getElementById('out-pengambil').value;
     const nominal = parseRupiah(document.getElementById('out-nominal').value);
     const keterangan = document.getElementById('out-keterangan').value;
-    
+
     if (nominal <= 0) {
       showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
       return;
     }
-    
-    
+
+
     const newTxn = {
       id: generateUniqueId('TXN-OUT'),
       tanggal,
@@ -984,9 +984,9 @@ function setupFormHandlers() {
       dateCreated: new Date().toISOString(),
       sync: false
     };
-    
+
     await saveTransaction(newTxn);
-    
+
     formOut.reset();
     document.getElementById('out-tanggal').value = new Date().toISOString().split('T')[0];
     fileIndicatorOut.textContent = '';
@@ -998,7 +998,7 @@ function setupFormHandlers() {
 async function saveTransaction(txn) {
   state.transactions.push(txn);
   await saveToStore(STORE_TXNS, txn);
-  
+
   // Auto-record to state.utang if OUT transaction is marked as Tanpa Sumber Dana (Dana Talangan)
   const src = getTxSumber(txn);
   if (txn.tipe === 'OUT' && (src.includes('Dana Talangan') || src === 'Tanpa Sumber Dana')) {
@@ -1020,20 +1020,20 @@ async function saveTransaction(txn) {
       };
       if (!state.utang) state.utang = [];
       state.utang.unshift(autoUtang);
-      try { await saveToStore(STORE_UTANG, autoUtang); } catch(e){}
-      try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+      try { await saveToStore(STORE_UTANG, autoUtang); } catch (e) { }
+      try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch (e) { }
       showToast('Masuk ke Catatan Utang', `Transaksi ${txn.id} dicatat sebagai Utang Belum Lunas (Dana Talangan). Saldo Kas Kas tidak berkurang.`, 'info');
     }
   } else {
     showToast('Transaksi Berhasil Disimpan', `Transaksi ${txn.id} tersimpan secara lokal.`, 'success');
   }
-  
+
   // If autoSync enabled, push to Google Sheets (non-blocking, runs in the background)
   if (state.settings.autoSync && state.settings.sheetUrl) {
     syncTransactionToSheets(txn);
   }
   updateSyncBadgeState();
-  
+
   // Render dashboard / tables
   renderApp();
 }
@@ -1041,7 +1041,7 @@ async function saveTransaction(txn) {
 // ================= GOOGLE SHEETS SINKRONISASI =================
 async function syncTransactionToSheets(txn) {
   if (!state.settings.sheetUrl) return;
-  
+
   const cleanTxn = {
     id: txn.id,
     tanggal: txn.tanggal,
@@ -1055,7 +1055,7 @@ async function syncTransactionToSheets(txn) {
     attachment: txn.attachment,
     dateCreated: txn.dateCreated
   };
-  
+
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
@@ -1068,15 +1068,15 @@ async function syncTransactionToSheets(txn) {
         transaction: cleanTxn
       })
     });
-    
+
     txn.sync = true;
     await saveToStore(STORE_TXNS, txn);
     updateSyncBadgeState();
-    
+
     // Check if still in transaction list, update sync flag in state
     const match = state.transactions.find(t => t.id === txn.id);
     if (match) match.sync = true;
-    
+
     showToast('Tersinkronisasi', `Transaksi ${txn.id} disinkronkan ke Google Sheet.`, 'success');
   } catch (err) {
     showToast('Gagal Sinkronisasi', 'Gagal mengirim data ke Google Sheets. Disimpan offline.', 'error');
@@ -1087,10 +1087,10 @@ async function syncTransactionToSheets(txn) {
 // Delete transaction from Google Sheets dengan tombstone pattern
 async function syncDeleteToSheets(txnId) {
   if (!state.settings.sheetUrl) {
-    try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
+    try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch (e) { }
     return;
   }
-  try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
+  try { await saveToStore(STORE_DELETED_IDS, { id: txnId, type: 'transaction', deletedAt: new Date().toISOString() }); } catch (e) { }
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
@@ -1098,7 +1098,7 @@ async function syncDeleteToSheets(txnId) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'delete_single', id: txnId })
     });
-    try { await deleteFromStore(STORE_DELETED_IDS, txnId); } catch(e){}
+    try { await deleteFromStore(STORE_DELETED_IDS, txnId); } catch (e) { }
   } catch (err) {
     console.error('Gagal hapus dari Sheet, akan dicoba ulang saat startup:', err);
   }
@@ -1123,20 +1123,20 @@ async function autoSyncPendingTransactions() {
 async function pushPendingDeletes() {
   if (!state.settings.sheetUrl) return;
   let pendingDeletes = [];
-  try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch(e){ return; }
+  try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { return; }
   if (!pendingDeletes || pendingDeletes.length === 0) return;
 
   for (const item of pendingDeletes) {
     try {
       const action = item.type === 'utang' ? 'delete_utang' :
-                     item.type === 'kwitansi' ? 'delete_kwitansi' : 'delete_single';
+        item.type === 'kwitansi' ? 'delete_kwitansi' : 'delete_single';
       await fetch(state.settings.sheetUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action, id: item.id, no: item.no || '' })
       });
-      try { await deleteFromStore(STORE_DELETED_IDS, item.id); } catch(e){}
+      try { await deleteFromStore(STORE_DELETED_IDS, item.id); } catch (e) { }
     } catch (err) {
       console.error('Gagal push pending delete:', item.id, err);
     }
@@ -1149,10 +1149,10 @@ async function pushAllTransactionsToSheets() {
     showToast('Peringatan', 'Silakan simpan URL Google Sheets terlebih dahulu.', 'error');
     return;
   }
-  
+
   updateSyncBadge('unsynced', 'Mengirim data...');
   showToast('Memulai Sinkronisasi', 'Mengunggah seluruh data lokal ke Google Sheet...', 'info');
-  
+
   const cleanList = state.transactions.map(txn => ({
     id: txn.id,
     tanggal: txn.tanggal,
@@ -1165,7 +1165,7 @@ async function pushAllTransactionsToSheets() {
     keterangan: txn.keterangan,
     dateCreated: txn.dateCreated
   }));
-  
+
   try {
     // We can try to use a standard CORS POST if Apps Script is configured for it,
     // otherwise fallback to no-cors. For bulk push, let's use no-cors to be safe.
@@ -1179,16 +1179,17 @@ async function pushAllTransactionsToSheets() {
         action: 'push_bulk',
         transactions: cleanList,
         kwitansi: state.sponsorshipHistory || [],
-        utang: state.utang || []
+        utang: state.utang || [],
+        jelantah: state.jelantahRecap || []
       })
     });
-    
+
     // Mark all as synced
     for (let txn of state.transactions) {
       txn.sync = true;
       await saveToStore(STORE_TXNS, txn);
     }
-    
+
     updateSyncBadgeState();
     renderApp();
     showToast('Ekspor Berhasil', 'Seluruh data transaksi terkirim ke Google Sheets.', 'success');
@@ -1204,20 +1205,20 @@ async function pullAllTransactionsFromSheets() {
     showToast('Peringatan', 'Silakan simpan URL Google Sheets terlebih dahulu.', 'error');
     return;
   }
-  
+
   if (!confirm('Peringatan! Menarik data dari Google Sheets akan MENGHAPUS seluruh data transaksi lokal saat ini dan menimpanya dengan data dari sheet. Lanjutkan?')) {
     return;
   }
-  
+
   updateSyncBadge('unsynced', 'Menarik data...');
   showToast('Mengimpor Data', 'Mengunduh data transaksi dari Google Sheets...', 'info');
-  
+
   try {
     // GET requests usually follow CORS. In Google Apps Script, redirecting makes it tricky.
     // Let's fetch using standard CORS since GET usually responds with access-control-allow-origin header.
     const response = await fetch(state.settings.sheetUrl);
     const result = await response.json();
-    
+
     if (result.success && Array.isArray(result.data)) {
       // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
       const localAttachmentMap = {};
@@ -1226,19 +1227,19 @@ async function pullAllTransactionsFromSheets() {
           localAttachmentMap[txn.id] = txn.attachment;
         }
       }
-      
+
       // Clear local txns store
       await clearStore(STORE_TXNS);
-      
+
       const newTxns = result.data.map(parseSheetRow);
-      
+
       // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
       for (const txn of newTxns) {
         if (localAttachmentMap[txn.id]) {
           txn.attachment = localAttachmentMap[txn.id];
         }
       }
-      
+
       // Save all to local DB
       for (const txn of newTxns) {
         await saveToStore(STORE_TXNS, txn);
@@ -1253,7 +1254,7 @@ async function pullAllTransactionsFromSheets() {
             await saveToStore(STORE_SPONSORSHIPS, kw);
           }
           localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
-        } catch(e){}
+        } catch (e) { }
       }
 
       if (result.utang && Array.isArray(result.utang) && result.utang.length > 0) {
@@ -1265,7 +1266,7 @@ async function pullAllTransactionsFromSheets() {
             await saveToStore(STORE_UTANG, ut);
           }
           localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
-        } catch(e){}
+        } catch (e) { }
       }
 
       // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
@@ -1292,9 +1293,9 @@ async function pullAllTransactionsFromSheets() {
             await saveToStore(STORE_JELANTAH, jlt);
           }
           localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap));
-        } catch(e){}
+        } catch (e) { }
       }
-      
+
       state.transactions = newTxns;
       updateSyncBadgeState();
       renderApp();
@@ -1313,18 +1314,18 @@ async function pullAllTransactionsFromSheets() {
 // Catatan: pushPendingDeletes() dan autoSyncPendingTransactions() HARUS dipanggil SEBELUM fungsi ini
 async function autoPullFromSheets() {
   if (!state.settings.sheetUrl) return;
-  
+
   updateSyncBadge('unsynced', 'Menarik data...');
   try {
     const response = await fetch(state.settings.sheetUrl);
     const result = await response.json();
-    
+
     if (result.success && Array.isArray(result.data)) {
       // ===== FULL REPLACE: Google Sheets adalah sumber kebenaran =====
       // Semua data lokal diganti dengan data dari Sheet
       // (pushPendingDeletes & autoSyncPendingTransactions sudah jalan sebelumnya,
       //  jadi data Sheet sudah akurat mencerminkan semua aksi hapus/tambah lokal)
-      
+
       // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
       const localAttachmentMap = {};
       for (const txn of state.transactions) {
@@ -1332,23 +1333,23 @@ async function autoPullFromSheets() {
           localAttachmentMap[txn.id] = txn.attachment;
         }
       }
-      
+
       const remoteTxns = result.data.map(parseSheetRow);
-      
+
       // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
       for (const txn of remoteTxns) {
         if (localAttachmentMap[txn.id]) {
           txn.attachment = localAttachmentMap[txn.id];
         }
       }
-      
+
       // Ganti data transaksi lokal sepenuhnya
       await clearStore(STORE_TXNS);
       for (const txn of remoteTxns) {
         await saveToStore(STORE_TXNS, txn);
       }
       state.transactions = remoteTxns;
-      
+
       // Ganti data kwitansi/sponsorship sepenuhnya
       if (result.kwitansi && Array.isArray(result.kwitansi)) {
         const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
@@ -1359,13 +1360,13 @@ async function autoPullFromSheets() {
             await saveToStore(STORE_SPONSORSHIPS, kw);
           }
           localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
-        } catch(e){}
+        } catch (e) { }
       }
 
       // Ganti data utang sepenuhnya (filter utang yang sedang ada di antrean tombstone hapus)
       if (result.utang && Array.isArray(result.utang)) {
         let pendingDeletes = [];
-        try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch(e){}
+        try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { }
         const deletedUtangIds = (pendingDeletes || []).filter(d => d.type === 'utang').map(d => d.id);
 
         const parsedUt = result.utang.map(parseUtangRow).filter(Boolean).filter(u => !deletedUtangIds.includes(u.id));
@@ -1376,7 +1377,7 @@ async function autoPullFromSheets() {
             await saveToStore(STORE_UTANG, ut);
           }
           localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
-        } catch(e){}
+        } catch (e) { }
       }
 
       // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
@@ -1403,7 +1404,7 @@ async function autoPullFromSheets() {
             await saveToStore(STORE_JELANTAH, jlt);
           }
           localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap));
-        } catch(e){}
+        } catch (e) { }
       }
 
       updateSyncBadgeState();
@@ -1422,7 +1423,7 @@ async function autoSyncPendingTransactions() {
   if (!state.settings.sheetUrl || !state.settings.autoSync) return;
   const unsynced = state.transactions.filter(t => !t.sync);
   if (unsynced.length === 0) return;
-  
+
   for (const txn of unsynced) {
     await syncTransactionToSheets(txn);
   }
@@ -1444,7 +1445,7 @@ function formatDateString(val) {
     if (!isNaN(d.getTime())) {
       return d.toISOString().split('T')[0];
     }
-  } catch(e){}
+  } catch (e) { }
   return String(val).split('T')[0];
 }
 
@@ -1454,7 +1455,7 @@ async function testGoogleSheetsConnection(showSuccessToast = true) {
     showToast('Error', 'Input URL kosong.', 'error');
     return;
   }
-  
+
   try {
     // Test connection via POST test action using CORS.
     // If it fails with CORS, we'll try a CORS-enabled get or just notify
@@ -1463,7 +1464,7 @@ async function testGoogleSheetsConnection(showSuccessToast = true) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'test' })
     });
-    
+
     // Web Apps redirect with 302, response might not be fetchable with CORS depending on Google setup,
     // so we handle normal errors or successes.
     if (showSuccessToast) {
@@ -1486,9 +1487,9 @@ function updateSyncBadgeState() {
     updateSyncBadge('unsynced', 'Offline / Tidak Sinkron');
     return;
   }
-  
+
   const unsyncedCount = state.transactions.filter(t => !t.sync).length;
-  
+
   if (unsyncedCount > 0) {
     updateSyncBadge('unsynced', `${unsyncedCount} Transaksi Belum Sinkron`);
   } else {
@@ -1499,7 +1500,7 @@ function updateSyncBadgeState() {
 function updateSyncBadge(type, text) {
   const badge = document.getElementById('sync-status-badge');
   const textEl = badge.querySelector('.badge-text');
-  
+
   badge.className = `sync-badge ${type}`;
   textEl.textContent = text;
 }
@@ -1508,7 +1509,7 @@ function updateSyncBadge(type, text) {
 function renderApp() {
   populateDropdowns();
   updateSyncBadgeState();
-  
+
   // Check active section and render it
   const activeSec = document.querySelector('.content-section.active');
   if (activeSec) {
@@ -1530,7 +1531,7 @@ function renderDashboard() {
   let totalOutKas = 0; // Kas keluar dari Kas Resmi (TIDAK termasuk Tenant & Dana Talangan)
   let totalOutAll = 0; // Total pengeluaran keseluruhan
   let txnCount = (state.transactions || []).length;
-  
+
   (state.transactions || []).forEach(t => {
     const nom = parseInt(t.nominal, 10) || 0;
     const src = String(getTxSumber(t) || '').trim();
@@ -1550,7 +1551,7 @@ function renderDashboard() {
       }
     }
   });
-  
+
   // Saldo Kas Utama HANYA dihitung dari Kas Pemasukan Utama - Kas Pengeluaran Utama
   let saldoKas = Math.max(0, totalInKas - totalOutKas);
 
@@ -1594,7 +1595,7 @@ function renderDashboard() {
     }
   });
   let sisaApbd = Math.max(0, totalApbdIn - totalApbdOut);
-  
+
   // Update fields
   if (document.getElementById('dashboard-total-saldo')) document.getElementById('dashboard-total-saldo').textContent = formatRupiah(saldoKas);
   if (document.getElementById('dashboard-total-pemasukan')) document.getElementById('dashboard-total-pemasukan').textContent = formatRupiah(totalInKas);
@@ -1609,12 +1610,12 @@ function renderDashboard() {
 
   // Render Dashboard Quick Checklist Utang
   renderDashboardQuickUtang();
-  
+
   // 1b. Render Ringkasan Saldo per Sumber Dana
   const summaryTbody = document.getElementById('dashboard-sumber-summary-tbody');
   if (summaryTbody) {
     summaryTbody.innerHTML = '';
-    
+
     // Group transactions by Sumber Dana
     const sourceSummaries = {};
     // Seed with all current sources in state
@@ -1623,7 +1624,7 @@ function renderDashboard() {
         sourceSummaries[src.nama] = { pemasukan: 0, pengeluaran: 0 };
       }
     });
-    
+
     // Process transactions
     (state.transactions || []).forEach(t => {
       const src = getTxSumber(t);
@@ -1638,7 +1639,7 @@ function renderDashboard() {
         sourceSummaries[targetSrc].pengeluaran += nom;
       }
     });
-    
+
     const summaryKeys = Object.keys(sourceSummaries).sort();
     if (summaryKeys.length === 0) {
       summaryTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada data sumber dana terdaftar.</td></tr>';
@@ -1647,7 +1648,7 @@ function renderDashboard() {
         const data = sourceSummaries[srcName];
         const rawSisa = data.pemasukan - data.pengeluaran;
         const sisa = Math.max(0, rawSisa);
-        
+
         // Only show if there's any transaction or it's a default source to keep UI clean
         if (data.pemasukan > 0 || data.pengeluaran > 0) {
           const tr = document.createElement('tr');
@@ -1660,19 +1661,19 @@ function renderDashboard() {
           summaryTbody.appendChild(tr);
         }
       });
-      
+
       // If no active rows were appended (all are zero), show a message
       if (summaryTbody.innerHTML === '') {
         summaryTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada transaksi pada sumber dana yang terdaftar.</td></tr>';
       }
     }
   }
-  
+
   // 2. Render 10 Latest Transactions
   const sortedTxns = [...state.transactions].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   const latestTxns = sortedTxns.slice(0, 10);
   const tbody = document.getElementById('recent-transactions-tbody');
-  
+
   tbody.innerHTML = '';
   if (latestTxns.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Belum ada transaksi terdaftar.</td></tr>';
@@ -1680,15 +1681,15 @@ function renderDashboard() {
     latestTxns.forEach(tx => {
       const tr = document.createElement('tr');
       tr.addEventListener('click', () => showTransactionDetail(tx));
-      
-      const typeBadge = tx.tipe === 'IN' 
-        ? '<span class="badge-type in">Pemasukan</span>' 
+
+      const typeBadge = tx.tipe === 'IN'
+        ? '<span class="badge-type in">Pemasukan</span>'
         : '<span class="badge-type out">Pengeluaran</span>';
-      
-      const syncBadge = tx.sync 
-        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>' 
+
+      const syncBadge = tx.sync
+        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>'
         : '<span class="badge-sync unsynced" title="Belum disinkronkan">⏳</span>';
-        
+
       tr.innerHTML = `
         <td>${formatIndonesianDate(tx.tanggal)}</td>
         <td class="font-bold">${tx.id}</td>
@@ -1703,7 +1704,7 @@ function renderDashboard() {
           <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
         </td>
       `;
-      
+
       const editBtn = tr.querySelector('.btn-edit-action');
       if (editBtn) {
         editBtn.addEventListener('click', (e) => {
@@ -1721,7 +1722,7 @@ function renderDashboard() {
       tbody.appendChild(tr);
     });
   }
-  
+
   // 3. Render Dashboard Charts
   renderDashboardCharts();
 }
@@ -1730,11 +1731,11 @@ function renderDashboard() {
 function renderDashboardCharts() {
   const ctxFlow = document.getElementById('flowChart').getContext('2d');
   const ctxCat = document.getElementById('categoryChart').getContext('2d');
-  
+
   // Destroy old charts if they exist to prevent memory leaks
   if (state.charts.flow) state.charts.flow.destroy();
   if (state.charts.category) state.charts.category.destroy();
-  
+
   // 1. Process data for Flow Chart (Income vs Expense monthly)
   // Group transactions by month
   const monthlyData = {};
@@ -1746,7 +1747,7 @@ function renderDashboardCharts() {
     if (t.tipe === 'IN') monthlyData[monthKey].in += t.nominal;
     else monthlyData[monthKey].out += t.nominal;
   });
-  
+
   // Sort months
   const sortedMonths = Object.keys(monthlyData).sort();
   // If no transactions, add current month as empty placeholder
@@ -1755,19 +1756,19 @@ function renderDashboardCharts() {
     sortedMonths.push(currentMonth);
     monthlyData[currentMonth] = { in: 0, out: 0 };
   }
-  
+
   const labelsFlow = sortedMonths.map(m => {
     const [y, mm] = m.split('-');
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
       'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
     ];
-    return `${monthNames[parseInt(mm, 10)-1]} ${y}`;
+    return `${monthNames[parseInt(mm, 10) - 1]} ${y}`;
   });
-  
+
   const dataIn = sortedMonths.map(m => monthlyData[m].in);
   const dataOut = sortedMonths.map(m => monthlyData[m].out);
-  
+
   state.charts.flow = new Chart(ctxFlow, {
     type: 'bar',
     data: {
@@ -1814,7 +1815,7 @@ function renderDashboardCharts() {
       }
     }
   });
-  
+
   // 2. Process data for Category Chart (Expenses only)
   const categoryTotals = {};
   state.transactions.forEach(t => {
@@ -1823,10 +1824,10 @@ function renderDashboardCharts() {
       categoryTotals[cat] = (categoryTotals[cat] || 0) + t.nominal;
     }
   });
-  
+
   const labelsCat = Object.keys(categoryTotals);
   const dataCat = Object.values(categoryTotals);
-  
+
   if (labelsCat.length === 0) {
     // Show empty placeholder
     state.charts.category = new Chart(ctxCat, {
@@ -1851,7 +1852,7 @@ function renderDashboardCharts() {
   } else {
     // Generate beautiful pastel colors list
     const backgroundColors = labelsCat.map((_, i) => PASTEL_PALETTE[i % PASTEL_PALETTE.length]);
-    
+
     state.charts.category = new Chart(ctxCat, {
       type: 'doughnut',
       data: {
@@ -1873,7 +1874,7 @@ function renderDashboardCharts() {
           },
           tooltip: {
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 let label = context.label || '';
                 if (label) label += ': ';
                 label += formatRupiah(context.raw);
@@ -1891,31 +1892,31 @@ function renderDashboardCharts() {
 function renderLaporan() {
   // Populate filter year options dynamically based on transaction dates
   populateFilterYears();
-  
+
   // Apply Filter & Search logic
   const filtered = filterTransactions();
-  
+
   // Sort transactions by date/amount
   sortTransactions(filtered);
-  
+
   // Compute running balances
   // We need to calculate running balance chronologically (sorted by Date ascending)
-  const chronological = [...state.transactions].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+  const chronological = [...state.transactions].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
   let runningTotal = 0;
   const runningBalancesMap = {};
-  
+
   chronological.forEach(tx => {
     if (tx.tipe === 'IN') runningTotal += tx.nominal;
     else runningTotal -= tx.nominal;
     runningBalancesMap[tx.id] = Math.max(0, runningTotal);
   });
-  
+
   // Render report rows
   const tbody = document.getElementById('laporan-tbody');
   tbody.innerHTML = '';
-  
+
   let filteredNominalSum = 0;
-  
+
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr class="row-empty"><td colspan="12" class="text-center text-muted">Tidak ditemukan transaksi yang cocok dengan filter.</td></tr>';
     document.getElementById('report-filtered-nominal-sum').textContent = formatRupiah(0);
@@ -1923,21 +1924,21 @@ function renderLaporan() {
   } else {
     filtered.forEach((tx, index) => {
       filteredNominalSum += tx.nominal;
-      
+
       const tr = document.createElement('tr');
       tr.addEventListener('click', () => showTransactionDetail(tx));
-      
-      const typeBadge = tx.tipe === 'IN' 
-        ? '<span class="badge-type in">Pemasukan</span>' 
+
+      const typeBadge = tx.tipe === 'IN'
+        ? '<span class="badge-type in">Pemasukan</span>'
         : '<span class="badge-type out">Pengeluaran</span>';
-      
-      const syncBadge = tx.sync 
-        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>' 
+
+      const syncBadge = tx.sync
+        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>'
         : '<span class="badge-sync unsynced" title="Belum disinkronkan">⏳</span>';
-      
+
       // Obtain running balance at this transaction
       const balAtTx = runningBalancesMap[tx.id] || 0;
-      
+
       tr.innerHTML = `
         <td>${index + 1}</td>
         <td>${formatIndonesianDate(tx.tanggal)}</td>
@@ -1955,7 +1956,7 @@ function renderLaporan() {
           <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
         </td>
       `;
-      
+
       const editBtn = tr.querySelector('.btn-edit-action');
       if (editBtn) {
         editBtn.addEventListener('click', (e) => {
@@ -1972,7 +1973,7 @@ function renderLaporan() {
       }
       tbody.appendChild(tr);
     });
-    
+
     // Display total summary for filtered list
     // Use the actual current running balance of the very last chronologically filtered transaction
     // Or let's calculate final total from complete dataset
@@ -1989,7 +1990,7 @@ function renderLaporan() {
         if (!isTalangan && !isTenant) overallOutKas += t.nominal;
       }
     });
-    
+
     document.getElementById('report-filtered-nominal-sum').textContent = formatRupiah(filteredNominalSum);
     document.getElementById('report-filtered-final-saldo').textContent = formatRupiah(Math.max(0, overallInKas - overallOutKas));
   }
@@ -1999,19 +2000,19 @@ function renderLaporan() {
 function populateFilterYears() {
   const select = document.getElementById('filter-tahun');
   const selectedYear = select.value;
-  
+
   // Extract years from dates
   const years = new Set();
   state.transactions.forEach(tx => {
     if (tx.tanggal) {
-      const y = tx.tanggal.slice(0,4);
+      const y = tx.tanggal.slice(0, 4);
       years.add(y);
     }
   });
-  
+
   // Also add current year
   years.add(new Date().getFullYear().toString());
-  
+
   select.innerHTML = '<option value="ALL">Semua Tahun</option>';
   Array.from(years).sort().forEach(y => {
     const opt = document.createElement('option');
@@ -2019,7 +2020,7 @@ function populateFilterYears() {
     opt.textContent = y;
     select.appendChild(opt);
   });
-  
+
   if (selectedYear) select.value = selectedYear;
 }
 
@@ -2034,17 +2035,17 @@ function filterTransactions() {
       const matchDesc = tx.keterangan.toLowerCase().includes(search);
       if (!matchId && !matchPic && !matchDesc) return false;
     }
-    
+
     // 2. Tipe
     if (state.filters.tipe !== 'ALL' && tx.tipe !== state.filters.tipe) {
       return false;
     }
-    
+
     // 3. Bulan & Tahun
     const [ty, tm] = tx.tanggal.split('-');
     if (state.filters.bulan !== 'ALL' && tm !== state.filters.bulan) return false;
     if (state.filters.tahun !== 'ALL' && ty !== state.filters.tahun) return false;
-    
+
     // 4. Kategori Pengeluaran
     if (state.filters.kategori !== 'ALL' && getTxCategory(tx) !== state.filters.kategori) {
       return false;
@@ -2054,14 +2055,14 @@ function filterTransactions() {
     if (state.filters.sumberDana !== 'ALL' && getTxSumber(tx) !== state.filters.sumberDana) {
       return false;
     }
-    
+
     // 5. Sync Status
     if (state.filters.sync !== 'ALL') {
       const isSynced = tx.sync;
       if (state.filters.sync === 'SYNCED' && !isSynced) return false;
       if (state.filters.sync === 'UNSYNCED' && isSynced) return false;
     }
-    
+
     return true;
   });
 }
@@ -2070,7 +2071,7 @@ function filterTransactions() {
 function sortTransactions(list) {
   list.sort((a, b) => {
     let valA, valB;
-    
+
     if (state.sort.column === 'no') {
       // Index order (we will sort by creation date as fallback)
       valA = a.dateCreated;
@@ -2084,7 +2085,7 @@ function sortTransactions(list) {
     } else {
       return 0;
     }
-    
+
     if (valA < valB) return state.sort.direction === 'asc' ? -1 : 1;
     if (valA > valB) return state.sort.direction === 'asc' ? 1 : -1;
     return 0;
@@ -2096,17 +2097,17 @@ function formatIndonesianDate(dateString) {
   if (!dateString) return '--';
   const parts = dateString.split('-');
   if (parts.length !== 3) return dateString;
-  
+
   const d = parts[2];
   const m = parts[1];
   const y = parts[0];
-  
+
   const monthNames = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
-  
-  return `${d} ${monthNames[parseInt(m, 10)-1]} ${y}`;
+
+  return `${d} ${monthNames[parseInt(m, 10) - 1]} ${y}`;
 }
 
 // Setup report filters listeners
@@ -2115,22 +2116,22 @@ function setupFilterHandlers() {
     state.filters.search = e.target.value;
     renderLaporan();
   });
-  
+
   document.getElementById('filter-tipe').addEventListener('change', (e) => {
     state.filters.tipe = e.target.value;
     renderLaporan();
   });
-  
+
   document.getElementById('filter-bulan').addEventListener('change', (e) => {
     state.filters.bulan = e.target.value;
     renderLaporan();
   });
-  
+
   document.getElementById('filter-tahun').addEventListener('change', (e) => {
     state.filters.tahun = e.target.value;
     renderLaporan();
   });
-  
+
   const filterKat = document.getElementById('filter-kategori');
   if (filterKat) {
     filterKat.addEventListener('change', (e) => {
@@ -2146,12 +2147,12 @@ function setupFilterHandlers() {
       renderLaporan();
     });
   }
-  
+
   document.getElementById('filter-sync').addEventListener('change', (e) => {
     state.filters.sync = e.target.value;
     renderLaporan();
   });
-  
+
   document.getElementById('btn-reset-filters').addEventListener('click', () => {
     document.getElementById('filter-search').value = '';
     document.getElementById('filter-tipe').value = 'ALL';
@@ -2160,7 +2161,7 @@ function setupFilterHandlers() {
     if (document.getElementById('filter-kategori')) document.getElementById('filter-kategori').value = 'ALL';
     if (document.getElementById('filter-sumber')) document.getElementById('filter-sumber').value = 'ALL';
     document.getElementById('filter-sync').value = 'ALL';
-    
+
     state.filters = {
       search: '',
       tipe: 'ALL',
@@ -2170,24 +2171,24 @@ function setupFilterHandlers() {
       sumberDana: 'ALL',
       sync: 'ALL'
     };
-    
+
     renderLaporan();
     showToast('Filter Direset', 'Menampilkan seluruh data transaksi.', 'info');
   });
-  
+
   // Table Sorting logic headers click
   const headers = document.querySelectorAll('#table-laporan-keuangan th.sortable');
   headers.forEach(header => {
     header.addEventListener('click', () => {
       const col = header.getAttribute('data-sort');
-      
+
       if (state.sort.column === col) {
         state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
       } else {
         state.sort.column = col;
         state.sort.direction = 'asc';
       }
-      
+
       // Update header indicators
       headers.forEach(h => {
         const icon = h.querySelector('.sort-icon');
@@ -2197,7 +2198,7 @@ function setupFilterHandlers() {
           icon.textContent = '';
         }
       });
-      
+
       renderLaporan();
     });
   });
@@ -2207,48 +2208,48 @@ function setupFilterHandlers() {
 function renderKategoriPage() {
   const listCat = document.getElementById('list-kategori-pengeluaran');
   const listSrc = document.getElementById('list-sumber-pemasukan');
-  
+
   listCat.innerHTML = '';
   listSrc.innerHTML = '';
-  
+
   // Render Categories list
   state.categories.forEach(cat => {
     const li = document.createElement('li');
     li.className = `custom-list-item ${cat.isDefault ? 'default' : ''}`;
-    
+
     let actionHtml = '';
     if (cat.isDefault) {
       actionHtml = '<span class="badge-default">Default</span>';
     } else {
       actionHtml = `<button class="btn-icon text-danger btn-delete-cat" data-id="${cat.id}">🗑️</button>`;
     }
-    
+
     li.innerHTML = `
       <span>${cat.nama}</span>
       ${actionHtml}
     `;
     listCat.appendChild(li);
   });
-  
+
   // Render Sources list
   state.sources.forEach(src => {
     const li = document.createElement('li');
     li.className = `custom-list-item ${src.isDefault ? 'default' : ''}`;
-    
+
     let actionHtml = '';
     if (src.isDefault) {
       actionHtml = '<span class="badge-default">Default</span>';
     } else {
       actionHtml = `<button class="btn-icon text-danger btn-delete-src" data-id="${src.id}">🗑️</button>`;
     }
-    
+
     li.innerHTML = `
       <span>${src.nama}</span>
       ${actionHtml}
     `;
     listSrc.appendChild(li);
   });
-  
+
   // Attach delete listeners
   document.querySelectorAll('.btn-delete-cat').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -2262,7 +2263,7 @@ function renderKategoriPage() {
       }
     });
   });
-  
+
   document.querySelectorAll('.btn-delete-src').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
@@ -2281,7 +2282,7 @@ function renderKategoriPage() {
 function setupCustomModals() {
   const inForm = document.getElementById('form-kategori-add');
   const srcForm = document.getElementById('form-sumber-add');
-  
+
   // Page category adder
   inForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2292,7 +2293,7 @@ function setupCustomModals() {
         showToast('Duplikat', 'Kategori ini sudah terdaftar.', 'error');
         return;
       }
-      
+
       const item = { id: generateUniqueId('CAT'), nama, isDefault: false };
       state.categories.push(item);
       await saveToStore(STORE_CATS, item);
@@ -2301,7 +2302,7 @@ function setupCustomModals() {
       renderKategoriPage();
     }
   });
-  
+
   srcForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nama = document.getElementById('sumber-nama').value.trim();
@@ -2311,7 +2312,7 @@ function setupCustomModals() {
         showToast('Duplikat', 'Sumber dana ini sudah terdaftar.', 'error');
         return;
       }
-      
+
       const item = { id: generateUniqueId('SRC'), nama, isDefault: false };
       state.sources.push(item);
       await saveToStore(STORE_SRCS, item);
@@ -2320,16 +2321,16 @@ function setupCustomModals() {
       renderKategoriPage();
     }
   });
-  
+
   // Inline dropdown buttons (+) triggers
   const customModal = document.getElementById('custom-add-modal');
   const customTitle = document.getElementById('custom-modal-title');
   const customLabel = document.getElementById('custom-modal-label');
   const customInput = document.getElementById('custom-input-value');
-  
+
   let inlineAddTargetType = ''; // 'SUMBER' or 'KATEGORI'
   let triggeredFrom = ''; // 'IN-FORM' or 'OUT-FORM'
-  
+
   document.getElementById('btn-add-sumber-inline').addEventListener('click', () => {
     inlineAddTargetType = 'SUMBER';
     triggeredFrom = 'IN-FORM';
@@ -2352,7 +2353,7 @@ function setupCustomModals() {
       customModal.classList.add('open');
     });
   }
-  
+
   document.getElementById('btn-add-kategori-inline').addEventListener('click', () => {
     inlineAddTargetType = 'KATEGORI';
     triggeredFrom = 'OUT-FORM';
@@ -2388,12 +2389,12 @@ function setupCustomModals() {
       customModal.classList.add('open');
     });
   }
-  
+
   // Close inline dialogs
   const closeInline = () => customModal.classList.remove('open');
   document.getElementById('btn-close-custom-modal').addEventListener('click', closeInline);
   document.getElementById('btn-cancel-custom-modal').addEventListener('click', closeInline);
-  
+
   // Submit inline custom adder
   document.getElementById('btn-submit-custom-modal').addEventListener('click', async () => {
     const val = customInput.value.trim();
@@ -2401,7 +2402,7 @@ function setupCustomModals() {
       showToast('Input Kosong', 'Harap isi nama item terlebih dahulu.', 'error');
       return;
     }
-    
+
     if (inlineAddTargetType === 'SUMBER') {
       if (state.sources.some(s => s.nama.toLowerCase() === val.toLowerCase())) {
         showToast('Duplikat', 'Sumber dana ini sudah terdaftar.', 'error');
@@ -2411,7 +2412,7 @@ function setupCustomModals() {
       state.sources.push(item);
       await saveToStore(STORE_SRCS, item);
       populateDropdowns();
-      
+
       if (triggeredFrom === 'OUT-FORM') {
         const outSumber = document.getElementById('out-sumber');
         if (outSumber) outSumber.value = val;
@@ -2438,7 +2439,7 @@ function setupCustomModals() {
         if (outKat) outKat.value = val;
       }
     }
-    
+
     closeInline();
     showToast('Berhasil Ditambahkan', `"${val}" siap digunakan.`, 'success');
   });
@@ -2447,18 +2448,18 @@ function setupCustomModals() {
 // ================= DETAIL MODAL LOGIC =================
 function showTransactionDetail(txn) {
   const modal = document.getElementById('detail-modal');
-  
+
   // Header details
   document.getElementById('detail-txn-id').textContent = txn.id;
   const typeEl = document.getElementById('detail-txn-type');
-  
+
   if (txn.tipe === 'IN') {
     typeEl.textContent = 'Pemasukan';
     typeEl.className = 'txn-badge-type pemasukan';
     document.getElementById('detail-cat-sumber-label').textContent = 'Sumber Dana:';
     document.getElementById('detail-pic-label').textContent = 'Penanggung Jawab / Pemberi:';
     document.getElementById('detail-amount').className = 'detail-value font-bold text-success';
-    
+
     const srcFundContainer = document.getElementById('detail-source-fund-container');
     if (srcFundContainer) srcFundContainer.style.display = 'none';
   } else {
@@ -2467,14 +2468,14 @@ function showTransactionDetail(txn) {
     document.getElementById('detail-cat-sumber-label').textContent = 'Kategori Bidang:';
     document.getElementById('detail-pic-label').textContent = 'Pengambil Dana:';
     document.getElementById('detail-amount').className = 'detail-value font-bold text-danger';
-    
+
     const srcFundContainer = document.getElementById('detail-source-fund-container');
     if (srcFundContainer) {
       srcFundContainer.style.display = 'block';
       document.getElementById('detail-source-fund-value').textContent = txn.sumberDana || 'Tidak dispesifikasi';
     }
   }
-  
+
   document.getElementById('detail-date').textContent = formatIndonesianDate(txn.tanggal);
   const catEl = document.getElementById('detail-cat-value');
   if (catEl) catEl.textContent = getTxCategory(txn);
@@ -2483,16 +2484,16 @@ function showTransactionDetail(txn) {
   document.getElementById('detail-pic-value').textContent = txn.pic;
   document.getElementById('detail-amount').textContent = formatRupiah(txn.nominal);
   document.getElementById('detail-description').textContent = txn.keterangan;
-  
+
   // Render attachments
   const renderArea = document.getElementById('attachment-preview-render');
   renderArea.innerHTML = '';
-  
+
   if (txn.attachment) {
     // Standardize attachments to an array
     const attachments = Array.isArray(txn.attachment) ? txn.attachment : [txn.attachment];
     const validAttachments = attachments.filter(att => att && att.base64);
-    
+
     if (validAttachments.length > 0) {
       validAttachments.forEach(att => {
         if (att.type.startsWith('image/')) {
@@ -2522,15 +2523,15 @@ function showTransactionDetail(txn) {
           box.style.padding = '8px';
           box.style.border = '1px solid #ddd';
           box.style.borderRadius = '4px';
-          
+
           const icon = document.createElement('div');
           icon.className = 'pdf-icon';
           icon.textContent = '📄';
-          
+
           const nameText = document.createElement('span');
           nameText.textContent = att.name.length > 20 ? att.name.substring(0, 17) + '...' : att.name;
           nameText.className = 'font-bold text-muted';
-          
+
           const link = document.createElement('button');
           link.className = 'btn btn-secondary btn-small';
           link.textContent = 'Lihat PDF';
@@ -2539,7 +2540,7 @@ function showTransactionDetail(txn) {
             pdfWindow.document.write(`<title>${att.name}</title><iframe width='100%' height='100%' src='${att.base64}'></iframe>`);
             pdfWindow.document.close();
           });
-          
+
           box.appendChild(icon);
           box.appendChild(nameText);
           box.appendChild(link);
@@ -2552,7 +2553,7 @@ function showTransactionDetail(txn) {
   } else {
     renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
   }
-  
+
   // Set sync individual action button states
   const btnSyncIndiv = document.getElementById('btn-sync-individual');
   if (!state.settings.sheetUrl) {
@@ -2569,10 +2570,10 @@ function showTransactionDetail(txn) {
       btnSyncIndiv.className = 'btn btn-success btn-small';
     }
   }
-  
+
   // Open modal
   modal.classList.add('open');
-  
+
   // Save active txn ID for modal action buttons
   modal.dataset.activeTxnId = txn.id;
 }
@@ -2581,40 +2582,40 @@ function showTransactionDetail(txn) {
 function setupCustomModalsClose() {
   const modal = document.getElementById('detail-modal');
   const closeModal = () => modal.classList.remove('open');
-  
+
   document.getElementById('btn-close-modal').addEventListener('click', closeModal);
   document.getElementById('btn-close-modal-footer').addEventListener('click', closeModal);
-  
+
   // Click overlay closes it
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
-  
+
   // Modal Delete Transaction
   document.getElementById('btn-delete-txn').addEventListener('click', async () => {
     const id = modal.dataset.activeTxnId;
     const match = state.transactions.find(t => t.id === id);
     if (!match) return;
-    
+
     if (confirm(`Apakah Anda yakin ingin MENGHAPUS transaksi ${id}?\nNominal: ${formatRupiah(match.nominal)}\nKeterangan: "${match.keterangan}"`)) {
       // Hapus dari state lokal & IndexedDB
       state.transactions = state.transactions.filter(t => t.id !== id);
       await deleteFromStore(STORE_TXNS, id);
-      
+
       // Selalu kirim hapus ke Google Sheets (tombstone jika gagal, retry saat startup berikutnya)
       if (state.settings.sheetUrl) {
         syncDeleteToSheets(id);
       } else {
         // Simpan ke tombstone agar dikirim saat URL tersedia
-        try { await saveToStore(STORE_DELETED_IDS, { id, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
+        try { await saveToStore(STORE_DELETED_IDS, { id, type: 'transaction', deletedAt: new Date().toISOString() }); } catch (e) { }
       }
-      
+
       closeModal();
       showToast('Transaksi Dihapus', `Transaksi ${id} berhasil dihapus dari web & Google Sheets.`, 'success');
       renderApp();
     }
   });
-  
+
   // Modal Individual Sync Action
   document.getElementById('btn-sync-individual').addEventListener('click', async () => {
     const id = modal.dataset.activeTxnId;
@@ -2627,7 +2628,7 @@ function setupCustomModalsClose() {
       renderApp();
     }
   });
-  
+
   // Modal Edit Transaction Action
   const btnEditTxn = document.getElementById('btn-edit-txn');
   if (btnEditTxn) {
@@ -2646,13 +2647,13 @@ function setupCustomModalsClose() {
   const closeEditModal = () => {
     if (editModal) editModal.classList.remove('open');
   };
-  
+
   const btnCloseEdit = document.getElementById('btn-close-edit-modal');
   if (btnCloseEdit) btnCloseEdit.addEventListener('click', closeEditModal);
-  
+
   const btnCancelEdit = document.getElementById('btn-cancel-edit-modal');
   if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeEditModal);
-  
+
   if (editModal) {
     editModal.addEventListener('click', (e) => {
       if (e.target === editModal) closeEditModal();
@@ -2686,7 +2687,7 @@ function setupCustomModalsClose() {
   if (formEdit) {
     formEdit.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const id = document.getElementById('edit-txn-id').value;
       const tanggal = document.getElementById('edit-tanggal').value;
       const tipe = document.getElementById('edit-tipe').value;
@@ -2695,12 +2696,12 @@ function setupCustomModalsClose() {
       const pic = document.getElementById('edit-pic').value;
       const nominal = parseRupiah(document.getElementById('edit-nominal').value);
       const keterangan = document.getElementById('edit-keterangan').value;
-      
+
       if (nominal <= 0) {
         showToast('Input Salah', 'Nominal harus lebih besar dari Rp 0.', 'error');
         return;
       }
-      
+
       const index = state.transactions.findIndex(t => t.id === id);
       if (index !== -1) {
         const updatedTxn = {
@@ -2715,21 +2716,21 @@ function setupCustomModalsClose() {
           keterangan,
           sync: false
         };
-        
+
         if (state.currentUpload) {
           updatedTxn.attachment = state.currentUpload;
         }
-        
+
         state.transactions[index] = updatedTxn;
         await saveToStore(STORE_TXNS, updatedTxn);
-        
+
         if (state.settings.autoSync && state.settings.sheetUrl) {
           syncTransactionToSheets(updatedTxn);
         }
-        
+
         state.currentUpload = null;
         if (fileIndicatorEdit) fileIndicatorEdit.textContent = '';
-        
+
         closeEditModal();
         showToast('Berhasil Diperbarui', `Transaksi ${id} berhasil diperbarui.`, 'success');
         renderApp();
@@ -2741,7 +2742,7 @@ function setupCustomModalsClose() {
 // Function to open & populate Edit Modal
 function openEditModal(txn) {
   populateDropdowns();
-  
+
   const editModal = document.getElementById('edit-modal');
   document.getElementById('edit-txn-id').value = txn.id;
   document.getElementById('edit-tanggal').value = txn.tanggal;
@@ -2749,11 +2750,11 @@ function openEditModal(txn) {
   document.getElementById('edit-pic').value = txn.pic;
   document.getElementById('edit-nominal').value = formatRupiah(txn.nominal).replace('Rp ', '');
   document.getElementById('edit-keterangan').value = txn.keterangan;
-  
+
   const editKategoriGroup = document.getElementById('edit-kategori-group');
   const editKategoriSelect = document.getElementById('edit-kategori');
   const editSumberSelect = document.getElementById('edit-sumber');
-  
+
   if (txn.tipe === 'IN') {
     if (editKategoriGroup) editKategoriGroup.style.display = 'none';
     if (editKategoriSelect) editKategoriSelect.value = '-';
@@ -2761,14 +2762,14 @@ function openEditModal(txn) {
     if (editKategoriGroup) editKategoriGroup.style.display = 'block';
     if (editKategoriSelect) editKategoriSelect.value = getTxCategory(txn);
   }
-  
+
   if (editSumberSelect) {
     editSumberSelect.value = getTxSumber(txn) !== '-' ? getTxSumber(txn) : '';
   }
-  
+
   state.currentUpload = null;
   if (fileIndicatorEdit) fileIndicatorEdit.textContent = '';
-  
+
   editModal.classList.add('open');
 }
 // Run the closing events attachment
@@ -2779,41 +2780,41 @@ function setupSettingsHandlers() {
   document.getElementById('btn-save-settings').addEventListener('click', async () => {
     const url = document.getElementById('settings-sheet-url').value.trim();
     const autoSync = document.getElementById('settings-auto-sync').checked;
-    
+
     state.settings.sheetUrl = url;
     state.settings.autoSync = autoSync;
-    
+
     await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: url });
     await saveToStore(STORE_SETTINGS, { key: 'autoSync', value: autoSync });
-    
+
     showToast('Pengaturan Disimpan', 'Konfigurasi integrasi Google Sheets berhasil diperbarui.', 'success');
     updateSyncBadgeState();
-    
+
     // Automatically trigger test connection and auto sync if URL saved
     if (url) {
       testGoogleSheetsConnection(false);
       autoSyncPendingTransactions();
     }
   });
-  
+
   document.getElementById('btn-test-connection').addEventListener('click', () => {
     testGoogleSheetsConnection(true);
   });
-  
+
   const btnPush = document.getElementById('btn-sync-push');
   if (btnPush) {
     btnPush.addEventListener('click', () => {
       pushAllTransactionsToSheets();
     });
   }
-  
+
   const btnPull = document.getElementById('btn-sync-pull');
   if (btnPull) {
     btnPull.addEventListener('click', () => {
       pullAllTransactionsFromSheets();
     });
   }
-  
+
   // Copy Apps Script code button
   document.getElementById('btn-copy-code').addEventListener('click', () => {
     const code = document.getElementById('code-script-content').textContent;
@@ -2834,29 +2835,29 @@ function setupExportHandlers() {
       showToast('Data Kosong', 'Tidak ada data transaksi untuk diekspor.', 'error');
       return;
     }
-    
+
     // Generate CSV contents
     // Separator semicolon (;) is friendly with Indonesian region Excel default separator
     let csv = '\ufeffNo;Tanggal;ID Transaksi;Tipe;Kategori;Sumber Dana;Penanggung Jawab;Keterangan;Nominal;Sync\n';
-    
+
     filtered.forEach((t, i) => {
       const cleanDesc = t.keterangan.replace(/[\n\r;]/g, ' ');
-      csv += `${i+1};${t.tanggal};${t.id};${t.tipe};${getTxCategory(t)};${getTxSumber(t)};${t.pic};${cleanDesc};${t.nominal};${t.sync ? 'YA' : 'BELUM'}\n`;
+      csv += `${i + 1};${t.tanggal};${t.id};${t.tipe};${getTxCategory(t)};${getTxSumber(t)};${t.pic};${cleanDesc};${t.nominal};${t.sync ? 'YA' : 'BELUM'}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const dateStr = new Date().toISOString().split('T')[0];
-    
+
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', `Laporan_Keuangan_Raimuna_Cilacap_${dateStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showToast('Ekspor CSV', 'Laporan berhasil diunduh dalam format CSV.', 'success');
   });
-  
+
   // Excel (HTML table layout approach) Export
   document.getElementById('btn-export-excel').addEventListener('click', () => {
     const filtered = filterTransactions();
@@ -2864,9 +2865,9 @@ function setupExportHandlers() {
       showToast('Data Kosong', 'Tidak ada data transaksi untuk diekspor.', 'error');
       return;
     }
-    
+
     const dateStr = new Date().toISOString().split('T')[0];
-    
+
     // Build standard HTML spreadsheet structure for Excel download
     let tableHtml = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -2913,11 +2914,11 @@ function setupExportHandlers() {
           </thead>
           <tbody>
     `;
-    
+
     filtered.forEach((t, i) => {
       tableHtml += `
         <tr>
-          <td>${i+1}</td>
+          <td>${i + 1}</td>
           <td class="date">${t.tanggal}</td>
           <td>${t.id}</td>
           <td>${t.tipe === 'IN' ? 'Pemasukan' : 'Pengeluaran'}</td>
@@ -2930,45 +2931,45 @@ function setupExportHandlers() {
         </tr>
       `;
     });
-    
+
     tableHtml += `
           </tbody>
         </table>
       </body>
       </html>
     `;
-    
+
     const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const link = document.createElement('a');
-    
+
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', `Laporan_Keuangan_Raimuna_Cilacap_${dateStr}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showToast('Ekspor Excel', 'Laporan berhasil diunduh dalam format Excel.', 'success');
   });
-  
+
   // Print Report Action
   document.getElementById('btn-print-report').addEventListener('click', () => {
     // 1. Prepare dynamic print header fields
     const summaryEl = document.getElementById('print-filter-summary-info');
-    
+
     const fTipe = state.filters.tipe === 'ALL' ? 'Semua Tipe' : (state.filters.tipe === 'IN' ? 'Pemasukan' : 'Pengeluaran');
     const fBulan = state.filters.bulan === 'ALL' ? 'Semua Bulan' : getIndonesianMonthName(state.filters.bulan);
     const fTahun = state.filters.tahun === 'ALL' ? 'Semua Tahun' : state.filters.tahun;
     const fSearch = state.filters.search ? `Kata Kunci: "${state.filters.search}"` : 'Semua Transaksi';
-    
+
     summaryEl.innerHTML = `
       <p><strong>Filter Cetak:</strong> ${fTipe} | Periode: ${fBulan} ${fTahun} | Pencarian: ${fSearch}</p>
       <p><strong>Total Dana Cetak:</strong> ${formatRupiah(state.transactions.filter(t => t.tipe === 'IN').reduce((acc, t) => acc + t.nominal, 0))} Pemasukan | ${formatRupiah(state.transactions.filter(t => t.tipe === 'OUT').reduce((acc, t) => acc + t.nominal, 0))} Pengeluaran</p>
     `;
-    
+
     // Set current print date
     const printDate = new Date();
     document.getElementById('print-current-date').textContent = `${printDate.getDate()} ${getIndonesianMonthName(String(printDate.getMonth() + 1).padStart(2, '0'))} ${printDate.getFullYear()}`;
-    
+
     // 2. Trigger Print Dialog
     window.print();
   });
@@ -2980,22 +2981,22 @@ function getIndonesianMonthName(mm) {
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
-  return monthNames[parseInt(mm, 10)-1] || '';
+  return monthNames[parseInt(mm, 10) - 1] || '';
 }
 
 // ================= TOAST NOTIFICATION launcher =================
 function showToast(title, message, type = 'success') {
   const container = document.getElementById('toast-container');
-  
+
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  
+
   const icons = {
     success: '🎉',
     error: '⚠️',
     info: 'ℹ️'
   };
-  
+
   toast.innerHTML = `
     <div class="toast-icon">${icons[type] || '🔔'}</div>
     <div class="toast-content">
@@ -3003,12 +3004,12 @@ function showToast(title, message, type = 'success') {
       <div class="toast-message">${message}</div>
     </div>
   `;
-  
+
   container.appendChild(toast);
-  
+
   // Trigger transition animation
   setTimeout(() => toast.classList.add('show'), 50);
-  
+
   // Auto remove after 4 seconds
   setTimeout(() => {
     toast.classList.remove('show');
@@ -3041,7 +3042,7 @@ async function checkLoginState() {
 function setupLoginHandler() {
   const loginForm = document.getElementById('login-form');
   const errorMsg = document.getElementById('login-error-message');
-  
+
   const togglePwBtn = document.getElementById('toggle-login-password');
   const pwInput = document.getElementById('login-password');
   if (togglePwBtn && pwInput) {
@@ -3058,21 +3059,21 @@ function setupLoginHandler() {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
-      
+
       // Hash input credentials
       const emailHash = await sha256(email.toLowerCase());
       const passwordHash = await sha256(password);
-      
+
       // Hardcoded hashes (securely hidden as SHA-256)
       const targetEmailHash = "a587a2cdb7a744a1096976ba46b775bed6da431b3fa75c1902b8fe093dabba09";
       const targetPasswordHash = "dff9cd137cab8b96431ccd81f8bb433fc71f0329eefb54bd4380b3fc3a9fc5d1";
-      
+
       if (emailHash === targetEmailHash && passwordHash === targetPasswordHash) {
         localStorage.setItem('isLoggedIn', 'true');
         errorMsg.classList.add('hidden');
         document.getElementById('login-container').classList.add('hidden');
         showToast('Login Berhasil', 'Selamat datang di Aplikasi Bendahara Raimuna.', 'success');
-        
+
         // Clear form inputs
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
@@ -3082,7 +3083,7 @@ function setupLoginHandler() {
       }
     });
   }
-  
+
   // Logout handler
   const logoutBtn = document.getElementById('btn-logout');
   if (logoutBtn) {
@@ -3102,9 +3103,9 @@ function setupLoginHandler() {
 function terbilangIndo(angka) {
   angka = Math.abs(parseInt(angka, 10)) || 0;
   if (angka === 0) return 'NOL RUPIAH';
-  
+
   const satuan = ['', 'SATU', 'DUA', 'TIGA', 'EMPAT', 'LIMA', 'ENAM', 'TUJUH', 'DELAPAN', 'SEMBILAN', 'SEPULUH', 'SEBELAS'];
-  
+
   function baca(n) {
     if (n < 12) return satuan[n];
     if (n < 20) return baca(n - 10) + ' BELAS';
@@ -3117,7 +3118,7 @@ function terbilangIndo(angka) {
     if (n < 1000000000000) return baca(Math.floor(n / 1000000000)) + ' MILYAR ' + (n % 1000000000 !== 0 ? baca(n % 1000000000) : '');
     return n.toString();
   }
-  
+
   let hasil = baca(angka).replace(/\s+/g, ' ').trim();
   return (hasil + ' RUPIAH').toUpperCase();
 }
@@ -3143,43 +3144,43 @@ function closeKwitansiUploadModal() {
 
 function setupSponsorshipHandlers() {
   if (isSponsorshipSetupDone) return;
-  
+
   // Setup Kwitansi Upload Modal Event Listeners
   const btnCloseKwUpload = document.getElementById('btn-close-kwitansi-upload');
   if (btnCloseKwUpload) btnCloseKwUpload.addEventListener('click', closeKwitansiUploadModal);
-  
+
   const btnCancelKwUpload = document.getElementById('btn-cancel-kwitansi-upload');
   if (btnCancelKwUpload) btnCancelKwUpload.addEventListener('click', closeKwitansiUploadModal);
-  
+
   const btnSubmitKwUpload = document.getElementById('btn-submit-kwitansi-upload');
   if (btnSubmitKwUpload) {
     btnSubmitKwUpload.addEventListener('click', async () => {
       const id = document.getElementById('kwitansi-upload-id').value;
       if (!id) return;
-      
+
       if (!state.currentUpload || state.currentUpload.length === 0) {
         showToast('File Kosong', 'Pilih minimal satu file untuk diupload.', 'error');
         return;
       }
-      
+
       const kwIdx = state.kwitansi.findIndex(k => k.id === id);
       if (kwIdx !== -1) {
         state.kwitansi[kwIdx].attachment = state.currentUpload;
         state.kwitansi[kwIdx].sync = false;
         await saveToStore(STORE_KWITANSI, state.kwitansi[kwIdx]);
-        
+
         showToast('Berhasil', 'Nota berhasil ditambahkan ke riwayat. Sedang menyinkronkan...', 'success');
         closeKwitansiUploadModal();
-        
+
         // render table to show attached status (maybe change icon later)
         renderKwitansiHistory();
-        
+
         // Trigger sync
         await syncKwitansiToSheets(state.kwitansi[kwIdx]);
       }
     });
   }
-  
+
   const kwitansiNo = document.getElementById('kwitansi-no');
   const kwitansiTgl = document.getElementById('kwitansi-tgl');
   const kwitansiDari = document.getElementById('kwitansi-dari');
@@ -3193,14 +3194,14 @@ function setupSponsorshipHandlers() {
   const selectTx = document.getElementById('sponsor-select-tx');
   const btnPrint = document.getElementById('btn-print-kwitansi');
   const btnReset = document.getElementById('btn-reset-kwitansi');
-  
+
   if (!kwitansiNo) return;
 
   if (kwitansiTipeJenis) {
     kwitansiTipeJenis.addEventListener('change', (e) => {
       const val = e.target.value;
       const labelNominal = document.getElementById('label-kwitansi-nominal');
-      
+
       if (val === 'JELANTAH') {
         if (labelNominal) labelNominal.textContent = 'Jumlah Berat (KG)';
         kwitansiNominal.value = '150';
@@ -3230,7 +3231,7 @@ function setupSponsorshipHandlers() {
       updateKwitansiLivePreview();
     });
   }
-  
+
   // Format nominal input as rupiah or KG based on type
   kwitansiNominal.addEventListener('input', (e) => {
     const valType = kwitansiTipeJenis?.value || 'SPONSORSHIP';
@@ -3254,22 +3255,22 @@ function setupSponsorshipHandlers() {
     }
     updateKwitansiLivePreview();
   });
-  
+
   // Auto-fill from transaction selector
   selectTx.addEventListener('change', (e) => {
     const txId = e.target.value;
     if (!txId) return;
-    
+
     const tx = state.transactions.find(t => t.id === txId);
     if (tx) {
       const srcName = getTxSumber(tx);
       const isJelantah = srcName === 'Minyak Jelantah' || (tx.keterangan && tx.keterangan.toLowerCase().includes('jelantah'));
       const isTenant = srcName === 'Pembayaran Tenant' || srcName === 'Pembayaran Stand' || (tx.keterangan && (tx.keterangan.toLowerCase().includes('tenant') || tx.keterangan.toLowerCase().includes('stand')));
-      
+
       if (kwitansiTipeJenis) {
         kwitansiTipeJenis.value = isJelantah ? 'JELANTAH' : (isTenant ? 'STAND' : 'SPONSORSHIP');
       }
-      
+
       const labelNominal = document.getElementById('label-kwitansi-nominal');
 
       if (isJelantah) {
@@ -3312,11 +3313,11 @@ function setupSponsorshipHandlers() {
       inp.addEventListener('change', updateKwitansiLivePreview);
     }
   });
-  
+
   btnPrint.addEventListener('click', () => {
     printSponsorshipKwitansi();
   });
-  
+
   btnReset.addEventListener('click', () => {
     selectTx.value = '';
     if (kwitansiTipeJenis) kwitansiTipeJenis.value = 'SPONSORSHIP';
@@ -3329,13 +3330,13 @@ function setupSponsorshipHandlers() {
     kwitansiGuna.value = 'SPONSORSHIP KEGIATAN RAIMUNA CABANG CILACAP TAHUN 2026';
     kwitansiPenerima.value = 'Sulis Rahayu';
     kwitansiNta.value = 'NTA. 11.01.00.100806.00001';
-    
+
     const printDate = new Date();
     kwitansiTgl.value = `${printDate.getDate()} ${getIndonesianMonthName(String(printDate.getMonth() + 1).padStart(2, '0'))} ${printDate.getFullYear()}`;
-    
+
     updateKwitansiLivePreview();
   });
-  
+
   isSponsorshipSetupDone = true;
 }
 
@@ -3364,7 +3365,7 @@ function formatTanggalIndoFull(dateStr) {
 
 function renderSponsorshipSection() {
   setupSponsorshipHandlers();
-  
+
   // Populate Transaction selector with Pemasukan transactions
   const selectTx = document.getElementById('sponsor-select-tx');
   if (selectTx) {
@@ -3379,7 +3380,7 @@ function renderSponsorshipSection() {
       selectTx.appendChild(opt);
     });
   }
-  
+
   // Default date if empty
   const kwitansiTgl = document.getElementById('kwitansi-tgl');
   if (kwitansiTgl && !kwitansiTgl.value) {
@@ -3471,7 +3472,7 @@ function exportKwitansiRecap(format) {
       const cleanDari = (item.dari || '-').replace(/[\n\r;]/g, ' ');
       const cleanTerbilang = (item.terbilang || '-').replace(/[\n\r;]/g, ' ');
 
-      csv += `${i+1};No. ${item.no || '001'};${tipeText};${item.tgl || '-'};${cleanDari};${formattedNominal};${cleanTerbilang};${cleanGuna};${item.penerima || '-'};${item.nta || '-'}\n`;
+      csv += `${i + 1};No. ${item.no || '001'};${tipeText};${item.tgl || '-'};${cleanDari};${formattedNominal};${cleanTerbilang};${cleanGuna};${item.penerima || '-'};${item.nta || '-'}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -3492,7 +3493,7 @@ function exportKwitansiRecap(format) {
 
       tableRows += `
         <tr>
-          <td style="text-align:center;">${i+1}</td>
+          <td style="text-align:center;">${i + 1}</td>
           <td>No. ${item.no || '001'}</td>
           <td>${tipeText}</td>
           <td>${item.tgl || '-'}</td>
@@ -3700,19 +3701,19 @@ async function loadKwitansiFromHistory(id, autoPrint = true) {
 
 async function deleteSponsorshipHistory(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus kwitansi ini dari riwayat?')) return;
-  
+
   const item = state.sponsorshipHistory.find(h => h.id === id);
   const kwNo = item ? item.no : null;
 
   try {
     await deleteFromStore(STORE_SPONSORSHIPS, id);
-  } catch(e){}
-  
+  } catch (e) { }
+
   state.sponsorshipHistory = state.sponsorshipHistory.filter(h => h.id !== id);
   try {
     localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
-  } catch(e){}
-  
+  } catch (e) { }
+
   if (state.settings.sheetUrl) {
     syncKwitansiToSheets_delete(id, kwNo);
   }
@@ -3724,11 +3725,11 @@ async function deleteSponsorshipHistory(id) {
 async function syncKwitansiToSheets_delete(id, no) {
   if (!state.settings.sheetUrl) {
     // Simpan ke tombstone jika tidak ada URL
-    try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch(e){}
+    try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch (e) { }
     return;
   }
   // Simpan ke tombstone dulu sebelum coba kirim
-  try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch(e){}
+  try { await saveToStore(STORE_DELETED_IDS, { id, type: 'kwitansi', no: no || '', deletedAt: new Date().toISOString() }); } catch (e) { }
   try {
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
@@ -3736,7 +3737,7 @@ async function syncKwitansiToSheets_delete(id, no) {
       body: JSON.stringify({ action: 'delete_kwitansi', id: id, no: no })
     });
     // Berhasil → hapus dari tombstone
-    try { await deleteFromStore(STORE_DELETED_IDS, id); } catch(e){}
+    try { await deleteFromStore(STORE_DELETED_IDS, id); } catch (e) { }
   } catch (err) {
     console.error('Gagal hapus kwitansi dari Sheet, akan dicoba ulang saat startup:', err);
     // Tombstone tetap tersimpan untuk retry berikutnya
@@ -3823,11 +3824,11 @@ function updateKwitansiLivePreview() {
 async function printSponsorshipKwitansi(saveHistory = true) {
   const printableArea = document.getElementById('kwitansi-printable-area');
   const numLembar = parseInt(document.getElementById('kwitansi-lembar')?.value || '2', 10);
-  
+
   if (!printableArea) return;
-  
+
   const kwitansiHtml = generateKwitansiHTML();
-  
+
   if (numLembar === 2) {
     printableArea.innerHTML = `
       <div class="kwitansi-print-page">
@@ -3873,12 +3874,12 @@ async function printSponsorshipKwitansi(saveHistory = true) {
 
     try {
       await saveToStore(STORE_SPONSORSHIPS, historyItem);
-    } catch(e){}
+    } catch (e) { }
 
     state.sponsorshipHistory.unshift(historyItem);
     try {
       localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory));
-    } catch(e){}
+    } catch (e) { }
 
     renderSponsorshipHistoryTable();
     showToast('Kwitansi Disimpan', `Kwitansi No. ${no} berhasil dicatat ke Riwayat.`, 'success');
@@ -3887,7 +3888,7 @@ async function printSponsorshipKwitansi(saveHistory = true) {
       syncKwitansiToSheets(historyItem);
     }
   }
-  
+
   window.print();
 }
 
@@ -3910,19 +3911,19 @@ function setupUtangHandlers() {
   if (formAdd) {
     formAdd.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const tanggal = document.getElementById('utang-tanggal').value;
       const tipe = document.getElementById('utang-tipe').value;
       const nama = document.getElementById('utang-nama').value;
       const sumberKat = document.getElementById('utang-sumber-kat').value;
       const nominal = parseRupiah(document.getElementById('utang-nominal').value);
       const keterangan = document.getElementById('utang-keterangan').value;
-      
+
       if (nominal <= 0) {
         showToast('Input Salah', 'Nominal utang harus lebih besar dari Rp 0.', 'error');
         return;
       }
-      
+
       const newUtang = {
         id: generateUniqueId('UTG'),
         tanggal,
@@ -3937,10 +3938,10 @@ function setupUtangHandlers() {
         tanggalLunas: null,
         dateCreated: new Date().toISOString()
       };
-      
+
       if (!state.utang) state.utang = [];
       state.utang.unshift(newUtang);
-      
+
       try {
         await saveToStore(STORE_UTANG, newUtang);
       } catch (err) {
@@ -3949,23 +3950,23 @@ function setupUtangHandlers() {
 
       try {
         localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
-      } catch(e){}
-      
+      } catch (e) { }
+
       if (state.settings.sheetUrl) {
         syncUtangToSheets(newUtang);
       }
 
       showToast('Catatan Utang Tersimpan', `Utang ${newUtang.id} berhasil ditambahkan.`, 'success');
-      
+
       formAdd.reset();
       const today = new Date().toISOString().split('T')[0];
       if (document.getElementById('utang-tanggal')) document.getElementById('utang-tanggal').value = today;
-      
+
       renderUtangPage();
       renderDashboard();
     });
   }
-  
+
   // Filter pills event listeners
   const filterContainer = document.getElementById('utang-filter-pills');
   if (filterContainer) {
@@ -4024,7 +4025,7 @@ function exportUtangRecap(format) {
       const cleanSumber = (u.sumberDana || '-').replace(/[\n\r;]/g, ' ');
       const cleanKeterangan = (u.keterangan || '-').replace(/[\n\r;]/g, ' ');
 
-      csv += `${i+1};${u.id};${u.tanggal};${tipeText};${cleanNama};${cleanSumber};${u.nominal};${cleanKeterangan};${statusText};${u.tanggalLunas || '-'}\n`;
+      csv += `${i + 1};${u.id};${u.tanggal};${tipeText};${cleanNama};${cleanSumber};${u.nominal};${cleanKeterangan};${statusText};${u.tanggalLunas || '-'}\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -4044,7 +4045,7 @@ function exportUtangRecap(format) {
 
       tableRows += `
         <tr>
-          <td style="text-align:center;">${i+1}</td>
+          <td style="text-align:center;">${i + 1}</td>
           <td>${u.id}</td>
           <td>${u.tanggal || '-'}</td>
           <td>${tipeText}</td>
@@ -4107,47 +4108,47 @@ function exportUtangRecap(format) {
 function renderUtangPage() {
   const tbody = document.getElementById('table-utang-tbody');
   if (!tbody) return;
-  
+
   tbody.innerHTML = '';
-  
+
   // Metrics calculation
   let pendingSum = 0;
   let paidSum = 0;
   let count = (state.utang || []).length;
-  
+
   state.utang.forEach(u => {
     if (u.status === 'BELUM_LUNAS') pendingSum += u.nominal;
     else if (u.status === 'LUNAS') paidSum += u.nominal;
   });
-  
+
   if (document.getElementById('utang-metric-pending')) document.getElementById('utang-metric-pending').textContent = formatRupiah(pendingSum);
   if (document.getElementById('utang-metric-paid')) document.getElementById('utang-metric-paid').textContent = formatRupiah(paidSum);
   if (document.getElementById('utang-metric-count')) document.getElementById('utang-metric-count').textContent = count;
-  
+
   // Filter
   const filtered = (state.utang || []).filter(u => {
     if (state.utangFilter === 'BELUM_LUNAS') return u.status === 'BELUM_LUNAS';
     if (state.utangFilter === 'LUNAS') return u.status === 'LUNAS';
     return true;
   });
-  
+
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Belum ada catatan utang sesuai filter.</td></tr>';
     return;
   }
-  
+
   filtered.forEach(u => {
     const tr = document.createElement('tr');
     const isPaid = u.status === 'LUNAS';
-    
-    const typeBadge = u.tipe === 'IN' 
-      ? '<span class="badge-type in">Piutang (Masuk)</span>' 
+
+    const typeBadge = u.tipe === 'IN'
+      ? '<span class="badge-type in">Piutang (Masuk)</span>'
       : '<span class="badge-type out">Utang (Keluar)</span>';
-      
-    const statusBadge = isPaid 
-      ? '<span class="badge-status success">LUNAS ✅</span>' 
+
+    const statusBadge = isPaid
+      ? '<span class="badge-status success">LUNAS ✅</span>'
       : '<span class="badge-status warning">BELUM LUNAS ⏳</span>';
-      
+
     tr.innerHTML = `
       <td class="text-center">
         <label class="custom-checkbox-container" title="Centang jika sudah dibayar / lunas">
@@ -4166,17 +4167,17 @@ function renderUtangPage() {
         <button class="btn-icon btn-delete-utang" data-id="${u.id}" title="Hapus Catatan Utang">🗑️</button>
       </td>
     `;
-    
+
     const chk = tr.querySelector('.utang-checklist-input');
     chk.addEventListener('change', (e) => {
       toggleUtangStatus(u.id, e.target.checked);
     });
-    
+
     const btnDel = tr.querySelector('.btn-delete-utang');
     btnDel.addEventListener('click', () => {
       deleteUtang(u.id);
     });
-    
+
     tbody.appendChild(tr);
   });
 }
@@ -4184,11 +4185,11 @@ function renderUtangPage() {
 async function toggleUtangStatus(utangId, isPaid) {
   const item = state.utang.find(u => u.id === utangId);
   if (!item) return;
-  
+
   if (isPaid) {
     item.status = 'LUNAS';
     item.tanggalLunas = new Date().toISOString().split('T')[0];
-    
+
     // Automatically record transaction to state.transactions
     const tx = {
       id: generateUniqueId(item.tipe === 'IN' ? 'TXN-IN' : 'TXN-OUT'),
@@ -4204,22 +4205,22 @@ async function toggleUtangStatus(utangId, isPaid) {
       dateCreated: new Date().toISOString(),
       sync: false
     };
-    
+
     item.paidTxId = tx.id;
     await saveTransaction(tx);
-    try { await saveToStore(STORE_UTANG, item); } catch(e){}
-    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+    try { await saveToStore(STORE_UTANG, item); } catch (e) { }
+    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch (e) { }
     if (state.settings.sheetUrl) { syncUtangToSheets(item); }
-    
+
     showToast('Utang Dilunasi!', `Transaksi pelunasan ${tx.id} berhasil dicatat dan masuk ke Dashboard.`, 'success');
   } else {
     item.status = 'BELUM_LUNAS';
     item.tanggalLunas = null;
-    
+
     if (item.paidTxId) {
       const txIdToDelete = item.paidTxId;
       item.paidTxId = null;
-      
+
       // Remove transaction from local state & DB
       state.transactions = state.transactions.filter(t => t.id !== txIdToDelete);
       await deleteFromStore(STORE_TXNS, txIdToDelete);
@@ -4227,20 +4228,20 @@ async function toggleUtangStatus(utangId, isPaid) {
         syncDeleteToSheets(txIdToDelete);
       }
     }
-    
-    try { await saveToStore(STORE_UTANG, item); } catch(e){}
-    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+
+    try { await saveToStore(STORE_UTANG, item); } catch (e) { }
+    try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch (e) { }
     if (state.settings.sheetUrl) { syncUtangToSheets(item); }
     showToast('Status Diperbarui', `Utang dikembalikan ke status BELUM LUNAS. Data pelunasan ditarik dari Dashboard.`, 'info');
   }
-  
+
   renderUtangPage();
   renderDashboard();
 }
 
 async function deleteUtang(utangId) {
   if (!confirm('Apakah Anda yakin ingin menghapus catatan utang ini?')) return;
-  
+
   const item = state.utang.find(u => u.id === utangId);
   if (item && item.paidTxId) {
     // Also remove the associated paid transaction
@@ -4251,22 +4252,22 @@ async function deleteUtang(utangId) {
     if (state.settings.sheetUrl) {
       await syncDeleteToSheets(txIdToDelete);
     } else {
-      try { await saveToStore(STORE_DELETED_IDS, { id: txIdToDelete, type: 'transaction', deletedAt: new Date().toISOString() }); } catch(e){}
+      try { await saveToStore(STORE_DELETED_IDS, { id: txIdToDelete, type: 'transaction', deletedAt: new Date().toISOString() }); } catch (e) { }
     }
   }
-  
+
   // Hapus dari state memori dan DB lokal
   state.utang = state.utang.filter(u => u.id !== utangId);
-  try { await deleteFromStore(STORE_UTANG, utangId); } catch(e){}
-  try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch(e){}
+  try { await deleteFromStore(STORE_UTANG, utangId); } catch (e) { }
+  try { localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang)); } catch (e) { }
 
   // Selalu catat ke tombstone DULU agar tidak balik saat autoPull, lalu kirim hapus ke Google Sheets
-  if (state.settings.sheetUrl) { 
-    await syncUtangToSheets_delete(utangId); 
+  if (state.settings.sheetUrl) {
+    await syncUtangToSheets_delete(utangId);
   } else {
-    try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
+    try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch (e) { }
   }
-  
+
   showToast('Catatan Utang Dihapus', 'Data utang berhasil dihapus.', 'info');
   renderUtangPage();
   renderDashboard();
@@ -4287,7 +4288,7 @@ async function syncUtangToSheets(ut) {
 }
 
 async function syncUtangToSheets_delete(utangId) {
-  try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch(e){}
+  try { await saveToStore(STORE_DELETED_IDS, { id: utangId, type: 'utang', deletedAt: new Date().toISOString() }); } catch (e) { }
   if (!state.settings.sheetUrl) return;
 
   try {
@@ -4298,7 +4299,7 @@ async function syncUtangToSheets_delete(utangId) {
       body: JSON.stringify({ action: 'delete_utang', id: utangId })
     });
     setTimeout(async () => {
-      try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch(e){}
+      try { await deleteFromStore(STORE_DELETED_IDS, utangId); } catch (e) { }
     }, 1500);
   } catch (err) {
     console.error('Gagal hapus utang dari Sheet, akan dicoba ulang saat startup:', err);
@@ -4308,21 +4309,21 @@ async function syncUtangToSheets_delete(utangId) {
 function renderDashboardQuickUtang() {
   const tbody = document.getElementById('dashboard-utang-quick-tbody');
   if (!tbody) return;
-  
+
   tbody.innerHTML = '';
   const pendingUtang = (state.utang || []).filter(u => u.status === 'BELUM_LUNAS');
-  
+
   if (pendingUtang.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada utang yang belum lunas. 🎉</td></tr>';
     return;
   }
-  
+
   pendingUtang.slice(0, 5).forEach(u => {
     const tr = document.createElement('tr');
-    const typeBadge = u.tipe === 'IN' 
-      ? '<span class="badge-type in">Piutang</span>' 
+    const typeBadge = u.tipe === 'IN'
+      ? '<span class="badge-type in">Piutang</span>'
       : '<span class="badge-type out">Utang</span>';
-      
+
     tr.innerHTML = `
       <td class="text-center">
         <label class="custom-checkbox-container" title="Centang untuk melunasi langsung dari Dashboard">
@@ -4337,12 +4338,12 @@ function renderDashboardQuickUtang() {
       <td class="font-bold ${u.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(u.nominal)}</td>
       <td>${u.keterangan}</td>
     `;
-    
+
     const chk = tr.querySelector('.dash-utang-chk');
     chk.addEventListener('change', (e) => {
       toggleUtangStatus(u.id, e.target.checked);
     });
-    
+
     tbody.appendChild(tr);
   });
 }
@@ -4353,20 +4354,20 @@ function setupAlokasiTalanganModal() {
   const btnClose = document.getElementById('btn-close-alokasi-modal');
   const btnCancel = document.getElementById('btn-cancel-alokasi-modal');
   const btnSubmit = document.getElementById('btn-submit-alokasi-modal');
-  
+
   if (btnClose) btnClose.addEventListener('click', () => modal.classList.remove('active'));
   if (btnCancel) btnCancel.addEventListener('click', () => modal.classList.remove('active'));
-  
+
   if (btnSubmit) {
     btnSubmit.addEventListener('click', async () => {
       const txnId = document.getElementById('alokasi-txn-id').value;
       const targetSumber = document.getElementById('alokasi-sumber-select').value;
-      
+
       if (!targetSumber) {
         showToast('Pilih Sumber Dana', 'Pilih sumber dana tujuan alokasi.', 'error');
         return;
       }
-      
+
       await alokasikanNotaTalangan(txnId, targetSumber);
       modal.classList.remove('active');
     });
@@ -4384,16 +4385,16 @@ function openAlokasiTalanganModal(txnId) {
 async function alokasikanNotaTalangan(txnId, targetSumber) {
   const txn = state.transactions.find(t => t.id === txnId);
   if (!txn) return;
-  
+
   txn.sumberDana = targetSumber;
   txn.kategoriSumber = targetSumber;
   txn.sync = false;
-  
+
   await saveToStore(STORE_TXNS, txn);
   if (state.settings.autoSync && state.settings.sheetUrl) {
     syncTransactionToSheets(txn);
   }
-  
+
   showToast('Dana Talangan Dialokasikan', `Transaksi ${txn.id} kini resmi dialokasikan ke ${targetSumber}.`, 'success');
   renderApp();
 }
@@ -4472,8 +4473,8 @@ function setupJelantahHandlers() {
     if (!state.jelantahRecap) state.jelantahRecap = [];
     state.jelantahRecap.unshift(newRecord);
 
-    try { await saveToStore(STORE_JELANTAH, newRecord); } catch(err){}
-    try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(err){}
+    try { await saveToStore(STORE_JELANTAH, newRecord); } catch (err) { }
+    try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (err) { }
 
     if (state.settings.sheetUrl) {
       syncJelantahToSheets(newRecord);
@@ -4516,8 +4517,8 @@ function setupJelantahHandlers() {
         rec.keterangan = ket;
         rec.guna = ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH';
 
-        try { await saveToStore(STORE_JELANTAH, rec); } catch(err){}
-        try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(err){}
+        try { await saveToStore(STORE_JELANTAH, rec); } catch (err) { }
+        try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (err) { }
 
         if (state.settings.sheetUrl) {
           syncJelantahToSheets(rec);
@@ -4586,7 +4587,7 @@ function processSelectedFiles(files, indicator, callback) {
       return;
     }
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       uploads.push({
         name: file.name,
         type: file.type,
@@ -4594,11 +4595,11 @@ function processSelectedFiles(files, indicator, callback) {
       });
       completed++;
       if (completed === filesArray.length) {
-        indicator.textContent = `${uploads.length} file terpilih (${uploads.map(u=>u.name).join(', ')})`;
+        indicator.textContent = `${uploads.length} file terpilih (${uploads.map(u => u.name).join(', ')})`;
         callback(uploads);
       }
     };
-    reader.onerror = function() {
+    reader.onerror = function () {
       completed++;
       if (completed === filesArray.length) callback(uploads);
     };
@@ -4630,7 +4631,7 @@ function getJelantahRecords() {
 
 function renderJelantahSection() {
   const records = getJelantahRecords();
-  
+
   // 1. Calculate Metrics
   let totalKg = 0;
   const kwarrans = new Set();
@@ -4671,7 +4672,7 @@ function renderJelantahSection() {
 
   filtered.forEach((r, idx) => {
     const tr = document.createElement('tr');
-    
+
     let kgVal = r.nominal;
     if (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG')) {
       kgVal = `${kgVal} KG`;
@@ -4685,7 +4686,7 @@ function renderJelantahSection() {
         attHtml = atts.map((att, i) => {
           const isUrl = typeof att === 'string' && att.startsWith('http');
           const href = isUrl ? att : (att.base64 || '#');
-          const name = isUrl ? `File ${i+1}` : (att.name || `File ${i+1}`);
+          const name = isUrl ? `File ${i + 1}` : (att.name || `File ${i + 1}`);
           return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;">📎 ${name}</a>`;
         }).join('');
       }
@@ -4752,7 +4753,7 @@ function showJelantahDetailModal(r) {
       atts.forEach((att, i) => {
         const isUrl = typeof att === 'string' && att.startsWith('http');
         const src = isUrl ? att : (att.base64 || '');
-        const name = isUrl ? `Berkas ${i+1}` : (att.name || `Berkas ${i+1}`);
+        const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
         const isImg = isUrl || (att.type && att.type.startsWith('image/')) || (att.base64 && att.base64.startsWith('data:image/'));
 
         if (isImg && src) {
@@ -4859,7 +4860,7 @@ function renderJelantahChart(records) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: function(context) {
+            label: function (context) {
               return ` Total: ${context.parsed.y} KG`;
             }
           }
@@ -4911,7 +4912,7 @@ function parseJelantahRow(row) {
   const kg = parseKgNumber(row.kg || row.nominal);
   const keterangan = String(row.keterangan || row.guna || '-').trim();
   const dateCreated = row.dateCreated || new Date().toISOString();
-  
+
   let attachment = null;
   if (row.bukti) {
     const urls = String(row.bukti).split(',').map(s => s.trim()).filter(Boolean);
@@ -4939,8 +4940,8 @@ async function deleteJelantahRecord(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus catatan pengambilan jelantah ini?')) return;
 
   state.jelantahRecap = (state.jelantahRecap || []).filter(r => r.id !== id);
-  try { await deleteFromStore(STORE_JELANTAH, id); } catch(e){}
-  try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch(e){}
+  try { await deleteFromStore(STORE_JELANTAH, id); } catch (e) { }
+  try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (e) { }
 
   if (state.settings.sheetUrl) {
     try {
@@ -4956,7 +4957,7 @@ async function deleteJelantahRecord(id) {
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'delete_kwitansi', id: id })
       });
-    } catch(err){}
+    } catch (err) { }
   }
 
   showToast('Catatan Dihapus', 'Data recap jelantah berhasil dihapus.', 'info');

@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbzgu-4Ar1zwcxYeamYo0EdERWPrBsgCr_diAf_obA2vMYsDj0upY0nnRmmklzBi77DeDw/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbx3qo3XCHQjO9fDkX8jR81ogZqKDARA7E05Ey1s6iRkPBKoL-qzbNm3yFGkqAGQa5nE/exec',
     autoSync: true
   },
   filters: {
@@ -1129,7 +1129,8 @@ async function pushAllTransactionsToSheets() {
         action: 'push_bulk',
         transactions: cleanList,
         kwitansi: state.sponsorshipHistory || [],
-        utang: state.utang || []
+        utang: state.utang || [],
+        jelantah: state.jelantahRecap || []
       })
     });
     
