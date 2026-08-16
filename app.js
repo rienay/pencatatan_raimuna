@@ -5068,38 +5068,47 @@ function openEditJelantahModal(r) {
 
 function parseJelantahRow(row) {
   if (!row) return null;
-  // Ignore blank rows
-  if (!row.id && !row.tanggal && !row.tgl && !row.kwarran && !row.dari && !row.kg && !row.nominal) return null;
 
-  const id = row.id || row.ID || row.no || generateUniqueId('JLT');
-  const tanggal = formatDateString(row.tanggal || row.tgl || row.Tanggal || row.Tgl);
-  const kwarran = String(row.kwarran || row.dari || row.nama || row['Nama Kwarran'] || row['Diterima Dari'] || '-').trim();
-  const kg = parseKgNumber(row.kg || row.nominal || row.Jumlah || row['Jumlah (KG)']);
-  const keterangan = String(row.keterangan || row.guna || row.Keperluan || row.Catatan || '-').trim();
-  const dateCreated = row.dateCreated || new Date().toISOString();
+  const rawTanggal = row.tanggal || row.tgl || row.Tanggal || row.Tgl || row['Tanggal Transaksi'];
+  const rawKwarran = row.kwarran || row.dari || row.nama || row['Nama Kwarran'] || row['Diterima Dari'] || row.Kwarran || row.Dari || row.Nama;
+  const rawKg = row.kg || row.nominal || row['Nominal / Jumlah'] || row['Jumlah (KG)'] || row.Jumlah || row.Nominal || row.KG;
+  const rawGuna = row.keterangan || row.guna || row.Keperluan || row.Keterangan || row.Catatan || row.Guna;
+
+  // Ignore blank rows
+  if (!rawTanggal && !rawKwarran && !rawKg && !rawGuna) return null;
+
+  const rawId = row.id || row.ID || row['Id'] || row['No. Kwitansi'] || row['No.'] || row.no;
+  const id = rawId ? String(rawId).replace(/^No\.\s*/i, '').trim() : generateUniqueId('JLT');
+  const tanggal = formatDateString(rawTanggal);
+  const kwarran = String(rawKwarran || '-').trim();
+  const kg = parseKgNumber(rawKg);
+  const keterangan = String(rawGuna || '-').trim();
+  const dateCreated = row.dateCreated || row['Date Created'] || new Date().toISOString();
 
   let attachment = null;
-  if (row.bukti) {
-    const urls = String(row.bukti).split(',').map(s => s.trim()).filter(Boolean);
-    if (urls.length > 0) attachment = urls;
-  }
-  if (!attachment && row.attachment) {
-    attachment = row.attachment;
+  const rawBukti = row.bukti || row.Bukti || row.attachment || row.Attachment || row['Bukti'] || row['Lampiran'];
+  if (rawBukti) {
+    if (Array.isArray(rawBukti)) {
+      attachment = rawBukti;
+    } else {
+      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
+      if (urls.length > 0) attachment = urls;
+    }
   }
 
   return {
-    id: String(id),
+    id: id || generateUniqueId('JLT'),
     tanggal: tanggal,
     tgl: tanggal,
     kwarran: kwarran,
     dari: kwarran,
     kg: kg,
     nominal: `${kg} KG`,
-    terbilang: `${terbilangKg(kg)} KILOGRAM`,
+    terbilang: row.terbilang || row.Terbilang || `${terbilangKg(kg)} KILOGRAM`,
     keterangan: keterangan,
-    guna: (keterangan && keterangan !== '-') ? `PENGAMBILAN MINYAK JELANTAH (${keterangan})` : 'PENGAMBILAN MINYAK JELANTAH',
-    penerima: row.penerima || 'Tri Soma Ananta Rahman',
-    nta: 'Ketua Panitia',
+    guna: (keterangan && keterangan !== '-') ? (keterangan.toUpperCase().startsWith('PENGAMBILAN') || keterangan.toUpperCase().startsWith('PERSYARATAN') ? keterangan : `PENGAMBILAN MINYAK JELANTAH (${keterangan})`) : 'PENGAMBILAN MINYAK JELANTAH',
+    penerima: row.penerima || row.Penerima || 'Tri Soma Ananta Rahman',
+    nta: row.nta || row['NTA / Jabatan'] || 'Ketua Panitia',
     attachment: attachment,
     dateCreated: dateCreated
   };
