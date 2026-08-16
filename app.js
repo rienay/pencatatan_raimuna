@@ -1267,6 +1267,33 @@ async function pullAllTransactionsFromSheets() {
           localStorage.setItem('raimuna_utang_data', JSON.stringify(state.utang));
         } catch(e){}
       }
+
+      // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
+      let rawJelantahPull = Array.isArray(result.jelantah) ? [...result.jelantah] : [];
+      if (result.kwitansi && Array.isArray(result.kwitansi)) {
+        const kwJlt = result.kwitansi.filter(row => {
+          const tipe = String(row.Tipe || row.tipeJenis || row['No. Kwitansi'] || row['Tipe Jenis'] || row.guna || row.Keperluan || '').toUpperCase();
+          return tipe.includes('JELANTAH');
+        });
+        rawJelantahPull = [...rawJelantahPull, ...kwJlt];
+      }
+
+      if (rawJelantahPull.length > 0) {
+        const mapJlt = new Map();
+        rawJelantahPull.forEach(row => {
+          const parsed = parseJelantahRow(row);
+          if (parsed && parsed.id) mapJlt.set(parsed.id, parsed);
+        });
+        const parsedJlt = Array.from(mapJlt.values());
+        state.jelantahRecap = parsedJlt;
+        try {
+          await clearStore(STORE_JELANTAH);
+          for (const jlt of parsedJlt) {
+            await saveToStore(STORE_JELANTAH, jlt);
+          }
+          localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap));
+        } catch(e){}
+      }
       
       state.transactions = newTxns;
       updateSyncBadgeState();
@@ -1352,9 +1379,23 @@ async function autoPullFromSheets() {
         } catch(e){}
       }
 
-      // Ganti data jelantah recap sepenuhnya
-      if (result.jelantah && Array.isArray(result.jelantah)) {
-        const parsedJlt = result.jelantah.map(parseJelantahRow).filter(Boolean);
+      // Ganti data jelantah recap sepenuhnya (kombinasi dari result.jelantah dan kwitansi tipe Jelantah)
+      let rawJelantah = Array.isArray(result.jelantah) ? [...result.jelantah] : [];
+      if (result.kwitansi && Array.isArray(result.kwitansi)) {
+        const kwJlt = result.kwitansi.filter(row => {
+          const tipe = String(row.Tipe || row.tipeJenis || row['No. Kwitansi'] || row['Tipe Jenis'] || row.guna || row.Keperluan || '').toUpperCase();
+          return tipe.includes('JELANTAH');
+        });
+        rawJelantah = [...rawJelantah, ...kwJlt];
+      }
+
+      if (rawJelantah.length > 0) {
+        const mapJlt = new Map();
+        rawJelantah.forEach(row => {
+          const parsed = parseJelantahRow(row);
+          if (parsed && parsed.id) mapJlt.set(parsed.id, parsed);
+        });
+        const parsedJlt = Array.from(mapJlt.values());
         state.jelantahRecap = parsedJlt;
         try {
           await clearStore(STORE_JELANTAH);
@@ -4909,6 +4950,12 @@ async function deleteJelantahRecord(id) {
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'delete_jelantah', id: id })
       });
+      await fetch(state.settings.sheetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'delete_kwitansi', id: id })
+      });
     } catch(err){}
   }
 
@@ -4920,11 +4967,49 @@ async function deleteJelantahRecord(id) {
 async function syncJelantahToSheets(rec) {
   if (!state.settings.sheetUrl) return;
   try {
+    const cleanJlt = {
+      id: rec.id,
+      tanggal: rec.tgl || rec.tanggal,
+      tgl: rec.tgl || rec.tanggal,
+      kwarran: rec.kwarran || rec.dari,
+      dari: rec.dari || rec.kwarran,
+      kg: rec.kg,
+      nominal: `${rec.kg} KG`,
+      terbilang: rec.terbilang || `${terbilangKg(rec.kg)} KILOGRAM`,
+      keterangan: rec.keterangan || rec.guna || '-',
+      guna: rec.guna || (rec.keterangan ? `PENGAMBILAN MINYAK JELANTAH (${rec.keterangan})` : 'PENGAMBILAN MINYAK JELANTAH'),
+      penerima: rec.penerima || 'Petugas Jelantah',
+      dateCreated: rec.dateCreated || new Date().toISOString()
+    };
+
+    // 1. Send as sync_kwitansi format (Google Apps Script stores jelantah under kwitansi sheet)
+    const kwRecord = {
+      id: rec.id,
+      tipeJenis: 'JELANTAH',
+      no: rec.id,
+      tgl: rec.tgl || rec.tanggal,
+      dari: rec.dari || rec.kwarran,
+      nominal: `${rec.kg} KG`,
+      terbilang: rec.terbilang || `${terbilangKg(rec.kg)} KILOGRAM`,
+      guna: rec.guna || 'PERSYARATAN MINYAK JELANTAH',
+      penerima: rec.penerima || 'Tri Soma Ananta Rahman',
+      nta: 'Ketua Panitia',
+      dateCreated: rec.dateCreated
+    };
+
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'sync_jelantah', jelantah: rec })
+      body: JSON.stringify({ action: 'sync_kwitansi', kwitansi: kwRecord })
+    });
+
+    // 2. Send as sync_jelantah format
+    await fetch(state.settings.sheetUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'sync_jelantah', jelantah: cleanJlt })
     });
   } catch (err) {
     console.error('Failed to sync jelantah to sheet:', err);
