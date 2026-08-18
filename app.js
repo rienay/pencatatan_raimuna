@@ -840,8 +840,15 @@ function setupNavigation() {
         renderJelantahSection();
       } else if (targetSectionId === 'sponsorship-section') {
         renderSponsorshipSection();
-      } else if (targetSectionId === 'pemasukan-section' || targetSectionId === 'pengeluaran-section') {
+      } else if (targetSectionId === 'pemasukan-section') {
         populateDropdowns();
+        renderPemasukanHistory();
+      } else if (targetSectionId === 'pengeluaran-section') {
+        populateDropdowns();
+        renderPengeluaranHistory();
+      } else if (targetSectionId === 'pengambilan-section') {
+        populateDropdowns();
+        renderPengambilanHistory();
       }
     });
   });
@@ -1729,6 +1736,9 @@ function renderApp() {
     else if (id === 'sponsorship-section') renderSponsorshipSection();
     else if (id === 'utang-section') renderUtangPage();
     else if (id === 'jelantah-section') renderJelantahSection();
+    else if (id === 'pemasukan-section') renderPemasukanHistory();
+    else if (id === 'pengeluaran-section') renderPengeluaranHistory();
+    else if (id === 'pengambilan-section') renderPengambilanHistory();
   }
 }
 
@@ -5686,5 +5696,267 @@ function exportJelantahExcel() {
 
 function exportJelantahCSV() {
   exportJelantahExcel();
+}
+
+// ================= RENDER: RIWAYAT PEMASUKAN =================
+function renderPemasukanHistory() {
+  const tbody = document.getElementById('pemasukan-history-tbody');
+  if (!tbody) return;
+
+  const inTxns = (state.transactions || [])
+    .filter(t => t.tipe === 'IN')
+    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || b.id.localeCompare(a.id));
+
+  const totalIn = inTxns.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
+  const totalEl = document.getElementById('pemasukan-history-total');
+  const countEl = document.getElementById('pemasukan-history-count');
+  if (totalEl) totalEl.textContent = formatRupiah(totalIn);
+  if (countEl) countEl.textContent = `${inTxns.length} Transaksi`;
+
+  if (inTxns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding: 24px;">Belum ada transaksi pemasukan yang tercatat.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  inTxns.forEach((tx, index) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => showTransactionDetail(tx));
+
+    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
+    if (tx.attachment) {
+      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
+      if (atts.length > 0) {
+        attHtml = atts.map((att, i) => {
+          const isUrl = typeof att === 'string' && att.startsWith('http');
+          const href = isUrl ? att : (att.base64 || '#');
+          const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+        }).join('');
+      }
+    }
+
+    const syncBadge = tx.sync
+      ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+      : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${formatIndonesianDate(tx.tanggal)}</td>
+      <td class="font-bold">${tx.id}</td>
+      <td>${getTxSumber(tx)}</td>
+      <td>${tx.pic}</td>
+      <td class="text-muted">${tx.keterangan}</td>
+      <td class="text-right font-bold text-success">${formatRupiah(tx.nominal)}</td>
+      <td>${attHtml}</td>
+      <td class="no-print text-center">${syncBadge}</td>
+      <td class="no-print text-center" style="white-space: nowrap;">
+        <div class="action-buttons-group">
+          <button class="btn-table-action btn-action-edit btn-edit-pemasukan" title="Edit Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="btn-table-action btn-action-view btn-view-pemasukan" title="Lihat Detail Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+      </td>
+    `;
+
+    const editBtn = tr.querySelector('.btn-edit-pemasukan');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(tx);
+      });
+    }
+    const viewBtn = tr.querySelector('.btn-view-pemasukan');
+    if (viewBtn) {
+      viewBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showTransactionDetail(tx);
+      });
+    }
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ================= RENDER: RIWAYAT PENGELUARAN =================
+function renderPengeluaranHistory() {
+  const tbody = document.getElementById('pengeluaran-history-tbody');
+  if (!tbody) return;
+
+  const outTxns = (state.transactions || [])
+    .filter(t => t.tipe === 'OUT')
+    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || b.id.localeCompare(a.id));
+
+  const totalOut = outTxns.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
+  const totalEl = document.getElementById('pengeluaran-history-total');
+  const countEl = document.getElementById('pengeluaran-history-count');
+  if (totalEl) totalEl.textContent = formatRupiah(totalOut);
+  if (countEl) countEl.textContent = `${outTxns.length} Transaksi`;
+
+  if (outTxns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted" style="padding: 24px;">Belum ada transaksi pengeluaran yang tercatat.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  outTxns.forEach((tx, index) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => showTransactionDetail(tx));
+
+    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
+    if (tx.attachment) {
+      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
+      if (atts.length > 0) {
+        attHtml = atts.map((att, i) => {
+          const isUrl = typeof att === 'string' && att.startsWith('http');
+          const href = isUrl ? att : (att.base64 || '#');
+          const name = isUrl ? `Nota ${i + 1}` : (att.name || `Nota ${i + 1}`);
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+        }).join('');
+      }
+    }
+
+    const syncBadge = tx.sync
+      ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+      : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${formatIndonesianDate(tx.tanggal)}</td>
+      <td class="font-bold">${tx.id}</td>
+      <td>${getTxCategory(tx)}</td>
+      <td>${getTxSumber(tx)}</td>
+      <td>${tx.pic}</td>
+      <td class="text-muted">${tx.keterangan}</td>
+      <td class="text-right font-bold text-danger">${formatRupiah(tx.nominal)}</td>
+      <td>${attHtml}</td>
+      <td class="no-print text-center">${syncBadge}</td>
+      <td class="no-print text-center" style="white-space: nowrap;">
+        <div class="action-buttons-group">
+          <button class="btn-table-action btn-action-edit btn-edit-pengeluaran" title="Edit Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="btn-table-action btn-action-view btn-view-pengeluaran" title="Lihat Detail Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+      </td>
+    `;
+
+    const editBtn = tr.querySelector('.btn-edit-pengeluaran');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(tx);
+      });
+    }
+    const viewBtn = tr.querySelector('.btn-view-pengeluaran');
+    if (viewBtn) {
+      viewBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showTransactionDetail(tx);
+      });
+    }
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ================= RENDER: RIWAYAT PENGAMBILAN UANG =================
+function renderPengambilanHistory() {
+  const tbody = document.getElementById('pengambilan-history-tbody');
+  if (!tbody) return;
+
+  const allOut = (state.transactions || [])
+    .filter(t => t.tipe === 'OUT')
+    .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || b.id.localeCompare(a.id));
+
+  const ambilTxns = allOut.filter(t => (
+    (t.keterangan && t.keterangan.toUpperCase().includes('[PENGAMBILAN]')) ||
+    (t.keterangan && t.keterangan.toUpperCase().includes('PENGAMBILAN'))
+  ));
+
+  // If specific [PENGAMBILAN] exists, show those, otherwise show all OUT transactions
+  const displayList = ambilTxns.length > 0 ? ambilTxns : allOut;
+
+  const totalAmbil = displayList.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
+  const totalEl = document.getElementById('pengambilan-history-total');
+  const countEl = document.getElementById('pengambilan-history-count');
+  if (totalEl) totalEl.textContent = formatRupiah(totalAmbil);
+  if (countEl) countEl.textContent = `${displayList.length} Pengambilan`;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted" style="padding: 24px;">Belum ada catatan pengambilan uang.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  displayList.forEach((tx, index) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => showTransactionDetail(tx));
+
+    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
+    if (tx.attachment) {
+      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
+      if (atts.length > 0) {
+        attHtml = atts.map((att, i) => {
+          const isUrl = typeof att === 'string' && att.startsWith('http');
+          const href = isUrl ? att : (att.base64 || '#');
+          const name = isUrl ? `Dok ${i + 1}` : (att.name || `Dok ${i + 1}`);
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+        }).join('');
+      }
+    }
+
+    const syncBadge = tx.sync
+      ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+      : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
+
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${formatIndonesianDate(tx.tanggal)}</td>
+      <td class="font-bold">${tx.id}</td>
+      <td>${getTxCategory(tx)}</td>
+      <td>${getTxSumber(tx)}</td>
+      <td>${tx.pic}</td>
+      <td class="text-muted">${tx.keterangan}</td>
+      <td class="text-right font-bold text-danger">${formatRupiah(tx.nominal)}</td>
+      <td>${attHtml}</td>
+      <td class="no-print text-center">${syncBadge}</td>
+      <td class="no-print text-center" style="white-space: nowrap;">
+        <div class="action-buttons-group">
+          <button class="btn-table-action btn-action-edit btn-edit-pengambilan" title="Edit Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="btn-table-action btn-action-view btn-view-pengambilan" title="Lihat Detail Transaksi">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+      </td>
+    `;
+
+    const editBtn = tr.querySelector('.btn-edit-pengambilan');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(tx);
+      });
+    }
+    const viewBtn = tr.querySelector('.btn-view-pengambilan');
+    if (viewBtn) {
+      viewBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showTransactionDetail(tx);
+      });
+    }
+
+    tbody.appendChild(tr);
+  });
 }
 

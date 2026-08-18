@@ -491,6 +491,43 @@
             </div>
           </form>
         </div>
+
+        <!-- Riwayat Pemasukan Table Card -->
+        <div class="table-card mt-25">
+          <div class="table-card-header">
+            <div>
+              <h3>Riwayat Transaksi Pemasukan</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar seluruh transaksi dana masuk yang tercatat</p>
+            </div>
+            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+              <span class="badge badge-success" id="pemasukan-history-total" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
+              <span class="badge badge-info" id="pemasukan-history-count" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Transaksi</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">No</th>
+                  <th>Tanggal</th>
+                  <th>ID Transaksi</th>
+                  <th>Sumber Dana</th>
+                  <th>Pemberi / Penanggung Jawab</th>
+                  <th>Keterangan</th>
+                  <th class="text-right">Nominal</th>
+                  <th>Lampiran</th>
+                  <th class="no-print text-center">Sync</th>
+                  <th class="no-print text-center" style="width: 100px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pemasukan-history-tbody">
+                <tr>
+                  <td colspan="10" class="text-center text-muted">Belum ada data pemasukan.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- ================= PENGELUARAN SECTION ================= -->
@@ -570,6 +607,44 @@
             </div>
           </form>
         </div>
+
+        <!-- Riwayat Pengeluaran Table Card -->
+        <div class="table-card mt-25">
+          <div class="table-card-header">
+            <div>
+              <h3>Riwayat Transaksi Pengeluaran</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar seluruh transaksi pengeluaran dana kegiatan</p>
+            </div>
+            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+              <span class="badge badge-danger" id="pengeluaran-history-total" style="font-size: 13px; padding: 6px 12px; background-color: #fee2e2; color: #b91c1c;">Rp 0</span>
+              <span class="badge badge-info" id="pengeluaran-history-count" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Transaksi</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">No</th>
+                  <th>Tanggal</th>
+                  <th>ID Transaksi</th>
+                  <th>Kategori Bidang</th>
+                  <th>Sumber Dana</th>
+                  <th>Pengambil / Penanggung Jawab</th>
+                  <th>Keterangan</th>
+                  <th class="text-right">Nominal</th>
+                  <th>Bukti Nota</th>
+                  <th class="no-print text-center">Sync</th>
+                  <th class="no-print text-center" style="width: 100px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pengeluaran-history-tbody">
+                <tr>
+                  <td colspan="11" class="text-center text-muted">Belum ada data pengeluaran.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- ================= PENGAMBILAN UANG SECTION ================= -->
@@ -646,6 +721,44 @@
               <button type="submit" class="btn btn-success">Simpan Pengambilan</button>
             </div>
           </form>
+        </div>
+
+        <!-- Riwayat Pengambilan Uang Table Card -->
+        <div class="table-card mt-25">
+          <div class="table-card-header">
+            <div>
+              <h3>Riwayat Pengambilan Uang</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar seluruh pengambilan uang kas yang disertai dokumentasi</p>
+            </div>
+            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+              <span class="badge badge-warning" id="pengambilan-history-total" style="font-size: 13px; padding: 6px 12px; background-color: #fef3c7; color: #92400e;">Rp 0</span>
+              <span class="badge badge-info" id="pengambilan-history-count" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Pengambilan</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">No</th>
+                  <th>Tanggal</th>
+                  <th>ID Transaksi</th>
+                  <th>Bidang (Kategori)</th>
+                  <th>Sumber Dana</th>
+                  <th>Nama Pengambil</th>
+                  <th>Keterangan</th>
+                  <th class="text-right">Nominal</th>
+                  <th>Dokumentasi</th>
+                  <th class="no-print text-center">Sync</th>
+                  <th class="no-print text-center" style="width: 100px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pengambilan-history-tbody">
+                <tr>
+                  <td colspan="11" class="text-center text-muted">Belum ada data pengambilan uang.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -2729,7 +2842,7 @@ function doPost(e) {
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App JavaScript -->
-  <script src="app.js?v=2.0"></script>
+  <script src="app.js?v=2.1"></script>
 
 </body>
 
