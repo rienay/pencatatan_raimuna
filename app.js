@@ -5208,6 +5208,11 @@ function renderJelantahSection() {
 
   filtered.forEach((r, idx) => {
     const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.title = 'Klik baris untuk membuka detail & menu aksi';
+    tr.addEventListener('click', () => {
+      showJelantahDetailModal(r);
+    });
 
     let kgVal = r.nominal || `${r.kg || 0} KG`;
     if (typeof kgVal === 'number' || (typeof kgVal === 'string' && !kgVal.toUpperCase().includes('KG'))) {
@@ -5223,7 +5228,7 @@ function renderJelantahSection() {
           const isUrl = typeof att === 'string' && att.startsWith('http');
           const href = isUrl ? att : (att.base64 || '#');
           const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
-          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;">📎 ${name}</a>`;
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()">📎 ${name}</a>`;
         }).join('');
       }
     }
@@ -5367,9 +5372,25 @@ function showJelantahDetailModal(r) {
   };
   const btnCloseHeader = document.getElementById('btn-close-jelantah-detail');
   const btnCloseFooter = document.getElementById('btn-close-jelantah-detail-footer');
+  const btnDelete = document.getElementById('btn-delete-jelantah-detail');
+  const btnEdit = document.getElementById('btn-edit-jelantah-detail');
 
   if (btnCloseHeader) btnCloseHeader.onclick = closeModal;
   if (btnCloseFooter) btnCloseFooter.onclick = closeModal;
+
+  if (btnDelete) {
+    btnDelete.onclick = () => {
+      closeModal();
+      deleteJelantahRecord(r.id);
+    };
+  }
+
+  if (btnEdit) {
+    btnEdit.onclick = () => {
+      closeModal();
+      openEditJelantahModal(r);
+    };
+  }
 }
 
 function renderJelantahChart(records) {
