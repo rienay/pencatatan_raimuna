@@ -5700,9 +5700,16 @@ function exportJelantahCSV() {
 
 // Helper to identify tenant/stand transactions
 function isTenantTxn(t) {
-  const src = String(getTxSumber(t) || '').trim().toLowerCase();
+  if (!t) return false;
+  const src = String(t.sumberDana || t.sumber || t.kategoriSumber || getTxSumber(t) || '').trim().toLowerCase();
   const desc = String(t.keterangan || '').trim().toLowerCase();
-  return src === 'pembayaran tenant' || src === 'pembayaran stand' || src === 'tenant' || src === 'stand' || desc.includes('bayar tenant') || desc.includes('bayar tenat') || desc.includes('sewa tenant') || desc.includes('pembayaran stand') || desc.includes('sewa stand');
+  const pic = String(t.pic || '').trim().toLowerCase();
+  const kat = String(t.kategori || '').trim().toLowerCase();
+
+  return src.includes('tenant') || src.includes('stand') || src.includes('stan') || src.includes('booth') ||
+         desc.includes('tenant') || desc.includes('tenat') || desc.includes('stand') || desc.includes('stan') || desc.includes('booth') ||
+         pic.includes('tenant') || pic.includes('stand') ||
+         kat.includes('tenant') || kat.includes('stand');
 }
 
 // ================= RENDER: RIWAYAT PEMASUKAN & PEMBAYARAN TENANT =================
