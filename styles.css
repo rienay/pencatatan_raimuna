@@ -677,6 +677,11 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 .file-dropzone p {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .file-dropzone svg,
 .file-dropzone p,
 .file-preview-indicator {
@@ -1156,7 +1161,7 @@ input:disabled, select:disabled, textarea:disabled {
   background-color: rgba(46, 44, 54, 0.45);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -1167,6 +1172,7 @@ input:disabled, select:disabled, textarea:disabled {
 
 .modal-overlay.open,
 .modal-overlay.active {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
 }
