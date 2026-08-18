@@ -4819,7 +4819,13 @@ async function alokasikanNotaTalangan(txnId, targetSumber) {
 // ================= RECAP JELANTAH MODULE =================
 let jelantahDokFiles = [];
 let jelantahNotaFiles = [];
-let jelantahEditFiles = [];
+let jelantahEditDokFiles = [];
+let jelantahEditNotaFiles = [];
+
+let jelantahAddDokDropzone = null;
+let jelantahAddNotaDropzone = null;
+let jelantahEditDokDropzone = null;
+let jelantahEditNotaDropzone = null;
 
 function setupJelantahHandlers() {
   const formJelantah = document.getElementById('form-jelantah-add');
@@ -4839,26 +4845,36 @@ function setupJelantahHandlers() {
   const indNota = document.getElementById('jelantah-nota-indicator');
   const inputNota = document.getElementById('jelantah-bukti-nota');
 
-  // Setup Dropzone for Jelantah (Edit form)
-  const dropEdit = document.getElementById('edit-jelantah-dropzone');
-  const indEdit = document.getElementById('edit-jelantah-file-indicator');
-  const inputEdit = document.getElementById('edit-jelantah-bukti');
+  // Setup Dropzones for Jelantah (Edit form)
+  const dropEditDok = document.getElementById('edit-jelantah-dok-dropzone');
+  const indEditDok = document.getElementById('edit-jelantah-dok-indicator');
+  const inputEditDok = document.getElementById('edit-jelantah-bukti-dok');
+
+  const dropEditNota = document.getElementById('edit-jelantah-nota-dropzone');
+  const indEditNota = document.getElementById('edit-jelantah-nota-indicator');
+  const inputEditNota = document.getElementById('edit-jelantah-bukti-nota');
 
   if (dropDok && inputDok) {
-    setupCustomMultiFileDropzone(dropDok, inputDok, indDok, (files) => {
+    jelantahAddDokDropzone = setupCustomMultiFileDropzone(dropDok, inputDok, indDok, (files) => {
       jelantahDokFiles = files;
     });
   }
 
   if (dropNota && inputNota) {
-    setupCustomMultiFileDropzone(dropNota, inputNota, indNota, (files) => {
+    jelantahAddNotaDropzone = setupCustomMultiFileDropzone(dropNota, inputNota, indNota, (files) => {
       jelantahNotaFiles = files;
     });
   }
 
-  if (dropEdit && inputEdit) {
-    setupCustomMultiFileDropzone(dropEdit, inputEdit, indEdit, (files) => {
-      jelantahEditFiles = files;
+  if (dropEditDok && inputEditDok) {
+    jelantahEditDokDropzone = setupCustomMultiFileDropzone(dropEditDok, inputEditDok, indEditDok, (files) => {
+      jelantahEditDokFiles = files;
+    });
+  }
+
+  if (dropEditNota && inputEditNota) {
+    jelantahEditNotaDropzone = setupCustomMultiFileDropzone(dropEditNota, inputEditNota, indEditNota, (files) => {
+      jelantahEditNotaFiles = files;
     });
   }
 
@@ -4935,8 +4951,8 @@ function setupJelantahHandlers() {
     // Reset Form
     formJelantah.reset();
     document.getElementById('jelantah-tanggal').value = today;
-    if (indDok) indDok.textContent = '';
-    if (indNota) indNota.textContent = '';
+    if (jelantahAddDokDropzone) jelantahAddDokDropzone.reset();
+    if (jelantahAddNotaDropzone) jelantahAddNotaDropzone.reset();
     jelantahDokFiles = [];
     jelantahNotaFiles = [];
 
@@ -4969,8 +4985,9 @@ function setupJelantahHandlers() {
         rec.keterangan = ket;
         rec.guna = ket ? `PENGAMBILAN MINYAK JELANTAH (${ket})` : 'PENGAMBILAN MINYAK JELANTAH';
 
-        if (jelantahEditFiles && jelantahEditFiles.length > 0) {
-          rec.attachment = jelantahEditFiles;
+        const newEditUploads = [...(jelantahEditDokFiles || []), ...(jelantahEditNotaFiles || [])];
+        if (newEditUploads.length > 0) {
+          rec.attachment = newEditUploads;
         }
 
         try { await saveToStore(STORE_JELANTAH, rec); } catch (err) { }
@@ -4984,8 +5001,8 @@ function setupJelantahHandlers() {
           kwItem.nominal = `${kg} KG`;
           kwItem.terbilang = `${terbilangKg(kg)} KILOGRAM`;
           kwItem.guna = rec.guna;
-          if (jelantahEditFiles && jelantahEditFiles.length > 0) {
-            kwItem.attachment = jelantahEditFiles;
+          if (newEditUploads.length > 0) {
+            kwItem.attachment = newEditUploads;
           }
           try { await saveToStore(STORE_SPONSORSHIPS, kwItem); } catch (err) { }
           try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch (err) { }
@@ -5001,7 +5018,10 @@ function setupJelantahHandlers() {
           modalEdit.classList.remove('open');
           modalEdit.classList.remove('active');
         }
-        jelantahEditFiles = [];
+        if (jelantahEditDokDropzone) jelantahEditDokDropzone.reset();
+        if (jelantahEditNotaDropzone) jelantahEditNotaDropzone.reset();
+        jelantahEditDokFiles = [];
+        jelantahEditNotaFiles = [];
         renderJelantahSection();
         renderSponsorshipHistoryTable();
         renderDashboard();
@@ -5024,6 +5044,66 @@ function setupJelantahHandlers() {
 }
 
 function setupCustomMultiFileDropzone(dropzone, fileInput, indicator, onFilesReady) {
+  if (!dropzone || !fileInput) return null;
+  let fileList = [];
+
+  function updateIndicator() {
+    if (!indicator) return;
+    if (fileList.length > 0) {
+      indicator.innerHTML = `
+        <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 4px; align-items: center; width: 100%;">
+          <div style="font-weight: 700; color: var(--success, #10b981); font-size: 0.83rem;">
+            ✓ ${fileList.length} berkas siap diunggah
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 100%;">
+            ${fileList.map((u, i) => `
+              <span style="display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                📎 ${u.name && u.name.length > 15 ? u.name.substring(0, 12) + '...' : (u.name || 'Berkas ' + (i + 1))}
+                <button type="button" class="btn-remove-drop-file" data-idx="${i}" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 2px; font-size: 0.9rem;" title="Hapus berkas ini">&times;</button>
+              </span>
+            `).join('')}
+          </div>
+          <div style="font-size: 0.72rem; color: #6366f1; margin-top: 2px;">
+            + Klik / seret lagi untuk menambah
+          </div>
+        </div>
+      `;
+      indicator.querySelectorAll('.btn-remove-drop-file').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const idx = parseInt(btn.dataset.idx, 10);
+          fileList.splice(idx, 1);
+          updateIndicator();
+          if (typeof onFilesReady === 'function') onFilesReady(fileList);
+        });
+      });
+    } else {
+      indicator.innerHTML = '';
+    }
+  }
+
+  async function handleFiles(files) {
+    if (!files || files.length === 0) return;
+    const filesArray = Array.from(files);
+    if (indicator) indicator.innerHTML = `<span style="color: var(--text-muted); font-size: 0.82rem;">Memproses & mengoptimalkan ${filesArray.length} berkas...</span>`;
+
+    for (const file of filesArray) {
+      try {
+        const item = await compressImageFile(file);
+        if (item && item.base64) {
+          if (!fileList.some(ex => ex.name === item.name && ex.base64 === item.base64)) {
+            fileList.push(item);
+          }
+        }
+      } catch (err) {
+        console.warn('Gagal memproses file:', file.name, err);
+      }
+    }
+    updateIndicator();
+    if (typeof onFilesReady === 'function') onFilesReady(fileList);
+  }
+
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropzone.classList.add('dragover');
@@ -5034,53 +5114,29 @@ function setupCustomMultiFileDropzone(dropzone, fileInput, indicator, onFilesRea
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      processSelectedFiles(fileInput.files, indicator, onFilesReady);
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      handleFiles(e.dataTransfer.files);
     }
   });
   fileInput.addEventListener('change', () => {
-    if (fileInput.files.length) {
-      processSelectedFiles(fileInput.files, indicator, onFilesReady);
-    } else {
-      indicator.textContent = '';
-      onFilesReady([]);
+    if (fileInput.files && fileInput.files.length) {
+      handleFiles(fileInput.files);
     }
   });
-}
 
-async function processSelectedFiles(files, indicator, callback) {
-  if (!files || files.length === 0) {
-    if (indicator) indicator.textContent = '';
-    if (typeof callback === 'function') callback([]);
-    return;
-  }
-
-  const filesArray = Array.from(files);
-  if (indicator) indicator.textContent = `Memproses & mengoptimalkan ${filesArray.length} berkas...`;
-
-  const uploads = [];
-  for (const file of filesArray) {
-    try {
-      const item = await compressImageFile(file);
-      if (item && item.base64) {
-        uploads.push(item);
-      }
-    } catch (err) {
-      console.warn('Gagal memproses file jelantah:', file.name, err);
-    }
-  }
-
-  if (indicator) {
-    indicator.textContent = uploads.length > 0
-      ? `✓ ${uploads.length} berkas terpilih (${uploads.map(u => u.name).join(', ')})`
-      : 'Tidak ada berkas valid yang terpilih.';
-    indicator.style.color = uploads.length > 0 ? 'var(--success, #10b981)' : '';
-  }
-
-  if (typeof callback === 'function') {
-    callback(uploads);
-  }
+  return {
+    reset: () => {
+      fileList = [];
+      updateIndicator();
+      if (typeof onFilesReady === 'function') onFilesReady([]);
+    },
+    setFiles: (files) => {
+      fileList = Array.isArray(files) ? [...files] : [];
+      updateIndicator();
+      if (typeof onFilesReady === 'function') onFilesReady(fileList);
+    },
+    getFiles: () => fileList
+  };
 }
 
 function terbilangKg(n) {
@@ -5410,16 +5466,20 @@ function openEditJelantahModal(r) {
   document.getElementById('edit-jelantah-kg').value = parseKgNumber(r.kg || r.nominal);
   document.getElementById('edit-jelantah-keterangan').value = r.keterangan || (r.guna && !r.guna.startsWith('PENGAMBILAN MINYAK JELANTAH') ? r.guna : '') || '';
 
-  const editInd = document.getElementById('edit-jelantah-file-indicator');
-  if (editInd) {
-    if (r.attachment && (Array.isArray(r.attachment) ? r.attachment.length > 0 : true)) {
-      const count = Array.isArray(r.attachment) ? r.attachment.length : 1;
-      editInd.innerHTML = `<span style="color: #059669; font-size: 0.8rem;">Sudah ada ${count} berkas lampiran tersimpan. (Pilih file baru jika ingin mengganti)</span>`;
-    } else {
-      editInd.textContent = '';
-    }
+  if (jelantahEditDokDropzone) jelantahEditDokDropzone.reset();
+  if (jelantahEditNotaDropzone) jelantahEditNotaDropzone.reset();
+  jelantahEditDokFiles = [];
+  jelantahEditNotaFiles = [];
+
+  const indDok = document.getElementById('edit-jelantah-dok-indicator');
+  const indNota = document.getElementById('edit-jelantah-nota-indicator');
+  if (r.attachment && (Array.isArray(r.attachment) ? r.attachment.length > 0 : true)) {
+    const count = Array.isArray(r.attachment) ? r.attachment.length : 1;
+    if (indDok) indDok.innerHTML = `<span style="color: #059669; font-size: 0.78rem; font-weight: 600;">Sudah ada ${count} berkas tersimpan. (Pilih berkas baru jika ingin memperbarui)</span>`;
+  } else {
+    if (indDok) indDok.textContent = '';
+    if (indNota) indNota.textContent = '';
   }
-  jelantahEditFiles = [];
 
   modal.classList.add('open');
   modal.classList.add('active');

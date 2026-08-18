@@ -2392,16 +2392,31 @@ function doPost(e) {
             <label for="edit-jelantah-keterangan">Keterangan / Catatan Tambahan</label>
             <textarea id="edit-jelantah-keterangan" rows="2" placeholder="Catatan..."></textarea>
           </div>
-          <div class="form-group mb-15">
-            <label for="edit-jelantah-bukti">Upload Bukti / Dokumentasi Baru <span class="text-muted">(Akan menggantikan berkas lama jika diunggah, Opsional)</span></label>
-            <div class="file-dropzone" id="edit-jelantah-dropzone">
-              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-              </svg>
-              <p>Klik untuk memilih file foto/nota atau seret ke sini</p>
-              <input type="file" id="edit-jelantah-bukti" accept="image/png, image/jpeg, application/pdf"
-                class="file-input-hidden" multiple>
-              <div class="file-preview-indicator" id="edit-jelantah-file-indicator"></div>
+          <div class="form-grid">
+            <div class="form-group mb-15">
+              <label for="edit-jelantah-bukti-dok">Dokumentasi Pengambilan <span class="text-muted">(Foto / PDF)</span></label>
+              <div class="file-dropzone" id="edit-jelantah-dok-dropzone">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <p>Upload Dokumentasi Foto</p>
+                <input type="file" id="edit-jelantah-bukti-dok" accept="image/png, image/jpeg, application/pdf"
+                  class="file-input-hidden" multiple>
+                <div class="file-preview-indicator" id="edit-jelantah-dok-indicator"></div>
+              </div>
+            </div>
+
+            <div class="form-group mb-15">
+              <label for="edit-jelantah-bukti-nota">Upload Nota / Tanda Terima <span class="text-muted">(Bukti Nota)</span></label>
+              <div class="file-dropzone" id="edit-jelantah-nota-dropzone">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <p>Upload Nota / Tanda Terima</p>
+                <input type="file" id="edit-jelantah-bukti-nota" accept="image/png, image/jpeg, application/pdf"
+                  class="file-input-hidden" multiple>
+                <div class="file-preview-indicator" id="edit-jelantah-nota-indicator"></div>
+              </div>
             </div>
           </div>
           <div class="modal-footer"
@@ -2674,7 +2689,7 @@ function doPost(e) {
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App JavaScript -->
-  <script src="app.js?v=1.7"></script>
+  <script src="app.js?v=1.8"></script>
 
 </body>
 
