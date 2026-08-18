@@ -492,12 +492,12 @@
           </form>
         </div>
 
-        <!-- Riwayat Pemasukan Table Card -->
+        <!-- Riwayat Pemasukan Kas Utama Table Card -->
         <div class="table-card mt-25">
           <div class="table-card-header">
             <div>
-              <h3>Riwayat Transaksi Pemasukan</h3>
-              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar seluruh transaksi dana masuk yang tercatat</p>
+              <h3>Riwayat Transaksi Pemasukan (Kas Utama)</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar seluruh transaksi dana masuk kas utama (APBD, Sponsor, Minyak Jelantah, dll)</p>
             </div>
             <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
               <span class="badge badge-success" id="pemasukan-history-total" style="font-size: 13px; padding: 6px 12px;">Rp 0</span>
@@ -522,7 +522,44 @@
               </thead>
               <tbody id="pemasukan-history-tbody">
                 <tr>
-                  <td colspan="10" class="text-center text-muted">Belum ada data pemasukan.</td>
+                  <td colspan="10" class="text-center text-muted">Belum ada data pemasukan kas utama.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Riwayat Pembayaran Tenant Table Card -->
+        <div class="table-card mt-25">
+          <div class="table-card-header">
+            <div>
+              <h3>Riwayat Pembayaran Tenant / Stand</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Daftar transaksi pembayaran sewa tenant booth & stand kegiatan</p>
+            </div>
+            <div class="sponsorship-history-summary-badges" style="display: flex; gap: 10px;">
+              <span class="badge badge-primary" id="tenant-pemasukan-history-total" style="font-size: 13px; padding: 6px 12px; background-color: #ede9fe; color: #6d28d9;">Rp 0</span>
+              <span class="badge badge-info" id="tenant-pemasukan-history-count" style="font-size: 13px; padding: 6px 12px; background-color: #e0f2fe; color: #0369a1;">0 Tenant</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">No</th>
+                  <th>Tanggal</th>
+                  <th>ID Transaksi</th>
+                  <th>Sumber Dana</th>
+                  <th>Penyewa / Penanggung Jawab</th>
+                  <th>Keterangan</th>
+                  <th class="text-right">Nominal</th>
+                  <th>Lampiran</th>
+                  <th class="no-print text-center">Sync</th>
+                  <th class="no-print text-center" style="width: 100px;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tenant-pemasukan-history-tbody">
+                <tr>
+                  <td colspan="10" class="text-center text-muted">Belum ada data pembayaran tenant.</td>
                 </tr>
               </tbody>
             </table>
@@ -2842,7 +2879,7 @@ function doPost(e) {
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App JavaScript -->
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=2.2"></script>
 
 </body>
 

@@ -5698,88 +5698,176 @@ function exportJelantahCSV() {
   exportJelantahExcel();
 }
 
-// ================= RENDER: RIWAYAT PEMASUKAN =================
-function renderPemasukanHistory() {
-  const tbody = document.getElementById('pemasukan-history-tbody');
-  if (!tbody) return;
+// Helper to identify tenant/stand transactions
+function isTenantTxn(t) {
+  const src = String(getTxSumber(t) || '').trim().toLowerCase();
+  const desc = String(t.keterangan || '').trim().toLowerCase();
+  return src === 'pembayaran tenant' || src === 'pembayaran stand' || src === 'tenant' || src === 'stand' || desc.includes('bayar tenant') || desc.includes('bayar tenat') || desc.includes('sewa tenant') || desc.includes('pembayaran stand') || desc.includes('sewa stand');
+}
 
-  const inTxns = (state.transactions || [])
+// ================= RENDER: RIWAYAT PEMASUKAN & PEMBAYARAN TENANT =================
+function renderPemasukanHistory() {
+  const tbodyMain = document.getElementById('pemasukan-history-tbody');
+  const tbodyTenant = document.getElementById('tenant-pemasukan-history-tbody');
+
+  const allInTxns = (state.transactions || [])
     .filter(t => t.tipe === 'IN')
     .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || b.id.localeCompare(a.id));
 
-  const totalIn = inTxns.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
-  const totalEl = document.getElementById('pemasukan-history-total');
-  const countEl = document.getElementById('pemasukan-history-count');
-  if (totalEl) totalEl.textContent = formatRupiah(totalIn);
-  if (countEl) countEl.textContent = `${inTxns.length} Transaksi`;
+  const mainInTxns = allInTxns.filter(t => !isTenantTxn(t));
+  const tenantTxns = allInTxns.filter(t => isTenantTxn(t));
 
-  if (inTxns.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding: 24px;">Belum ada transaksi pemasukan yang tercatat.</td></tr>';
-    return;
+  // --- 1. RENDER KAS UTAMA ---
+  if (tbodyMain) {
+    const totalMain = mainInTxns.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
+    const totalEl = document.getElementById('pemasukan-history-total');
+    const countEl = document.getElementById('pemasukan-history-count');
+    if (totalEl) totalEl.textContent = formatRupiah(totalMain);
+    if (countEl) countEl.textContent = `${mainInTxns.length} Transaksi`;
+
+    if (mainInTxns.length === 0) {
+      tbodyMain.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding: 24px;">Belum ada transaksi pemasukan kas utama.</td></tr>';
+    } else {
+      tbodyMain.innerHTML = '';
+      mainInTxns.forEach((tx, index) => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.addEventListener('click', () => showTransactionDetail(tx));
+
+        let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
+        if (tx.attachment) {
+          const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
+          if (atts.length > 0) {
+            attHtml = atts.map((att, i) => {
+              const isUrl = typeof att === 'string' && att.startsWith('http');
+              const href = isUrl ? att : (att.base64 || '#');
+              const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
+              return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+            }).join('');
+          }
+        }
+
+        const syncBadge = tx.sync
+          ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+          : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
+
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${formatIndonesianDate(tx.tanggal)}</td>
+          <td class="font-bold">${tx.id}</td>
+          <td>${getTxSumber(tx)}</td>
+          <td>${tx.pic}</td>
+          <td class="text-muted">${tx.keterangan}</td>
+          <td class="text-right font-bold text-success">${formatRupiah(tx.nominal)}</td>
+          <td>${attHtml}</td>
+          <td class="no-print text-center">${syncBadge}</td>
+          <td class="no-print text-center" style="white-space: nowrap;">
+            <div class="action-buttons-group">
+              <button class="btn-table-action btn-action-edit btn-edit-pemasukan" title="Edit Transaksi">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-table-action btn-action-view btn-view-pemasukan" title="Lihat Detail Transaksi">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </td>
+        `;
+
+        const editBtn = tr.querySelector('.btn-edit-pemasukan');
+        if (editBtn) {
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditModal(tx);
+          });
+        }
+        const viewBtn = tr.querySelector('.btn-view-pemasukan');
+        if (viewBtn) {
+          viewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showTransactionDetail(tx);
+          });
+        }
+
+        tbodyMain.appendChild(tr);
+      });
+    }
   }
 
-  tbody.innerHTML = '';
-  inTxns.forEach((tx, index) => {
-    const tr = document.createElement('tr');
-    tr.style.cursor = 'pointer';
-    tr.addEventListener('click', () => showTransactionDetail(tx));
+  // --- 2. RENDER PEMBAYARAN TENANT ---
+  if (tbodyTenant) {
+    const totalTenant = tenantTxns.reduce((sum, t) => sum + (parseInt(t.nominal, 10) || 0), 0);
+    const totalTenantEl = document.getElementById('tenant-pemasukan-history-total');
+    const countTenantEl = document.getElementById('tenant-pemasukan-history-count');
+    if (totalTenantEl) totalTenantEl.textContent = formatRupiah(totalTenant);
+    if (countTenantEl) countTenantEl.textContent = `${tenantTxns.length} Tenant`;
 
-    let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
-    if (tx.attachment) {
-      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
-      if (atts.length > 0) {
-        attHtml = atts.map((att, i) => {
-          const isUrl = typeof att === 'string' && att.startsWith('http');
-          const href = isUrl ? att : (att.base64 || '#');
-          const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
-          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
-        }).join('');
-      }
-    }
+    if (tenantTxns.length === 0) {
+      tbodyTenant.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding: 24px;">Belum ada catatan pembayaran tenant.</td></tr>';
+    } else {
+      tbodyTenant.innerHTML = '';
+      tenantTxns.forEach((tx, index) => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.addEventListener('click', () => showTransactionDetail(tx));
 
-    const syncBadge = tx.sync
-      ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
-      : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
+        let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
+        if (tx.attachment) {
+          const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
+          if (atts.length > 0) {
+            attHtml = atts.map((att, i) => {
+              const isUrl = typeof att === 'string' && att.startsWith('http');
+              const href = isUrl ? att : (att.base64 || '#');
+              const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
+              return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+            }).join('');
+          }
+        }
 
-    tr.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${formatIndonesianDate(tx.tanggal)}</td>
-      <td class="font-bold">${tx.id}</td>
-      <td>${getTxSumber(tx)}</td>
-      <td>${tx.pic}</td>
-      <td class="text-muted">${tx.keterangan}</td>
-      <td class="text-right font-bold text-success">${formatRupiah(tx.nominal)}</td>
-      <td>${attHtml}</td>
-      <td class="no-print text-center">${syncBadge}</td>
-      <td class="no-print text-center" style="white-space: nowrap;">
-        <div class="action-buttons-group">
-          <button class="btn-table-action btn-action-edit btn-edit-pemasukan" title="Edit Transaksi">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-          </button>
-          <button class="btn-table-action btn-action-view btn-view-pemasukan" title="Lihat Detail Transaksi">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          </button>
-        </div>
-      </td>
-    `;
+        const syncBadge = tx.sync
+          ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+          : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
 
-    const editBtn = tr.querySelector('.btn-edit-pemasukan');
-    if (editBtn) {
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(tx);
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${formatIndonesianDate(tx.tanggal)}</td>
+          <td class="font-bold">${tx.id}</td>
+          <td><span class="badge-type in" style="font-size:0.75rem;">${getTxSumber(tx)}</span></td>
+          <td>${tx.pic}</td>
+          <td class="text-muted">${tx.keterangan}</td>
+          <td class="text-right font-bold text-success">${formatRupiah(tx.nominal)}</td>
+          <td>${attHtml}</td>
+          <td class="no-print text-center">${syncBadge}</td>
+          <td class="no-print text-center" style="white-space: nowrap;">
+            <div class="action-buttons-group">
+              <button class="btn-table-action btn-action-edit btn-edit-pemasukan" title="Edit Transaksi">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-table-action btn-action-view btn-view-pemasukan" title="Lihat Detail Transaksi">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </td>
+        `;
+
+        const editBtn = tr.querySelector('.btn-edit-pemasukan');
+        if (editBtn) {
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditModal(tx);
+          });
+        }
+        const viewBtn = tr.querySelector('.btn-view-pemasukan');
+        if (viewBtn) {
+          viewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showTransactionDetail(tx);
+          });
+        }
+
+        tbodyTenant.appendChild(tr);
       });
     }
-    const viewBtn = tr.querySelector('.btn-view-pemasukan');
-    if (viewBtn) {
-      viewBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showTransactionDetail(tx);
-      });
-    }
-
-    tbody.appendChild(tr);
-  });
+  }
 }
 
 // ================= RENDER: RIWAYAT PENGELUARAN =================
