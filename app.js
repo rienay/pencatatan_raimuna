@@ -441,41 +441,88 @@ async function compressImageFile(file) {
   });
 }
 
-// Convert uploaded files to array of Base64 objects with auto compression
+// Convert uploaded files to array of Base64 objects with auto compression and accumulation
 async function handleMultipleFilesSelected(files, indicator) {
   if (!files || files.length === 0) return;
   const filesArray = Array.from(files);
-  if (indicator) indicator.textContent = `Memproses & mengoptimalkan ${filesArray.length} berkas...`;
-  state.currentUpload = null;
+  if (indicator) indicator.innerHTML = `<span style="color: var(--text-muted); font-size: 0.85rem;">Memproses & mengoptimalkan ${filesArray.length} berkas...</span>`;
 
-  const uploads = [];
+  const newUploads = [];
   for (const file of filesArray) {
     try {
       const item = await compressImageFile(file);
       if (item && item.base64) {
-        uploads.push(item);
+        newUploads.push(item);
       }
     } catch (err) {
       console.warn('Gagal memproses berkas:', file.name, err);
     }
   }
 
-  finishUploadProcessing(uploads, indicator);
+  // Akumulasi berkas (jika sudah ada sebelumnya, tambahkan berkas baru)
+  let currentList = [];
+  if (state.currentUpload) {
+    currentList = Array.isArray(state.currentUpload) ? [...state.currentUpload] : [state.currentUpload];
+  }
+
+  for (const item of newUploads) {
+    if (!currentList.some(ex => ex.name === item.name && ex.base64 === item.base64)) {
+      currentList.push(item);
+    }
+  }
+
+  finishUploadProcessing(currentList, indicator);
 }
+
+function removeUploadedFileIndex(index, indicatorId) {
+  if (!state.currentUpload) return;
+  let list = Array.isArray(state.currentUpload) ? [...state.currentUpload] : [state.currentUpload];
+  list.splice(index, 1);
+  const indicator = document.getElementById(indicatorId);
+  finishUploadProcessing(list, indicator);
+}
+
+function clearCurrentUploads(indicatorId) {
+  state.currentUpload = null;
+  const indicator = document.getElementById(indicatorId);
+  if (indicator) {
+    indicator.innerHTML = '';
+  }
+}
+
+window.removeUploadedFileIndex = removeUploadedFileIndex;
+window.clearCurrentUploads = clearCurrentUploads;
 
 function finishUploadProcessing(uploads, indicator) {
   if (uploads && uploads.length > 0) {
     state.currentUpload = uploads; // Array of { name, type, base64 }
     if (indicator) {
-      indicator.textContent = `✓ ${uploads.length} berkas siap diupload: ` + uploads.map(u => u.name).join(', ');
-      indicator.style.color = 'var(--success, #10b981)';
+      const indId = indicator.id || 'indicator';
+      indicator.innerHTML = `
+        <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px; align-items: center; width: 100%;">
+          <div style="font-weight: 700; color: var(--success, #10b981); font-size: 0.88rem;">
+            ✓ ${uploads.length} berkas foto/nota siap disimpan
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 100%;">
+            ${uploads.map((u, i) => `
+              <span style="display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                📎 ${u.name.length > 18 ? u.name.substring(0, 15) + '...' : u.name}
+                <button type="button" onclick="event.stopPropagation(); removeUploadedFileIndex(${i}, '${indId}')" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 2px; font-size: 0.9rem;" title="Hapus foto ini">&times;</button>
+              </span>
+            `).join('')}
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 4px; font-size: 0.75rem;">
+            <span style="color: #6366f1; font-weight: 600;">+ Klik / seret lagi untuk menambah foto</span>
+            <button type="button" onclick="event.stopPropagation(); clearCurrentUploads('${indId}')" style="background: none; border: none; color: #ef4444; text-decoration: underline; cursor: pointer; font-size: 0.75rem;">Hapus Semua</button>
+          </div>
+        </div>
+      `;
     }
-    showToast('Berkas Siap', `${uploads.length} berkas foto/nota berhasil diproses dan siap disinkronkan.`, 'info');
+    showToast('Berkas Siap', `${uploads.length} berkas foto/nota siap disimpan.`, 'info');
   } else {
     state.currentUpload = null;
     if (indicator) {
-      indicator.textContent = 'Tidak ada berkas valid yang terpilih.';
-      indicator.style.color = '';
+      indicator.innerHTML = '';
     }
   }
 }

@@ -1184,11 +1184,19 @@ input:disabled, select:disabled, textarea:disabled {
   box-shadow: 0 25px 60px rgba(46, 44, 54, 0.18);
   width: 90%;
   max-width: 620px;
-  max-height: 90vh;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   transform: scale(0.92);
   transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+}
+
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1207,6 +1215,7 @@ input:disabled, select:disabled, textarea:disabled {
   justify-content: space-between;
   padding: 20px 28px;
   border-bottom: 2px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -1229,18 +1238,20 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 .modal-body {
-  padding: 28px;
+  padding: 24px 28px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .modal-footer {
-  padding: 18px 28px;
+  padding: 16px 28px;
   border-top: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   background-color: var(--bg-app);
+  flex-shrink: 0;
 }
 
 .modal-footer .footer-right {
