@@ -677,9 +677,10 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 .file-dropzone p {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.file-dropzone svg,
+.file-dropzone p,
+.file-preview-indicator {
+  pointer-events: none;
 }
 
 .file-input-hidden {
@@ -690,6 +691,7 @@ input:disabled, select:disabled, textarea:disabled {
   height: 100%;
   opacity: 0;
   cursor: pointer;
+  z-index: 10;
 }
 
 .file-preview-indicator {

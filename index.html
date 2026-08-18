@@ -1257,10 +1257,22 @@
 // Fitur: Auto Folder Drive, Auto Case-Insensitive, Upload Bukti, Hapus Pintar, Bulk Sync
 // ============================================================================
 
-// Opsional: Masukkan Folder ID Google Drive Anda jika ingin disimpan ke folder tertentu.
-// JIKA DIKOSONGKAN, script akan OTOMATIS membuat folder di Google Drive Anda!
-var FOLDER_PENGAMBILAN_UANG = ''; // Opsional: ID Folder Google Drive Dokumentasi Pengambilan Uang
-var FOLDER_NOTA = '';             // Opsional: ID Folder Google Drive Nota & Kwitansi
+// Masukkan Folder ID Google Drive "nota raimuna" milik akun Anda
+var FOLDER_NOTA = '10CEz6nMi6mBvm68xE-j34U-5WukhwgA4';             // ID Folder Google Drive "nota raimuna"
+var FOLDER_PENGAMBILAN_UANG = '10CEz6nMi6mBvm68xE-j34U-5WukhwgA4'; // ID Folder Google Drive "nota raimuna"
+
+// ── FUNGSI CEK & OTORISASI GOOGLE DRIVE ──────────────────────────────────────
+// Jalankan fungsi ini 1x di editor Apps Script (pilih fungsi 'testDriveAccess' lalu klik tombol 'Jalankan / Run')
+// untuk memberikan izin akses Google Drive pada akun Google Anda!
+function testDriveAccess() {
+  var folder = DriveApp.getFolderById(FOLDER_NOTA);
+  Logger.log("Berhasil membuka folder: " + folder.getName());
+  var testFile = folder.createFile("test_izin_drive.txt", "Izin akses Google Drive berhasil aktif!");
+  Logger.log("Berhasil membuat file: " + testFile.getUrl());
+  testFile.setTrashed(true);
+  Logger.log("File tes dihapus. Izin Google Drive 100% SUKSES!");
+  return "SUKSES";
+}
 
 // Definisi Header Standar untuk Tiap Tab
 var HEADERS = {
@@ -1346,31 +1358,42 @@ function autoMigrateColumns(sheet) {
 // ── HELPER: MENDAPATKAN ATAU MEMBUAT FOLDER DRIVE OTOMATIS ──────────────────
 function getOrCreateDriveFolder(folderId, fallbackFolderName) {
   var folder = null;
-  // 1. Coba buka dari Folder ID jika diberikan
-  if (folderId && typeof folderId === 'string' && folderId.trim().length > 15 && folderId !== '13yzUOz2qknJZ9fAHFmj9DeS3_p9riiID' && folderId !== '10CEz6nMi6mBvm68xE-j34U-5WukhwgA4') {
-    try {
-      folder = DriveApp.getFolderById(folderId.trim());
-    } catch (e) {
-      Logger.log("Folder ID tidak ditemukan / tidak ada akses: " + folderId);
-      folder = null;
-    }
+  // 1. Buka dari Folder ID
+  var targetId = (folderId && String(folderId).trim().length > 15) ? String(folderId).trim() : FOLDER_NOTA;
+  try {
+    folder = DriveApp.getFolderById(targetId);
+  } catch (e) {
+    Logger.log("Folder ID tidak dapat dibuka langsung: " + targetId);
+    folder = null;
   }
   
-  // 2. Jika Folder ID kosong atau tidak dapat diakses, cari atau buat folder otomatis di Drive pemilik
+  // 2. Jika belum ditemukan, coba buka FOLDER_NOTA
+  if (!folder && FOLDER_NOTA) {
+    try {
+      folder = DriveApp.getFolderById(FOLDER_NOTA);
+    } catch (e) {}
+  }
+
+  // 3. Jika belum ditemukan, cari berdasarkan nama folder "nota raimuna"
   if (!folder) {
-    var name = fallbackFolderName || "Raimuna Cabang - Lampiran & Nota";
+    var name = fallbackFolderName || "nota raimuna";
     try {
       var existing = DriveApp.getRootFolder().getFoldersByName(name);
       if (existing.hasNext()) {
         folder = existing.next();
       } else {
         folder = DriveApp.getRootFolder().createFolder(name);
-        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       }
     } catch (err) {
-      Logger.log("Gagal membuat folder fallback: " + err.toString());
+      Logger.log("Gagal membuat/mencari folder: " + err.toString());
       try { folder = DriveApp.getRootFolder(); } catch(e3) {}
     }
+  }
+
+  if (folder) {
+    try {
+      folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (e) {}
   }
   return folder;
 }
@@ -1594,13 +1617,9 @@ function doPost(e) {
       autoMigrateColumns(sheetTx);
       var tx = payload.transaction;
       
-      var isPengambilan = (tx.tipe === 'OUT' && (String(tx.keterangan || '').indexOf('[PENGAMBILAN]') !== -1 || String(tx.sumberDana || '').indexOf('Pengambilan') !== -1));
-      var folderName = isPengambilan ? "Dokumentasi Pengambilan Uang" : "Nota & Bukti Transaksi";
-      var targetFolderId = isPengambilan ? FOLDER_PENGAMBILAN_UANG : FOLDER_NOTA;
-
       var fileUrls = [];
       if (tx.attachment) {
-        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, targetFolderId, folderName);
+        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, FOLDER_NOTA, "nota raimuna");
       }
 
       var existingBukti = "";
@@ -1651,7 +1670,7 @@ function doPost(e) {
       var kw = payload.kwitansi;
       var fileUrls = [];
       if (kw.attachment) {
-        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA, "Nota & Bukti Kwitansi");
+        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA, "nota raimuna");
       }
 
       var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
@@ -1740,7 +1759,7 @@ function doPost(e) {
       var jlt = payload.jelantah;
       var fileUrls = [];
       if (jlt.attachment) {
-        fileUrls = uploadAttachmentsToDrive(jlt.attachment, jlt.id, FOLDER_NOTA, "Dokumentasi & Nota Jelantah");
+        fileUrls = uploadAttachmentsToDrive(jlt.attachment, jlt.id, FOLDER_NOTA, "nota raimuna");
       }
 
       var sheetJlt = getOrCreateSheet(ss, "Jelantah", HEADERS.jelantah);

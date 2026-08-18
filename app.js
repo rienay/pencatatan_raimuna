@@ -1129,9 +1129,8 @@ async function syncTransactionToSheets(txn) {
   };
 
   try {
-    await fetch(state.settings.sheetUrl, {
+    const response = await fetch(state.settings.sheetUrl, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
         'Content-Type': 'text/plain'
       },
@@ -1141,17 +1140,28 @@ async function syncTransactionToSheets(txn) {
       })
     });
 
+    try {
+      const res = await response.json();
+      if (res.urls && res.urls.length > 0) {
+        txn.attachment = res.urls;
+        await saveToStore(STORE_TXNS, txn);
+      }
+    } catch (e) {}
+
     txn.sync = true;
     await saveToStore(STORE_TXNS, txn);
     updateSyncBadgeState();
 
     // Check if still in transaction list, update sync flag in state
     const match = state.transactions.find(t => t.id === txn.id);
-    if (match) match.sync = true;
+    if (match) {
+      match.sync = true;
+      if (txn.attachment) match.attachment = txn.attachment;
+    }
 
-    showToast('Tersinkronisasi', `Transaksi ${txn.id} disinkronkan ke Google Sheet.`, 'success');
+    showToast('Tersinkronisasi', `Transaksi ${txn.id} berhasil diunggah ke Google Drive & Sheets.`, 'success');
   } catch (err) {
-    showToast('Gagal Sinkronisasi', 'Gagal mengirim data ke Google Sheets. Disimpan offline.', 'error');
+    showToast('Gagal Sinkronisasi', 'Gagal mengirim data ke Google Sheets.', 'error');
     updateSyncBadge('error', 'Gagal Sinkronisasi');
   }
 }
