@@ -11,7 +11,7 @@ const state = {
   utang: [],
   utangFilter: 'ALL',
   settings: {
-    sheetUrl: 'https://script.google.com/macros/s/AKfycbx3qo3XCHQjO9fDkX8jR81ogZqKDARA7E05Ey1s6iRkPBKoL-qzbNm3yFGkqAGQa5nE/exec',
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbzHlmEWqavA3rI0ckayM-ONvjfH1L-O3usGtZrBwQMx9IfrFoBKJJGqfUeoAd9tvZgAgA/exec',
     autoSync: true
   },
   filters: {

@@ -1400,14 +1400,23 @@ function getOrCreateDriveFolder(folderId, fallbackFolderName) {
 
 // ── UPLOAD LAMPIRAN KE GOOGLE DRIVE ─────────────────────────────────────────
 function uploadAttachmentsToDrive(attachments, prefixId, folderId, folderName) {
-  var urls = [];
-  if (!attachments) return urls;
+  var result = { urls: [], errors: [] };
+  if (!attachments) return result;
   
   var list = Array.isArray(attachments) ? attachments : [attachments];
-  if (list.length === 0) return urls;
+  if (list.length === 0) return result;
 
-  var folder = getOrCreateDriveFolder(folderId, folderName);
-  if (!folder) return urls;
+  var folder = null;
+  try {
+    folder = getOrCreateDriveFolder(folderId, folderName);
+  } catch (fe) {
+    result.errors.push("Folder error: " + fe.toString());
+  }
+
+  if (!folder) {
+    result.errors.push("Folder tidak ditemukan / tidak ada izin Drive");
+    return result;
+  }
 
   for (var i = 0; i < list.length; i++) {
     var item = list[i];
@@ -1416,14 +1425,14 @@ function uploadAttachmentsToDrive(attachments, prefixId, folderId, folderName) {
     // Jika sudah berupa URL Drive (string)
     if (typeof item === 'string') {
       if (item.indexOf('http') === 0) {
-        urls.push(item);
+        result.urls.push(item);
       }
       continue;
     }
 
     var base64Data = item.base64 || '';
     if (!base64Data && item.url) {
-      urls.push(item.url);
+      result.urls.push(item.url);
       continue;
     }
 
@@ -1441,12 +1450,13 @@ function uploadAttachmentsToDrive(attachments, prefixId, folderId, folderName) {
       var blob = Utilities.newBlob(decoded, contentType, fileName);
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      urls.push(file.getUrl());
+      result.urls.push(file.getUrl());
     } catch (uploadErr) {
       Logger.log("Gagal upload file ke Drive (" + fileName + "): " + uploadErr.toString());
+      result.errors.push(fileName + ": " + uploadErr.toString());
     }
   }
-  return urls;
+  return result;
 }
 
 // ── UPSERT BARIS BY ID ──────────────────────────────────────────────────────
@@ -1611,16 +1621,36 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ── 0.1 DIAGNOSE GOOGLE DRIVE ─────────────────────────────────────────────
+    if (action === "diagnose_drive") {
+      var diag = { folderId: FOLDER_NOTA, step: "init" };
+      try {
+        diag.step = "getFolderById";
+        var f = DriveApp.getFolderById(FOLDER_NOTA);
+        diag.folderName = f.getName();
+        diag.step = "createTestFile";
+        var file = f.createFile("diag_test.txt", "Drive access working!");
+        diag.fileUrl = file.getUrl();
+        file.setTrashed(true);
+        diag.success = true;
+      } catch (err) {
+        diag.success = false;
+        diag.error = err.toString();
+      }
+      return ContentService.createTextOutput(JSON.stringify(diag)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ── 1. TRANSAKSI (SYNC 1) ─────────────────────────────────────────────────
     if (action === "sync_single") {
       var sheetTx = getOrCreateSheet(ss, "Transaksi", HEADERS.transaksi);
       autoMigrateColumns(sheetTx);
       var tx = payload.transaction;
       
-      var fileUrls = [];
+      var uploadResult = { urls: [], errors: [] };
       if (tx.attachment) {
-        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, FOLDER_NOTA, "nota raimuna");
+        uploadResult = uploadAttachmentsToDrive(tx.attachment, tx.id, FOLDER_NOTA, "nota raimuna");
       }
+      var fileUrls = uploadResult.urls || [];
 
       var existingBukti = "";
       var rows = sheetTx.getDataRange().getValues();
@@ -1653,8 +1683,11 @@ function doPost(e) {
         sheetTx.appendRow(rowData);
       }
 
-      return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        urls: fileUrls,
+        driveErrors: uploadResult.errors || []
+      })).setMimeType(ContentService.MimeType.JSON);
     }
 
     // ── 2. TRANSAKSI (HAPUS 1) ────────────────────────────────────────────────
@@ -1668,10 +1701,11 @@ function doPost(e) {
     // ── 3. KWITANSI (SYNC 1) ──────────────────────────────────────────────────
     if (action === "sync_kwitansi") {
       var kw = payload.kwitansi;
-      var fileUrls = [];
+      var uploadResult = { urls: [], errors: [] };
       if (kw.attachment) {
-        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA, "nota raimuna");
+        uploadResult = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA, "nota raimuna");
       }
+      var fileUrls = uploadResult.urls || [];
 
       var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
       var existingBukti = "";
@@ -1738,8 +1772,11 @@ function doPost(e) {
         }
       }
 
-      return ContentService.createTextOutput(JSON.stringify({ success: true, urls: fileUrls }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        urls: fileUrls,
+        driveErrors: uploadResult.errors || []
+      })).setMimeType(ContentService.MimeType.JSON);
     }
 
     // ── 4. KWITANSI (HAPUS 1) ─────────────────────────────────────────────────
