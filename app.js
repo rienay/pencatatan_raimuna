@@ -49,6 +49,52 @@ const STORE_UTANG = 'utang';
 const STORE_JELANTAH = 'jelantah_recap';
 const STORE_DELETED_IDS = 'deleted_ids'; // Tombstone: ID yang dihapus lokal tapi belum terkirim ke Sheet
 
+// Robust Helper to parse & flatten multiple attachments from array, comma-separated string, JSON, or object
+function parseAndFlattenAttachments(attachment) {
+  if (!attachment) return [];
+  let rawList = [];
+
+  if (Array.isArray(attachment)) {
+    rawList = attachment;
+  } else if (typeof attachment === 'string') {
+    const trimmed = attachment.trim();
+    if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        rawList = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        rawList = trimmed.split(',');
+      }
+    } else {
+      rawList = trimmed.split(',');
+    }
+  } else if (typeof attachment === 'object' && attachment !== null) {
+    rawList = [attachment];
+  }
+
+  const flattened = [];
+  for (const item of rawList) {
+    if (!item) continue;
+    if (typeof item === 'string') {
+      const parts = item.split(',').map(s => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        if (p) flattened.push(p);
+      }
+    } else if (typeof item === 'object') {
+      if (item.url && typeof item.url === 'string' && item.url.includes(',')) {
+        const subUrls = item.url.split(',').map(s => s.trim()).filter(Boolean);
+        for (const u of subUrls) {
+          flattened.push({ ...item, url: u });
+        }
+      } else {
+        flattened.push(item);
+      }
+    }
+  }
+
+  return flattened;
+}
+
 // Helper functions for Kategori & Sumber Dana
 function getTxCategory(tx) {
   if (!tx) return '-';
@@ -111,12 +157,8 @@ function parseSheetRow(row) {
   let attachment = null;
   const rawBukti = row.bukti || row.Bukti || row.lampiran || row.Lampiran || row.attachment || row.Attachment;
   if (rawBukti) {
-    if (Array.isArray(rawBukti)) {
-      attachment = rawBukti;
-    } else {
-      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
-      if (urls.length > 0) attachment = urls;
-    }
+    const flat = parseAndFlattenAttachments(rawBukti);
+    if (flat.length > 0) attachment = flat;
   }
 
   return {
@@ -165,12 +207,8 @@ function parseKwitansiRow(row) {
   let attachment = null;
   const rawBukti = row.bukti || row.Bukti || row.lampiran || row.Lampiran || row.attachment || row.Attachment;
   if (rawBukti) {
-    if (Array.isArray(rawBukti)) {
-      attachment = rawBukti;
-    } else {
-      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
-      if (urls.length > 0) attachment = urls;
-    }
+    const flat = parseAndFlattenAttachments(rawBukti);
+    if (flat.length > 0) attachment = flat;
   }
 
   return {
@@ -2691,14 +2729,7 @@ function renderAttachmentList(renderArea, attachment) {
   if (!renderArea) return;
   renderArea.innerHTML = '';
 
-  let items = [];
-  if (Array.isArray(attachment)) {
-    items = attachment;
-  } else if (typeof attachment === 'string') {
-    items = attachment.split(',').map(s => s.trim()).filter(Boolean);
-  } else if (typeof attachment === 'object' && attachment !== null) {
-    items = [attachment];
-  }
+  const items = parseAndFlattenAttachments(attachment);
 
   if (items.length === 0) {
     renderArea.innerHTML = '<span class="text-muted" style="font-size: 0.88rem;">Tidak ada bukti transaksi/nota dilampirkan.</span>';
@@ -2708,7 +2739,7 @@ function renderAttachmentList(renderArea, attachment) {
   const container = document.createElement('div');
   container.className = 'attachment-items-grid';
   container.style.display = 'grid';
-  container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+  container.style.gridTemplateColumns = items.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))';
   container.style.gap = '14px';
   container.style.width = '100%';
   container.style.marginTop = '8px';
@@ -5575,12 +5606,8 @@ function parseJelantahRow(row) {
   let attachment = null;
   const rawBukti = row.bukti || row.Bukti || row.attachment || row.Attachment || row['Bukti'] || row['Lampiran'];
   if (rawBukti) {
-    if (Array.isArray(rawBukti)) {
-      attachment = rawBukti;
-    } else {
-      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
-      if (urls.length > 0) attachment = urls;
-    }
+    const flat = parseAndFlattenAttachments(rawBukti);
+    if (flat.length > 0) attachment = flat;
   }
 
   return {
@@ -5742,16 +5769,14 @@ function renderPemasukanHistory() {
         tr.addEventListener('click', () => showTransactionDetail(tx));
 
         let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
-        if (tx.attachment) {
-          const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
-          if (atts.length > 0) {
-            attHtml = atts.map((att, i) => {
-              const isUrl = typeof att === 'string' && att.startsWith('http');
-              const href = isUrl ? att : (att.base64 || '#');
-              const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
-              return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
-            }).join('');
-          }
+        const flatAtts = parseAndFlattenAttachments(tx.attachment);
+        if (flatAtts.length > 0) {
+          attHtml = flatAtts.map((att, i) => {
+            const isUrl = typeof att === 'string' && att.startsWith('http');
+            const href = isUrl ? att : (att.base64 || '#');
+            const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
+            return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+          }).join('');
         }
 
         const syncBadge = tx.sync
@@ -5818,16 +5843,14 @@ function renderPemasukanHistory() {
         tr.addEventListener('click', () => showTransactionDetail(tx));
 
         let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
-        if (tx.attachment) {
-          const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
-          if (atts.length > 0) {
-            attHtml = atts.map((att, i) => {
-              const isUrl = typeof att === 'string' && att.startsWith('http');
-              const href = isUrl ? att : (att.base64 || '#');
-              const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
-              return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
-            }).join('');
-          }
+        const flatAtts = parseAndFlattenAttachments(tx.attachment);
+        if (flatAtts.length > 0) {
+          attHtml = flatAtts.map((att, i) => {
+            const isUrl = typeof att === 'string' && att.startsWith('http');
+            const href = isUrl ? att : (att.base64 || '#');
+            const name = isUrl ? `Bukti ${i + 1}` : (att.name || `Bukti ${i + 1}`);
+            return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+          }).join('');
         }
 
         const syncBadge = tx.sync
@@ -5904,16 +5927,14 @@ function renderPengeluaranHistory() {
     tr.addEventListener('click', () => showTransactionDetail(tx));
 
     let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
-    if (tx.attachment) {
-      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
-      if (atts.length > 0) {
-        attHtml = atts.map((att, i) => {
-          const isUrl = typeof att === 'string' && att.startsWith('http');
-          const href = isUrl ? att : (att.base64 || '#');
-          const name = isUrl ? `Nota ${i + 1}` : (att.name || `Nota ${i + 1}`);
-          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
-        }).join('');
-      }
+    const flatAtts = parseAndFlattenAttachments(tx.attachment);
+    if (flatAtts.length > 0) {
+      attHtml = flatAtts.map((att, i) => {
+        const isUrl = typeof att === 'string' && att.startsWith('http');
+        const href = isUrl ? att : (att.base64 || '#');
+        const name = isUrl ? `Nota ${i + 1}` : (att.name || `Nota ${i + 1}`);
+        return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+      }).join('');
     }
 
     const syncBadge = tx.sync
@@ -5997,16 +6018,14 @@ function renderPengambilanHistory() {
     tr.addEventListener('click', () => showTransactionDetail(tx));
 
     let attHtml = '<span class="text-muted" style="font-size:0.85rem;">-</span>';
-    if (tx.attachment) {
-      const atts = Array.isArray(tx.attachment) ? tx.attachment : [tx.attachment];
-      if (atts.length > 0) {
-        attHtml = atts.map((att, i) => {
-          const isUrl = typeof att === 'string' && att.startsWith('http');
-          const href = isUrl ? att : (att.base64 || '#');
-          const name = isUrl ? `Dok ${i + 1}` : (att.name || `Dok ${i + 1}`);
-          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
-        }).join('');
-      }
+    const flatAtts = parseAndFlattenAttachments(tx.attachment);
+    if (flatAtts.length > 0) {
+      attHtml = flatAtts.map((att, i) => {
+        const isUrl = typeof att === 'string' && att.startsWith('http');
+        const href = isUrl ? att : (att.base64 || '#');
+        const name = isUrl ? `Dok ${i + 1}` : (att.name || `Dok ${i + 1}`);
+        return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
+      }).join('');
     }
 
     const syncBadge = tx.sync
