@@ -2654,107 +2654,211 @@ function setupCustomModals() {
   });
 }
 
-// Helper to render attachments (Both Google Drive Links & Local Base64 Previews)
+// Helper to extract Google Drive File ID
+
+function getGoogleDriveFileId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                url.match(/id=([a-zA-Z0-9_-]+)/) ||
+                url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+// Renders multiple attachments (Google Drive Links or Base64 images)
 function renderAttachmentList(renderArea, attachment) {
   if (!renderArea) return;
   renderArea.innerHTML = '';
-
-  if (!attachment) {
-    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
-    return;
-  }
 
   let items = [];
   if (Array.isArray(attachment)) {
     items = attachment;
   } else if (typeof attachment === 'string') {
     items = attachment.split(',').map(s => s.trim()).filter(Boolean);
-  } else if (typeof attachment === 'object') {
+  } else if (typeof attachment === 'object' && attachment !== null) {
     items = [attachment];
   }
 
   if (items.length === 0) {
-    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
+    renderArea.innerHTML = '<span class="text-muted" style="font-size: 0.88rem;">Tidak ada bukti transaksi/nota dilampirkan.</span>';
     return;
   }
 
   const container = document.createElement('div');
   container.className = 'attachment-items-grid';
-  container.style.display = 'flex';
-  container.style.flexWrap = 'wrap';
-  container.style.gap = '10px';
-  container.style.marginTop = '6px';
+  container.style.display = 'grid';
+  container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+  container.style.gap = '14px';
+  container.style.width = '100%';
+  container.style.marginTop = '8px';
 
   items.forEach((item, idx) => {
     if (!item) return;
 
-    // Case 1: Google Drive URL (String or Object with url)
+    const card = document.createElement('div');
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '8px';
+    card.style.padding = '10px';
+    card.style.background = '#ffffff';
+    card.style.border = '1.5px solid var(--border-color, #e2e8f0)';
+    card.style.borderRadius = '12px';
+    card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+
+    // Case 1: Google Drive URL
     const url = (typeof item === 'string') ? item : (item.url || (item.base64 ? null : ''));
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      const driveCard = document.createElement('a');
-      driveCard.href = url;
-      driveCard.target = '_blank';
-      driveCard.rel = 'noopener noreferrer';
-      driveCard.className = 'btn btn-secondary btn-small';
-      driveCard.style.display = 'inline-flex';
-      driveCard.style.alignItems = 'center';
-      driveCard.style.gap = '8px';
-      driveCard.style.padding = '8px 14px';
-      driveCard.style.textDecoration = 'none';
-      driveCard.style.borderRadius = '8px';
-      driveCard.style.backgroundColor = '#ecfdf5';
-      driveCard.style.color = '#065f46';
-      driveCard.style.border = '1px solid #10b981';
-      driveCard.style.fontWeight = '600';
-      driveCard.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      const fileId = getGoogleDriveFileId(url);
+      const previewUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : url;
+      const fallbackUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : url;
+
+      // Photo Box Container
+      const photoBox = document.createElement('div');
+      photoBox.style.width = '100%';
+      photoBox.style.height = '160px';
+      photoBox.style.borderRadius = '8px';
+      photoBox.style.overflow = 'hidden';
+      photoBox.style.background = '#f8fafc';
+      photoBox.style.display = 'flex';
+      photoBox.style.alignItems = 'center';
+      photoBox.style.justifyContent = 'center';
+      photoBox.style.cursor = 'pointer';
+      photoBox.style.border = '1px solid #e2e8f0';
+      photoBox.title = 'Klik untuk memperbesar / membuka foto';
+
+      const img = document.createElement('img');
+      img.src = previewUrl;
+      img.alt = `Bukti Nota #${idx + 1}`;
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '100%';
+      img.style.objectFit = 'contain';
+      img.style.transition = 'transform 0.2s ease';
+      img.onerror = () => {
+        if (img.src !== fallbackUrl) {
+          img.src = fallbackUrl;
+        } else {
+          img.style.display = 'none';
+          fallbackIcon.style.display = 'flex';
+        }
+      };
+
+      const fallbackIcon = document.createElement('div');
+      fallbackIcon.style.display = 'none';
+      fallbackIcon.style.flexDirection = 'column';
+      fallbackIcon.style.alignItems = 'center';
+      fallbackIcon.style.gap = '4px';
+      fallbackIcon.style.color = 'var(--text-muted, #64748b)';
+      fallbackIcon.innerHTML = `<span style="font-size: 2.2rem;">📄</span><span style="font-size: 0.78rem; font-weight: 600;">Lihat di Drive</span>`;
+
+      photoBox.appendChild(img);
+      photoBox.appendChild(fallbackIcon);
+      photoBox.addEventListener('click', () => {
+        window.open(url, '_blank');
+      });
+
+      // Bottom Action Button: Cek di Google Drive
+      const driveBtn = document.createElement('a');
+      driveBtn.href = url;
+      driveBtn.target = '_blank';
+      driveBtn.rel = 'noopener noreferrer';
+      driveBtn.className = 'btn btn-secondary btn-small';
+      driveBtn.style.display = 'inline-flex';
+      driveBtn.style.alignItems = 'center';
+      driveBtn.style.justifyContent = 'center';
+      driveBtn.style.gap = '6px';
+      driveBtn.style.padding = '8px 12px';
+      driveBtn.style.textDecoration = 'none';
+      driveBtn.style.borderRadius = '8px';
+      driveBtn.style.backgroundColor = '#ecfdf5';
+      driveBtn.style.color = '#065f46';
+      driveBtn.style.border = '1px solid #10b981';
+      driveBtn.style.fontWeight = '700';
+      driveBtn.style.fontSize = '0.82rem';
+      driveBtn.style.width = '100%';
+      driveBtn.style.boxSizing = 'border-box';
+      driveBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
           <polyline points="15 3 21 3 21 9"></polyline>
           <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
-        <span>Buka di Google Drive ${items.length > 1 ? '#' + (idx + 1) : ''}</span>
+        <span>Cek Google Drive ${items.length > 1 ? '#' + (idx + 1) : ''}</span>
       `;
-      container.appendChild(driveCard);
+
+      card.appendChild(photoBox);
+      card.appendChild(driveBtn);
+      container.appendChild(card);
       return;
     }
 
     // Case 2: Base64 Object { name, type, base64 }
     if (item.base64) {
       if (item.type && item.type.startsWith('image/')) {
+        const photoBox = document.createElement('div');
+        photoBox.style.width = '100%';
+        photoBox.style.height = '160px';
+        photoBox.style.borderRadius = '8px';
+        photoBox.style.overflow = 'hidden';
+        photoBox.style.background = '#f8fafc';
+        photoBox.style.display = 'flex';
+        photoBox.style.alignItems = 'center';
+        photoBox.style.justifyContent = 'center';
+        photoBox.style.cursor = 'pointer';
+        photoBox.style.border = '1px solid #e2e8f0';
+        photoBox.title = 'Klik untuk memperbesar gambar';
+
         const img = document.createElement('img');
         img.src = item.base64;
-        img.alt = item.name || 'Bukti';
-        img.style.maxWidth = '150px';
-        img.style.maxHeight = '150px';
-        img.style.objectFit = 'cover';
-        img.style.cursor = 'pointer';
-        img.style.border = '1px solid var(--border-color, #ddd)';
-        img.style.borderRadius = '6px';
-        img.title = `Klik untuk memperbesar gambar: ${item.name || 'Bukti'}`;
-        img.addEventListener('click', () => {
+        img.alt = item.name || 'Bukti Foto';
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '100%';
+        img.style.objectFit = 'contain';
+        photoBox.appendChild(img);
+
+        photoBox.addEventListener('click', () => {
           const w = window.open();
           w.document.write(`<title>${item.name || 'Bukti Transaksi'}</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${item.base64}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
           w.document.close();
         });
-        container.appendChild(img);
+
+        const infoBtn = document.createElement('button');
+        infoBtn.type = 'button';
+        infoBtn.className = 'btn btn-secondary btn-small';
+        infoBtn.style.width = '100%';
+        infoBtn.style.fontSize = '0.8rem';
+        infoBtn.style.padding = '6px 10px';
+        infoBtn.style.fontWeight = '600';
+        infoBtn.innerHTML = `🔍 ${item.name ? (item.name.length > 20 ? item.name.substring(0, 17) + '...' : item.name) : 'Lihat Gambar'}`;
+        infoBtn.addEventListener('click', () => {
+          const w = window.open();
+          w.document.write(`<title>${item.name || 'Bukti Transaksi'}</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${item.base64}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
+          w.document.close();
+        });
+
+        card.appendChild(photoBox);
+        card.appendChild(infoBtn);
+        container.appendChild(card);
       } else {
         const box = document.createElement('div');
         box.className = 'pdf-preview-box';
-        box.style.display = 'inline-flex';
+        box.style.display = 'flex';
+        box.style.flexDirection = 'column';
         box.style.alignItems = 'center';
-        box.style.gap = '10px';
-        box.style.padding = '8px 12px';
-        box.style.border = '1px solid var(--border-color, #ddd)';
-        box.style.borderRadius = '6px';
-        box.style.backgroundColor = 'var(--bg-secondary, #f8fafc)';
+        box.style.justifyContent = 'center';
+        box.style.gap = '8px';
+        box.style.padding = '16px 12px';
+        box.style.height = '160px';
+        box.style.boxSizing = 'border-box';
+        box.style.backgroundColor = '#f8fafc';
+        box.style.borderRadius = '8px';
+        box.style.border = '1px solid #e2e8f0';
 
-        const nameText = document.createElement('span');
-        nameText.textContent = (item.name && item.name.length > 20) ? (item.name.substring(0, 17) + '...') : (item.name || 'Dokumen PDF');
-        nameText.className = 'font-bold text-muted';
+        box.innerHTML = `<span style="font-size: 2.4rem;">📄</span><span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">${item.name || 'Dokumen PDF'}</span>`;
 
         const link = document.createElement('button');
         link.type = 'button';
         link.className = 'btn btn-secondary btn-small';
+        link.style.width = '100%';
+        link.style.fontSize = '0.82rem';
         link.textContent = 'Lihat PDF';
         link.addEventListener('click', () => {
           const pdfWindow = window.open();
@@ -2762,10 +2866,9 @@ function renderAttachmentList(renderArea, attachment) {
           pdfWindow.document.close();
         });
 
-        box.innerHTML = '📄 ';
-        box.appendChild(nameText);
-        box.appendChild(link);
-        container.appendChild(box);
+        card.appendChild(box);
+        card.appendChild(link);
+        container.appendChild(card);
       }
     }
   });
@@ -2773,7 +2876,7 @@ function renderAttachmentList(renderArea, attachment) {
   if (container.children.length > 0) {
     renderArea.appendChild(container);
   } else {
-    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
+    renderArea.innerHTML = '<span class="text-muted" style="font-size: 0.88rem;">Tidak ada bukti transaksi/nota dilampirkan.</span>';
   }
 }
 
@@ -5126,34 +5229,42 @@ function showJelantahDetailModal(r) {
   if (r.attachment) {
     const atts = Array.isArray(r.attachment) ? r.attachment : [r.attachment];
     if (atts.length > 0) {
-      attHtml = '<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px;">';
+      attHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 10px;">';
       atts.forEach((att, i) => {
         const isUrl = typeof att === 'string' && (att.startsWith('http://') || att.startsWith('https://'));
         const src = isUrl ? att : (att.base64 || '');
-        const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
-        const isImg = !isUrl && ((att.type && att.type.startsWith('image/')) || (att.base64 && att.base64.startsWith('data:image/')));
+        const name = isUrl ? `Dokumentasi #${i + 1}` : (att.name || `Dokumentasi #${i + 1}`);
 
         if (isUrl) {
+          const fileId = getGoogleDriveFileId(src);
+          const previewUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : src;
+          const fallbackUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : src;
+
           attHtml += `
-            <a href="${src}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-small" style="padding: 8px 12px; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #ecfdf5; color: #065f46; border: 1px solid #10b981; border-radius: 6px; font-weight: 600;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              <span>Buka di Google Drive ${atts.length > 1 ? '#' + (i + 1) : ''}</span>
-            </a>
-          `;
-        } else if (isImg && src) {
-          attHtml += `
-            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: #fafafa; text-align: center; max-width: 160px;">
-              <a href="${src}" target="_blank" title="Klik untuk mengunduh / membuka ukuran penuh">
-                <img src="${src}" alt="${name}" style="max-width: 100%; max-height: 120px; object-fit: cover; border-radius: 6px;" />
+            <div style="background: #ffffff; border: 1.5px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+              <div style="width: 100%; height: 140px; border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #e2e8f0;" onclick="window.open('${src}', '_blank')">
+                <img src="${previewUrl}" onerror="if(this.src!=='${fallbackUrl}'){this.src='${fallbackUrl}';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}" alt="${name}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                <div style="display: none; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted);">
+                  <span style="font-size: 2rem;">📄</span>
+                  <span style="font-size: 0.75rem; font-weight: 600;">Lihat di Drive</span>
+                </div>
+              </div>
+              <a href="${src}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-small" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background-color: #ecfdf5; color: #065f46; border: 1px solid #10b981; border-radius: 6px; font-weight: 700;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                <span>Cek Google Drive ${atts.length > 1 ? '#' + (i + 1) : ''}</span>
               </a>
-              <p style="font-size: 0.75rem; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</p>
             </div>
           `;
         } else if (src) {
           attHtml += `
-            <a href="${src}" target="_blank" class="badge-tag info" style="padding: 8px 12px; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-              📄 ${name}
-            </a>
+            <div style="background: #ffffff; border: 1.5px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+              <div style="width: 100%; height: 140px; border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #e2e8f0;" onclick="window.open('${src}', '_blank')">
+                <img src="${src}" alt="${name}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+              </div>
+              <button type="button" class="btn btn-secondary btn-small" style="padding: 6px 10px; font-size: 0.8rem; font-weight: 600; width: 100%;" onclick="window.open('${src}', '_blank')">
+                🔍 ${name}
+              </button>
+            </div>
           `;
         }
       });
