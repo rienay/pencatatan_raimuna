@@ -108,6 +108,17 @@ function parseSheetRow(row) {
     pic = '-';
   }
 
+  let attachment = null;
+  const rawBukti = row.bukti || row.Bukti || row.lampiran || row.Lampiran || row.attachment || row.Attachment;
+  if (rawBukti) {
+    if (Array.isArray(rawBukti)) {
+      attachment = rawBukti;
+    } else {
+      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
+      if (urls.length > 0) attachment = urls;
+    }
+  }
+
   return {
     id: row.id,
     tanggal: formatDateString(row.tanggal),
@@ -119,7 +130,7 @@ function parseSheetRow(row) {
     nominal: nominal,
     keterangan: String(keterangan).trim(),
     dateCreated: row.dateCreated || new Date().toISOString(),
-    attachment: null,
+    attachment: attachment,
     sync: true
   };
 }
@@ -151,6 +162,17 @@ function parseKwitansiRow(row) {
     }
   }
 
+  let attachment = null;
+  const rawBukti = row.bukti || row.Bukti || row.lampiran || row.Lampiran || row.attachment || row.Attachment;
+  if (rawBukti) {
+    if (Array.isArray(rawBukti)) {
+      attachment = rawBukti;
+    } else {
+      const urls = String(rawBukti).split(',').map(s => s.trim()).filter(Boolean);
+      if (urls.length > 0) attachment = urls;
+    }
+  }
+
   return {
     id: String(id),
     tipeJenis: normalizedTipe,
@@ -162,6 +184,7 @@ function parseKwitansiRow(row) {
     guna: String(guna),
     penerima: String(penerima),
     nta: String(nta),
+    attachment: attachment,
     dateCreated: row.dateCreated || new Date().toISOString()
   };
 }
@@ -282,6 +305,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, 30000);
 });
 
+let fileIndicatorKwitansiUpload = null;
+
 // Setup References to DOM elements
 function setupDomReferences() {
   dropzoneIn = document.getElementById('in-dropzone');
@@ -293,11 +318,15 @@ function setupDomReferences() {
   fileIndicatorEdit = document.getElementById('edit-file-indicator');
   fileIndicatorAmbil = document.getElementById('ambil-file-indicator');
 
+  const dropzoneKw = document.getElementById('kwitansi-upload-dropzone');
+  fileIndicatorKwitansiUpload = document.getElementById('kwitansi-file-indicator');
+
   // Drag and Drop listeners
-  setupFileDropzone(dropzoneIn, 'in-bukti', fileIndicatorIn);
-  setupFileDropzone(dropzoneOut, 'out-nota', fileIndicatorOut);
+  if (dropzoneIn) setupFileDropzone(dropzoneIn, 'in-bukti', fileIndicatorIn);
+  if (dropzoneOut) setupFileDropzone(dropzoneOut, 'out-nota', fileIndicatorOut);
   if (dropzoneEdit) setupFileDropzone(dropzoneEdit, 'edit-bukti', fileIndicatorEdit);
   if (dropzoneAmbil) setupFileDropzone(dropzoneAmbil, 'ambil-bukti', fileIndicatorAmbil);
+  if (dropzoneKw) setupFileDropzone(dropzoneKw, 'kwitansi-upload-file', fileIndicatorKwitansiUpload);
 
   // Numeric Inputs Formatting (Auto Rupiah)
   setupRupiahInput('in-nominal');
@@ -309,21 +338,24 @@ function setupDomReferences() {
   const sidebar = document.querySelector('.sidebar');
   const toggleBtn = document.getElementById('sidebar-toggle');
 
-  toggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    sidebar.classList.toggle('open');
-  });
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('open');
+    });
 
-  document.addEventListener('click', (e) => {
-    if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
-      sidebar.classList.remove('open');
-    }
-  });
+    document.addEventListener('click', (e) => {
+      if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
+        sidebar.classList.remove('open');
+      }
+    });
+  }
 }
 
 // Setup File drag and drop dropzone logic
 function setupFileDropzone(dropzone, inputId, indicator) {
   const fileInput = document.getElementById(inputId);
+  if (!dropzone || !fileInput) return;
 
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -347,64 +379,104 @@ function setupFileDropzone(dropzone, inputId, indicator) {
     if (fileInput.files.length) {
       handleMultipleFilesSelected(fileInput.files, indicator);
     } else {
-      indicator.textContent = '';
+      if (indicator) indicator.textContent = '';
       state.currentUpload = null;
     }
   });
 }
 
-// Convert uploaded files to array of Base64 objects
-function handleMultipleFilesSelected(files, indicator) {
-  if (!files || files.length === 0) return;
-  const maxIndividualSize = 4 * 1024 * 1024; // 4MB limit per file
+// Smart Client-side Image Compression (Canvas-based)
+async function compressImageFile(file) {
+  if (!file) return null;
+  // If not image (e.g. PDF), read directly as Base64 Data URL
+  if (!file.type || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve({ name: file.name, type: file.type || 'application/pdf', base64: e.target.result });
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
 
-  const filesArray = Array.from(files);
-  const uploads = [];
-  let completed = 0;
-
-  indicator.textContent = `Memproses ${filesArray.length} file...`;
-  state.currentUpload = null;
-
-  filesArray.forEach(file => {
-    if (file.size > maxIndividualSize) {
-      showToast('Ukuran File Terlalu Besar', `File "${file.name}" melebihi batas 4MB.`, 'error');
-      completed++;
-      if (completed === filesArray.length) {
-        finishUploadProcessing(uploads, indicator);
-      }
-      return;
-    }
-
+  return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = function (e) {
-      uploads.push({
-        name: file.name,
-        type: file.type,
-        base64: e.target.result
-      });
-      completed++;
-      if (completed === filesArray.length) {
-        finishUploadProcessing(uploads, indicator);
-      }
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1920;
+        const maxHeight = 1920;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        resolve({
+          name: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+          type: 'image/jpeg',
+          base64: compressedBase64
+        });
+      };
+      img.onerror = () => {
+        resolve({ name: file.name, type: file.type || 'image/jpeg', base64: e.target.result });
+      };
+      img.src = e.target.result;
     };
-    reader.onerror = function () {
-      completed++;
-      if (completed === filesArray.length) {
-        finishUploadProcessing(uploads, indicator);
-      }
-    };
+    reader.onerror = () => resolve(null);
     reader.readAsDataURL(file);
   });
 }
 
+// Convert uploaded files to array of Base64 objects with auto compression
+async function handleMultipleFilesSelected(files, indicator) {
+  if (!files || files.length === 0) return;
+  const filesArray = Array.from(files);
+  if (indicator) indicator.textContent = `Memproses & mengoptimalkan ${filesArray.length} berkas...`;
+  state.currentUpload = null;
+
+  const uploads = [];
+  for (const file of filesArray) {
+    try {
+      const item = await compressImageFile(file);
+      if (item && item.base64) {
+        uploads.push(item);
+      }
+    } catch (err) {
+      console.warn('Gagal memproses berkas:', file.name, err);
+    }
+  }
+
+  finishUploadProcessing(uploads, indicator);
+}
+
 function finishUploadProcessing(uploads, indicator) {
-  if (uploads.length > 0) {
-    state.currentUpload = uploads; // Can be a single object or array of objects
-    indicator.textContent = `${uploads.length} file terpilih: ` + uploads.map(u => u.name).join(', ');
-    showToast('File Berhasil Diunggah', `${uploads.length} berkas siap dilampirkan.`, 'info');
+  if (uploads && uploads.length > 0) {
+    state.currentUpload = uploads; // Array of { name, type, base64 }
+    if (indicator) {
+      indicator.textContent = `✓ ${uploads.length} berkas siap diupload: ` + uploads.map(u => u.name).join(', ');
+      indicator.style.color = 'var(--success, #10b981)';
+    }
+    showToast('Berkas Siap', `${uploads.length} berkas foto/nota berhasil diproses dan siap disinkronkan.`, 'info');
   } else {
     state.currentUpload = null;
-    indicator.textContent = 'Tidak ada file valid yang terpilih.';
+    if (indicator) {
+      indicator.textContent = 'Tidak ada berkas valid yang terpilih.';
+      indicator.style.color = '';
+    }
   }
 }
 
@@ -1242,11 +1314,19 @@ async function pullAllTransactionsFromSheets() {
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data)) {
-      // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
+      // Simpan semua attachment lokal sebelum diganti
       const localAttachmentMap = {};
       for (const txn of state.transactions) {
         if (txn.attachment && txn.id) {
           localAttachmentMap[txn.id] = txn.attachment;
+        }
+      }
+
+      // Simpan attachment lokal kwitansi sebelum diganti
+      const localKwAttachmentMapPull = {};
+      for (const kw of (state.sponsorshipHistory || [])) {
+        if (kw.attachment && kw.id) {
+          localKwAttachmentMapPull[kw.id] = kw.attachment;
         }
       }
 
@@ -1255,9 +1335,9 @@ async function pullAllTransactionsFromSheets() {
 
       const newTxns = result.data.map(parseSheetRow);
 
-      // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
+      // Kembalikan attachment lokal jika data sheet belum memiliki bukti
       for (const txn of newTxns) {
-        if (localAttachmentMap[txn.id]) {
+        if (!txn.attachment && localAttachmentMap[txn.id]) {
           txn.attachment = localAttachmentMap[txn.id];
         }
       }
@@ -1269,6 +1349,11 @@ async function pullAllTransactionsFromSheets() {
 
       if (result.kwitansi && Array.isArray(result.kwitansi) && result.kwitansi.length > 0) {
         const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
+        for (const kw of parsedKw) {
+          if (!kw.attachment && localKwAttachmentMapPull[kw.id]) {
+            kw.attachment = localKwAttachmentMapPull[kw.id];
+          }
+        }
         state.sponsorshipHistory = parsedKw;
         try {
           await clearStore(STORE_SPONSORSHIPS);
@@ -1367,7 +1452,7 @@ async function autoPullFromSheets() {
       let pendingDeletes = [];
       try { pendingDeletes = await getAllFromStore(STORE_DELETED_IDS); } catch (e) { }
 
-      // Simpan semua attachment lokal sebelum diganti (nota/bukti tidak disimpan di Sheets)
+      // Simpan semua attachment lokal sebelum diganti
       const localAttachmentMap = {};
       for (const txn of state.transactions) {
         if (txn.attachment && txn.id) {
@@ -1375,11 +1460,19 @@ async function autoPullFromSheets() {
         }
       }
 
+      // Simpan attachment lokal kwitansi sebelum diganti
+      const localKwAttachmentMap = {};
+      for (const kw of (state.sponsorshipHistory || [])) {
+        if (kw.attachment && kw.id) {
+          localKwAttachmentMap[kw.id] = kw.attachment;
+        }
+      }
+
       const remoteTxns = result.data.map(parseSheetRow);
 
-      // Kembalikan attachment lokal ke transaksi yang sesuai berdasarkan ID
+      // Kembalikan attachment lokal ke transaksi jika belum ada di sheet
       for (const txn of remoteTxns) {
-        if (localAttachmentMap[txn.id]) {
+        if (!txn.attachment && localAttachmentMap[txn.id]) {
           txn.attachment = localAttachmentMap[txn.id];
         }
       }
@@ -1394,6 +1487,11 @@ async function autoPullFromSheets() {
       // Ganti data kwitansi/sponsorship sepenuhnya
       if (result.kwitansi && Array.isArray(result.kwitansi)) {
         const parsedKw = result.kwitansi.map(parseKwitansiRow).filter(Boolean);
+        for (const kw of parsedKw) {
+          if (!kw.attachment && localKwAttachmentMap[kw.id]) {
+            kw.attachment = localKwAttachmentMap[kw.id];
+          }
+        }
         state.sponsorshipHistory = parsedKw;
         try {
           await clearStore(STORE_SPONSORSHIPS);
@@ -2499,6 +2597,129 @@ function setupCustomModals() {
   });
 }
 
+// Helper to render attachments (Both Google Drive Links & Local Base64 Previews)
+function renderAttachmentList(renderArea, attachment) {
+  if (!renderArea) return;
+  renderArea.innerHTML = '';
+
+  if (!attachment) {
+    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
+    return;
+  }
+
+  let items = [];
+  if (Array.isArray(attachment)) {
+    items = attachment;
+  } else if (typeof attachment === 'string') {
+    items = attachment.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (typeof attachment === 'object') {
+    items = [attachment];
+  }
+
+  if (items.length === 0) {
+    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.className = 'attachment-items-grid';
+  container.style.display = 'flex';
+  container.style.flexWrap = 'wrap';
+  container.style.gap = '10px';
+  container.style.marginTop = '6px';
+
+  items.forEach((item, idx) => {
+    if (!item) return;
+
+    // Case 1: Google Drive URL (String or Object with url)
+    const url = (typeof item === 'string') ? item : (item.url || (item.base64 ? null : ''));
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      const driveCard = document.createElement('a');
+      driveCard.href = url;
+      driveCard.target = '_blank';
+      driveCard.rel = 'noopener noreferrer';
+      driveCard.className = 'btn btn-secondary btn-small';
+      driveCard.style.display = 'inline-flex';
+      driveCard.style.alignItems = 'center';
+      driveCard.style.gap = '8px';
+      driveCard.style.padding = '8px 14px';
+      driveCard.style.textDecoration = 'none';
+      driveCard.style.borderRadius = '8px';
+      driveCard.style.backgroundColor = '#ecfdf5';
+      driveCard.style.color = '#065f46';
+      driveCard.style.border = '1px solid #10b981';
+      driveCard.style.fontWeight = '600';
+      driveCard.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        <span>Buka di Google Drive ${items.length > 1 ? '#' + (idx + 1) : ''}</span>
+      `;
+      container.appendChild(driveCard);
+      return;
+    }
+
+    // Case 2: Base64 Object { name, type, base64 }
+    if (item.base64) {
+      if (item.type && item.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = item.base64;
+        img.alt = item.name || 'Bukti';
+        img.style.maxWidth = '150px';
+        img.style.maxHeight = '150px';
+        img.style.objectFit = 'cover';
+        img.style.cursor = 'pointer';
+        img.style.border = '1px solid var(--border-color, #ddd)';
+        img.style.borderRadius = '6px';
+        img.title = `Klik untuk memperbesar gambar: ${item.name || 'Bukti'}`;
+        img.addEventListener('click', () => {
+          const w = window.open();
+          w.document.write(`<title>${item.name || 'Bukti Transaksi'}</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${item.base64}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
+          w.document.close();
+        });
+        container.appendChild(img);
+      } else {
+        const box = document.createElement('div');
+        box.className = 'pdf-preview-box';
+        box.style.display = 'inline-flex';
+        box.style.alignItems = 'center';
+        box.style.gap = '10px';
+        box.style.padding = '8px 12px';
+        box.style.border = '1px solid var(--border-color, #ddd)';
+        box.style.borderRadius = '6px';
+        box.style.backgroundColor = 'var(--bg-secondary, #f8fafc)';
+
+        const nameText = document.createElement('span');
+        nameText.textContent = (item.name && item.name.length > 20) ? (item.name.substring(0, 17) + '...') : (item.name || 'Dokumen PDF');
+        nameText.className = 'font-bold text-muted';
+
+        const link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'btn btn-secondary btn-small';
+        link.textContent = 'Lihat PDF';
+        link.addEventListener('click', () => {
+          const pdfWindow = window.open();
+          pdfWindow.document.write(`<title>${item.name || 'Dokumen'}</title><iframe width='100%' height='100%' style='border:none;height:100vh;' src='${item.base64}'></iframe>`);
+          pdfWindow.document.close();
+        });
+
+        box.innerHTML = '📄 ';
+        box.appendChild(nameText);
+        box.appendChild(link);
+        container.appendChild(box);
+      }
+    }
+  });
+
+  if (container.children.length > 0) {
+    renderArea.appendChild(container);
+  } else {
+    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
+  }
+}
+
 // ================= DETAIL MODAL LOGIC =================
 function showTransactionDetail(txn) {
   const modal = document.getElementById('detail-modal');
@@ -2541,72 +2762,7 @@ function showTransactionDetail(txn) {
 
   // Render attachments
   const renderArea = document.getElementById('attachment-preview-render');
-  renderArea.innerHTML = '';
-
-  if (txn.attachment) {
-    // Standardize attachments to an array
-    const attachments = Array.isArray(txn.attachment) ? txn.attachment : [txn.attachment];
-    const validAttachments = attachments.filter(att => att && att.base64);
-
-    if (validAttachments.length > 0) {
-      validAttachments.forEach(att => {
-        if (att.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = att.base64;
-          img.alt = att.name;
-          img.style.maxWidth = '150px';
-          img.style.maxHeight = '150px';
-          img.style.margin = '5px';
-          img.style.cursor = 'pointer';
-          img.style.border = '1px solid #ddd';
-          img.style.borderRadius = '4px';
-          img.title = `Klik untuk memperbesar gambar: ${att.name}`;
-          img.addEventListener('click', () => {
-            const w = window.open();
-            w.document.write(`<title>${att.name}</title><img src="${att.base64}" style="max-width:100%; max-height:100vh; display:block; margin:auto;" />`);
-            w.document.close();
-          });
-          renderArea.appendChild(img);
-        } else if (att.type === 'application/pdf') {
-          const box = document.createElement('div');
-          box.className = 'pdf-preview-box';
-          box.style.display = 'inline-flex';
-          box.style.alignItems = 'center';
-          box.style.gap = '10px';
-          box.style.margin = '5px';
-          box.style.padding = '8px';
-          box.style.border = '1px solid #ddd';
-          box.style.borderRadius = '4px';
-
-          const icon = document.createElement('div');
-          icon.className = 'pdf-icon';
-          icon.textContent = '📄';
-
-          const nameText = document.createElement('span');
-          nameText.textContent = att.name.length > 20 ? att.name.substring(0, 17) + '...' : att.name;
-          nameText.className = 'font-bold text-muted';
-
-          const link = document.createElement('button');
-          link.className = 'btn btn-secondary btn-small';
-          link.textContent = 'Lihat PDF';
-          link.addEventListener('click', () => {
-            const pdfWindow = window.open();
-            pdfWindow.document.write(`<title>${att.name}</title><iframe width='100%' height='100%' src='${att.base64}'></iframe>`);
-            pdfWindow.document.close();
-          });
-
-          box.appendChild(icon);
-          box.appendChild(nameText);
-          box.appendChild(link);
-          renderArea.appendChild(box);
-        }
-      });
-    } else {
-      renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
-    }
-  } else {
-    renderArea.innerHTML = '<span class="text-muted">Tidak ada bukti transaksi/nota dilampirkan.</span>';
-  }
+  renderAttachmentList(renderArea, txn.attachment);
 
   // Set sync individual action button states
   const btnSyncIndiv = document.getElementById('btn-sync-individual');
@@ -3180,15 +3336,24 @@ function terbilangIndo(angka) {
 let isSponsorshipSetupDone = false;
 
 function openKwitansiUploadModal(id) {
-  const kw = state.kwitansi.find(k => k.id === id);
-  if (!kw) return;
+  const kw = (state.sponsorshipHistory || []).find(k => String(k.id) === String(id));
+  if (!kw) {
+    showToast('Kwitansi Tidak Ditemukan', 'Data tanda terima tidak ditemukan.', 'error');
+    return;
+  }
   document.getElementById('kwitansi-upload-id').value = id;
   const title = document.getElementById('kwitansi-upload-title');
-  if (title) title.textContent = `Upload Nota - No. ${kw.no || '-'}`;
+  if (title) title.textContent = `Upload Nota / Dokumentasi - No. ${kw.no || kw.id || '-'}`;
   if (fileIndicatorKwitansiUpload) {
-    fileIndicatorKwitansiUpload.innerHTML = kw.attachment ? '<span style="color:green;font-weight:bold;">Tanda terima ini sudah memiliki lampiran nota (mengupload file baru akan menimpa yang lama).</span>' : '';
+    const hasAtt = kw.attachment && (Array.isArray(kw.attachment) ? kw.attachment.length > 0 : true);
+    fileIndicatorKwitansiUpload.innerHTML = hasAtt
+      ? '<span style="color:var(--success, #10b981);font-weight:bold;">✓ Tanda terima ini sudah memiliki lampiran (mengunggah berkas baru akan menggantikan lampiran lama).</span>'
+      : '';
   }
   state.currentUpload = null;
+  const fileInput = document.getElementById('kwitansi-upload-file');
+  if (fileInput) fileInput.value = '';
+
   document.getElementById('kwitansi-upload-modal').classList.add('open');
 }
 
@@ -3213,24 +3378,34 @@ function setupSponsorshipHandlers() {
       if (!id) return;
 
       if (!state.currentUpload || state.currentUpload.length === 0) {
-        showToast('File Kosong', 'Pilih minimal satu file untuk diupload.', 'error');
+        showToast('Berkas Kosong', 'Pilih minimal satu berkas foto/nota untuk diupload.', 'error');
         return;
       }
 
-      const kwIdx = state.kwitansi.findIndex(k => k.id === id);
+      const kwIdx = (state.sponsorshipHistory || []).findIndex(k => String(k.id) === String(id));
       if (kwIdx !== -1) {
-        state.kwitansi[kwIdx].attachment = state.currentUpload;
-        state.kwitansi[kwIdx].sync = false;
-        await saveToStore(STORE_KWITANSI, state.kwitansi[kwIdx]);
+        state.sponsorshipHistory[kwIdx].attachment = state.currentUpload;
+        try { await saveToStore(STORE_SPONSORSHIPS, state.sponsorshipHistory[kwIdx]); } catch (e) { }
+        try { localStorage.setItem('sponsorship_history', JSON.stringify(state.sponsorshipHistory)); } catch (e) { }
 
-        showToast('Berhasil', 'Nota berhasil ditambahkan ke riwayat. Sedang menyinkronkan...', 'success');
+        // Juga update di catatan jelantah jika cocok
+        if (state.jelantahRecap) {
+          const jIdx = state.jelantahRecap.findIndex(j => String(j.id) === String(id));
+          if (jIdx !== -1) {
+            state.jelantahRecap[jIdx].attachment = state.currentUpload;
+            try { await saveToStore(STORE_JELANTAH, state.jelantahRecap[jIdx]); } catch (e) { }
+            try { localStorage.setItem('jelantah_recap_data', JSON.stringify(state.jelantahRecap)); } catch (e) { }
+          }
+        }
+
+        showToast('Berhasil', 'Nota/Dokumentasi tersimpan. Sedang mengunggah ke Google Drive & Sheets...', 'success');
         closeKwitansiUploadModal();
 
-        // render table to show attached status (maybe change icon later)
-        renderKwitansiHistory();
+        renderSponsorshipHistoryTable();
+        renderJelantahSection();
 
-        // Trigger sync
-        await syncKwitansiToSheets(state.kwitansi[kwIdx]);
+        // Trigger sync ke Google Drive & Sheets
+        await syncKwitansiToSheets(state.sponsorshipHistory[kwIdx]);
       }
     });
   }
@@ -3688,6 +3863,11 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
     if (typeKey === 'tenant') badgeTag = '<span class="badge-type in" style="font-size: 0.75rem;">Tenant</span>';
     if (typeKey === 'jelantah') badgeTag = '<span class="badge-type out" style="font-size: 0.75rem; background-color: #fef3c7; color: #92400e;">Jelantah</span>';
 
+    const hasAtt = item.attachment && (Array.isArray(item.attachment) ? item.attachment.length > 0 : true);
+    const attachBtn = hasAtt
+      ? `<button type="button" class="btn btn-small btn-success btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Lihat / Ganti Nota atau Bukti Terlampir">✓ Terlampir</button>`
+      : `<button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Upload Nota / Dokumentasi">📎 Upload</button>`;
+
     html += `
       <tr>
         <td><span class="kwitansi-no-badge">No. ${item.no || '001'}</span> ${badgeTag}</td>
@@ -3701,9 +3881,7 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
             <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="loadKwitansiFromHistory('${item.id}')" title="Cetak Ulang / Muat Data">
               🖨️ Muat & Cetak
             </button>
-            <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Upload Nota">
-              📎 Upload
-            </button>
+            ${attachBtn}
             <button type="button" class="btn btn-small btn-danger btn-icon-small" onclick="deleteSponsorshipHistory('${item.id}')" title="Hapus Riwayat">
               🗑️
             </button>
@@ -3959,10 +4137,25 @@ async function printSponsorshipKwitansi(saveHistory = true) {
 async function syncKwitansiToSheets(kw) {
   if (!state.settings.sheetUrl) return;
   try {
+    const cleanKw = {
+      id: kw.id,
+      tipeJenis: kw.tipeJenis || 'SPONSORSHIP',
+      no: kw.no || kw.id,
+      tgl: kw.tgl || kw.tanggal || '',
+      dari: kw.dari || '',
+      nominal: kw.nominal,
+      terbilang: kw.terbilang || '',
+      guna: kw.guna || '',
+      penerima: kw.penerima || '',
+      nta: kw.nta || '',
+      attachment: kw.attachment || null,
+      dateCreated: kw.dateCreated || new Date().toISOString()
+    };
+
     await fetch(state.settings.sheetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'sync_kwitansi', kwitansi: kw })
+      body: JSON.stringify({ action: 'sync_kwitansi', kwitansi: cleanKw })
     });
   } catch (err) {
     console.error('Failed to sync kwitansi to sheet:', err);
@@ -4696,38 +4889,38 @@ function setupCustomMultiFileDropzone(dropzone, fileInput, indicator, onFilesRea
   });
 }
 
-function processSelectedFiles(files, indicator, callback) {
-  const filesArray = Array.from(files);
-  const uploads = [];
-  let completed = 0;
-  indicator.textContent = `Memproses ${filesArray.length} file...`;
+async function processSelectedFiles(files, indicator, callback) {
+  if (!files || files.length === 0) {
+    if (indicator) indicator.textContent = '';
+    if (typeof callback === 'function') callback([]);
+    return;
+  }
 
-  filesArray.forEach(file => {
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('File Terlalu Besar', `File ${file.name} melebihi 4MB.`, 'error');
-      completed++;
-      if (completed === filesArray.length) callback(uploads);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      uploads.push({
-        name: file.name,
-        type: file.type,
-        base64: e.target.result
-      });
-      completed++;
-      if (completed === filesArray.length) {
-        indicator.textContent = `${uploads.length} file terpilih (${uploads.map(u => u.name).join(', ')})`;
-        callback(uploads);
+  const filesArray = Array.from(files);
+  if (indicator) indicator.textContent = `Memproses & mengoptimalkan ${filesArray.length} berkas...`;
+
+  const uploads = [];
+  for (const file of filesArray) {
+    try {
+      const item = await compressImageFile(file);
+      if (item && item.base64) {
+        uploads.push(item);
       }
-    };
-    reader.onerror = function () {
-      completed++;
-      if (completed === filesArray.length) callback(uploads);
-    };
-    reader.readAsDataURL(file);
-  });
+    } catch (err) {
+      console.warn('Gagal memproses file jelantah:', file.name, err);
+    }
+  }
+
+  if (indicator) {
+    indicator.textContent = uploads.length > 0
+      ? `✓ ${uploads.length} berkas terpilih (${uploads.map(u => u.name).join(', ')})`
+      : 'Tidak ada berkas valid yang terpilih.';
+    indicator.style.color = uploads.length > 0 ? 'var(--success, #10b981)' : '';
+  }
+
+  if (typeof callback === 'function') {
+    callback(uploads);
+  }
 }
 
 function terbilangKg(n) {
@@ -4878,12 +5071,19 @@ function showJelantahDetailModal(r) {
     if (atts.length > 0) {
       attHtml = '<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px;">';
       atts.forEach((att, i) => {
-        const isUrl = typeof att === 'string' && att.startsWith('http');
+        const isUrl = typeof att === 'string' && (att.startsWith('http://') || att.startsWith('https://'));
         const src = isUrl ? att : (att.base64 || '');
         const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
-        const isImg = isUrl || (att.type && att.type.startsWith('image/')) || (att.base64 && att.base64.startsWith('data:image/'));
+        const isImg = !isUrl && ((att.type && att.type.startsWith('image/')) || (att.base64 && att.base64.startsWith('data:image/')));
 
-        if (isImg && src) {
+        if (isUrl) {
+          attHtml += `
+            <a href="${src}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-small" style="padding: 8px 12px; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background-color: #ecfdf5; color: #065f46; border: 1px solid #10b981; border-radius: 6px; font-weight: 600;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              <span>Buka di Google Drive ${atts.length > 1 ? '#' + (i + 1) : ''}</span>
+            </a>
+          `;
+        } else if (isImg && src) {
           attHtml += `
             <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: #fafafa; text-align: center; max-width: 160px;">
               <a href="${src}" target="_blank" title="Klik untuk mengunduh / membuka ukuran penuh">

@@ -1254,11 +1254,13 @@
               <pre class="code-box" id="code-script-content"><code>// ============================================================================
 // KODE GOOGLE APPS SCRIPT - RAIMUNA CABANG CILACAP (VERSI MULTI-SHEET LENGKAP)
 // Mendukung Semua Tab: Transaksi, Utang, Kwitansi, Sponsorship, Tenant, Jelantah
-// Fitur: Auto Case-Insensitive, Upload Google Drive, Hapus Pintar, Bulk Sync
+// Fitur: Auto Folder Drive, Auto Case-Insensitive, Upload Bukti, Hapus Pintar, Bulk Sync
 // ============================================================================
 
-var FOLDER_PENGAMBILAN_UANG = '13yzUOz2qknJZ9fAHFmj9DeS3_p9riiID';
-var FOLDER_NOTA = '10CEz6nMi6mBvm68xE-j34U-5WukhwgA4';
+// Opsional: Masukkan Folder ID Google Drive Anda jika ingin disimpan ke folder tertentu.
+// JIKA DIKOSONGKAN, script akan OTOMATIS membuat folder di Google Drive Anda!
+var FOLDER_PENGAMBILAN_UANG = ''; // Opsional: ID Folder Google Drive Dokumentasi Pengambilan Uang
+var FOLDER_NOTA = '';             // Opsional: ID Folder Google Drive Nota & Kwitansi
 
 // Definisi Header Standar untuk Tiap Tab
 var HEADERS = {
@@ -1341,32 +1343,85 @@ function autoMigrateColumns(sheet) {
   }
 }
 
-// ── UPLOAD LAMPIRAN KE GOOGLE DRIVE ─────────────────────────────────────────
-function uploadAttachmentsToDrive(attachments, prefixId, folderId) {
-  var urls = [];
-  if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
-    return urls;
+// ── HELPER: MENDAPATKAN ATAU MEMBUAT FOLDER DRIVE OTOMATIS ──────────────────
+function getOrCreateDriveFolder(folderId, fallbackFolderName) {
+  var folder = null;
+  // 1. Coba buka dari Folder ID jika diberikan
+  if (folderId && typeof folderId === 'string' && folderId.trim().length > 15 && folderId !== '13yzUOz2qknJZ9fAHFmj9DeS3_p9riiID' && folderId !== '10CEz6nMi6mBvm68xE-j34U-5WukhwgA4') {
+    try {
+      folder = DriveApp.getFolderById(folderId.trim());
+    } catch (e) {
+      Logger.log("Folder ID tidak ditemukan / tidak ada akses: " + folderId);
+      folder = null;
+    }
   }
-  try {
-    var folder = DriveApp.getFolderById(folderId);
-    for (var i = 0; i < attachments.length; i++) {
-      var item = attachments[i];
-      var base64Data = item.base64 || '';
-      var contentType = item.type || 'image/jpeg';
-      var fileName = (prefixId || 'lampiran') + '_' + (item.name || ('file_' + (i + 1)));
-
-      if (base64Data.indexOf('base64,') !== -1) {
-        base64Data = base64Data.split('base64,')[1];
+  
+  // 2. Jika Folder ID kosong atau tidak dapat diakses, cari atau buat folder otomatis di Drive pemilik
+  if (!folder) {
+    var name = fallbackFolderName || "Raimuna Cabang - Lampiran & Nota";
+    try {
+      var existing = DriveApp.getRootFolder().getFoldersByName(name);
+      if (existing.hasNext()) {
+        folder = existing.next();
+      } else {
+        folder = DriveApp.getRootFolder().createFolder(name);
+        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       }
-      if (!base64Data) continue;
+    } catch (err) {
+      Logger.log("Gagal membuat folder fallback: " + err.toString());
+      try { folder = DriveApp.getRootFolder(); } catch(e3) {}
+    }
+  }
+  return folder;
+}
 
-      var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, fileName);
+// ── UPLOAD LAMPIRAN KE GOOGLE DRIVE ─────────────────────────────────────────
+function uploadAttachmentsToDrive(attachments, prefixId, folderId, folderName) {
+  var urls = [];
+  if (!attachments) return urls;
+  
+  var list = Array.isArray(attachments) ? attachments : [attachments];
+  if (list.length === 0) return urls;
+
+  var folder = getOrCreateDriveFolder(folderId, folderName);
+  if (!folder) return urls;
+
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    if (!item) continue;
+
+    // Jika sudah berupa URL Drive (string)
+    if (typeof item === 'string') {
+      if (item.indexOf('http') === 0) {
+        urls.push(item);
+      }
+      continue;
+    }
+
+    var base64Data = item.base64 || '';
+    if (!base64Data && item.url) {
+      urls.push(item.url);
+      continue;
+    }
+
+    var contentType = item.type || 'image/jpeg';
+    var rawName = item.name || ('file_' + (i + 1) + '.jpg');
+    var fileName = (prefixId ? (prefixId + '_') : '') + rawName;
+
+    if (base64Data.indexOf('base64,') !== -1) {
+      base64Data = base64Data.split('base64,')[1];
+    }
+    if (!base64Data) continue;
+
+    try {
+      var decoded = Utilities.base64Decode(base64Data);
+      var blob = Utilities.newBlob(decoded, contentType, fileName);
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       urls.push(file.getUrl());
+    } catch (uploadErr) {
+      Logger.log("Gagal upload file ke Drive (" + fileName + "): " + uploadErr.toString());
     }
-  } catch (err) {
-    Logger.log("Gagal upload Drive: " + err.toString());
   }
   return urls;
 }
@@ -1539,10 +1594,13 @@ function doPost(e) {
       autoMigrateColumns(sheetTx);
       var tx = payload.transaction;
       
+      var isPengambilan = (tx.tipe === 'OUT' && (String(tx.keterangan || '').indexOf('[PENGAMBILAN]') !== -1 || String(tx.sumberDana || '').indexOf('Pengambilan') !== -1));
+      var folderName = isPengambilan ? "Dokumentasi Pengambilan Uang" : "Nota & Bukti Transaksi";
+      var targetFolderId = isPengambilan ? FOLDER_PENGAMBILAN_UANG : FOLDER_NOTA;
+
       var fileUrls = [];
-      if (tx.attachment && Array.isArray(tx.attachment) && tx.attachment.length > 0) {
-        var folderId = (tx.tipe === 'OUT') ? FOLDER_PENGAMBILAN_UANG : FOLDER_NOTA;
-        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, folderId);
+      if (tx.attachment) {
+        fileUrls = uploadAttachmentsToDrive(tx.attachment, tx.id, targetFolderId, folderName);
       }
 
       var existingBukti = "";
@@ -1592,8 +1650,8 @@ function doPost(e) {
     if (action === "sync_kwitansi") {
       var kw = payload.kwitansi;
       var fileUrls = [];
-      if (kw.attachment && Array.isArray(kw.attachment) && kw.attachment.length > 0) {
-        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA);
+      if (kw.attachment) {
+        fileUrls = uploadAttachmentsToDrive(kw.attachment, kw.id || kw.no, FOLDER_NOTA, "Nota & Bukti Kwitansi");
       }
 
       var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
@@ -1681,8 +1739,8 @@ function doPost(e) {
     if (action === "sync_jelantah") {
       var jlt = payload.jelantah;
       var fileUrls = [];
-      if (jlt.attachment && Array.isArray(jlt.attachment) && jlt.attachment.length > 0) {
-        fileUrls = uploadAttachmentsToDrive(jlt.attachment, jlt.id, FOLDER_NOTA);
+      if (jlt.attachment) {
+        fileUrls = uploadAttachmentsToDrive(jlt.attachment, jlt.id, FOLDER_NOTA, "Dokumentasi & Nota Jelantah");
       }
 
       var sheetJlt = getOrCreateSheet(ss, "Jelantah", HEADERS.jelantah);
@@ -1780,12 +1838,20 @@ function doPost(e) {
       // 9.1 Transaksi
       var transactions = payload.transactions || [];
       var sheetTx = getOrCreateSheet(ss, "Transaksi", HEADERS.transaksi);
+      var existingTxBuktiMap = {};
       if (sheetTx.getLastRow() > 1) {
+        var existingTxRows = sheetTx.getDataRange().getValues();
+        for (var ex = 1; ex < existingTxRows.length; ex++) {
+          var exId = String(existingTxRows[ex][0]).trim();
+          var exBukti = existingTxRows[ex][9] || "";
+          if (exId && exBukti) existingTxBuktiMap[exId] = exBukti;
+        }
         sheetTx.getRange(2, 1, sheetTx.getLastRow() - 1, sheetTx.getLastColumn()).clearContent();
       }
       if (transactions.length > 0) {
         var txRows = transactions.map(function(t) {
-          return [t.id, t.tanggal, t.tipe, t.kategori || "-", t.sumberDana || "-", t.pic, t.nominal, t.keterangan, t.dateCreated, ""];
+          var tBukti = t.bukti || existingTxBuktiMap[String(t.id).trim()] || "";
+          return [t.id, t.tanggal, t.tipe, t.kategori || "-", t.sumberDana || "-", t.pic, t.nominal, t.keterangan, t.dateCreated, tBukti];
         });
         sheetTx.getRange(2, 1, txRows.length, txRows[0].length).setValues(txRows);
       }
@@ -1806,12 +1872,20 @@ function doPost(e) {
       // 9.3 Kwitansi Master
       var kwitansiList = payload.kwitansi || [];
       var sheetKw = getOrCreateSheet(ss, "Kwitansi", HEADERS.kwitansi);
+      var existingKwBuktiMap = {};
       if (sheetKw.getLastRow() > 1) {
+        var existingKwRows = sheetKw.getDataRange().getValues();
+        for (var ek = 1; ek < existingKwRows.length; ek++) {
+          var ekId = String(existingKwRows[ek][0]).trim();
+          var ekBukti = existingKwRows[ek][11] || "";
+          if (ekId && ekBukti) existingKwBuktiMap[ekId] = ekBukti;
+        }
         sheetKw.getRange(2, 1, sheetKw.getLastRow() - 1, sheetKw.getLastColumn()).clearContent();
       }
       if (kwitansiList.length > 0) {
         var kwRows = kwitansiList.map(function(k) {
-          return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+          var kBukti = k.bukti || existingKwBuktiMap[String(k.id).trim()] || "";
+          return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, kBukti];
         });
         sheetKw.getRange(2, 1, kwRows.length, kwRows[0].length).setValues(kwRows);
       }
@@ -1828,7 +1902,8 @@ function doPost(e) {
         });
         if (spItems.length > 0) {
           var spRows = spItems.map(function(k) {
-            return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+            var kBukti = k.bukti || existingKwBuktiMap[String(k.id).trim()] || "";
+            return [k.id, k.tipeJenis || "SPONSORSHIP", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, kBukti];
           });
           sheetSp.getRange(2, 1, spRows.length, spRows[0].length).setValues(spRows);
         }
@@ -1846,7 +1921,8 @@ function doPost(e) {
         });
         if (tenantItems.length > 0) {
           var tntRows = tenantItems.map(function(k) {
-            return [k.id, k.tipeJenis || "STAND", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, ""];
+            var kBukti = k.bukti || existingKwBuktiMap[String(k.id).trim()] || "";
+            return [k.id, k.tipeJenis || "STAND", k.no, k.tgl, k.dari, k.nominal, k.terbilang, k.guna, k.penerima, k.nta, k.dateCreated, kBukti];
           });
           sheetTenant.getRange(2, 1, tntRows.length, tntRows[0].length).setValues(tntRows);
         }
@@ -1873,6 +1949,7 @@ function doPost(e) {
               keterangan: k.guna,
               guna: k.guna,
               penerima: k.penerima,
+              bukti: k.bukti || "",
               dateCreated: k.dateCreated
             };
           });
@@ -1880,6 +1957,7 @@ function doPost(e) {
         
         if (jelantahList.length > 0) {
           var jltRows = jelantahList.map(function(j) {
+            var jBukti = j.bukti || existingKwBuktiMap[String(j.id).trim()] || "";
             return [
               j.id, 
               j.tanggal || j.tgl, 
@@ -1891,7 +1969,7 @@ function doPost(e) {
               j.guna || "PENGAMBILAN MINYAK JELANTAH", 
               j.penerima || "Petugas Jelantah", 
               j.dateCreated, 
-              ""
+              jBukti
             ];
           });
           sheetJlt.getRange(2, 1, jltRows.length, jltRows[0].length).setValues(jltRows);
@@ -2540,7 +2618,7 @@ function doPost(e) {
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App JavaScript -->
-  <script src="app.js?v=1.4"></script>
+  <script src="app.js?v=1.5"></script>
 
 </body>
 
