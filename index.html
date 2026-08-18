@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=1.7">
+  <link rel="stylesheet" href="styles.css?v=1.8">
 
   <!-- Chart.js CDN for visual charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -244,56 +244,72 @@
         <!-- Info Cards -->
         <div class="metrics-grid">
           <div class="metric-card balance">
-            <div class="card-icon">💰</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Total Saldo Kas Utama</h3>
               <p id="dashboard-total-saldo">Rp 0</p>
             </div>
           </div>
           <div class="metric-card income">
-            <div class="card-icon">📈</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Pemasukan Kas Utama</h3>
               <p id="dashboard-total-pemasukan">Rp 0</p>
             </div>
           </div>
           <div class="metric-card expense">
-            <div class="card-icon">📉</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Pengeluaran Kas Utama</h3>
               <p id="dashboard-total-pengeluaran">Rp 0</p>
             </div>
           </div>
           <div class="metric-card balance" style="border-left: 4px solid #8b5cf6;">
-            <div class="card-icon">🏪</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Rekap Pembayaran Tenant</h3>
               <p id="dashboard-total-tenant">Rp 0</p>
             </div>
           </div>
           <div class="metric-card warning-card">
-            <div class="card-icon">📝</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
             <div class="card-details">
               <h3>Utang Belum Lunas</h3>
               <p id="dashboard-total-utang-pending">Rp 0</p>
             </div>
           </div>
           <div class="metric-card info-card">
-            <div class="card-icon">🧾</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Nota Dana Talangan</h3>
               <p id="dashboard-total-talangan-pending">Rp 0</p>
             </div>
           </div>
           <div class="metric-card balance" style="border-left: 4px solid #059669;">
-            <div class="card-icon">🛢️</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Pengambilan Minyak Jelantah</h3>
               <p id="dashboard-total-jelantah-kg">0 KG</p>
             </div>
           </div>
           <div class="metric-card income" style="border-left: 4px solid #10b981;">
-            <div class="card-icon">💵</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="6" x2="12" y2="18"></line></svg>
+            </div>
             <div class="card-details">
               <h3>Total Uang Minyak Jelantah</h3>
               <p id="dashboard-total-jelantah-rp">Rp 0</p>
@@ -680,21 +696,27 @@
       <section id="utang-section" class="content-section">
         <div class="metrics-grid mb-20">
           <div class="metric-card warning-card">
-            <div class="card-icon">⏳</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Total Belum Lunas</h3>
               <p id="utang-metric-pending">Rp 0</p>
             </div>
           </div>
           <div class="metric-card income">
-            <div class="card-icon">✅</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
             <div class="card-details">
               <h3>Total Sudah Lunas</h3>
               <p id="utang-metric-paid">Rp 0</p>
             </div>
           </div>
           <div class="metric-card balance">
-            <div class="card-icon">📋</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Total Catatan Utang</h3>
               <p id="utang-metric-count">0</p>
@@ -821,21 +843,27 @@
         <!-- Info Metrics Jelantah -->
         <div class="metrics-grid mb-20">
           <div class="metric-card balance" style="border-left: 4px solid #059669;">
-            <div class="card-icon">🛢️</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Total Terkumpul</h3>
               <p id="jelantah-metric-kg">0 KG</p>
             </div>
           </div>
           <div class="metric-card income" style="border-left: 4px solid #10b981;">
-            <div class="card-icon">🏫</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Kwarran Setor</h3>
               <p id="jelantah-metric-kwarran">0 Kwarran</p>
             </div>
           </div>
           <div class="metric-card balance" style="border-left: 4px solid #3b82f6;">
-            <div class="card-icon">📋</div>
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+            </div>
             <div class="card-details">
               <h3>Total Catatan Jelantah</h3>
               <p id="jelantah-metric-count">0 Catatan</p>
@@ -2071,9 +2099,9 @@ function doPost(e) {
               <div class="form-group full-width" style="margin-bottom: 12px;">
                 <label for="kwitansi-tipe-jenis">Jenis / Tipe Kwitansi <span class="required">*</span></label>
                 <select id="kwitansi-tipe-jenis" class="form-control" style="font-weight: 700;">
-                  <option value="SPONSORSHIP">💼 Kwitansi Sponsorship / Donatur</option>
-                  <option value="STAND">🏢 Kwitansi Pembayaran Tenant</option>
-                  <option value="JELANTAH">🛢️ Tanda Terima Minyak Jelantah (Berdasarkan Berat KG)</option>
+                  <option value="SPONSORSHIP">Kwitansi Sponsorship / Donatur</option>
+                  <option value="STAND">Kwitansi Pembayaran Tenant</option>
+                  <option value="JELANTAH">Tanda Terima Minyak Jelantah (Berdasarkan Berat KG)</option>
                 </select>
               </div>
 
@@ -2178,10 +2206,10 @@ function doPost(e) {
           <div class="kwitansi-history-filter-bar mb-20"
             style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <div class="filter-pills" id="kwitansi-history-filter-pills">
-              <button type="button" class="btn-pill active" data-kw-filter="ALL">📊 Semua Riwayat</button>
-              <button type="button" class="btn-pill" data-kw-filter="SPONSORSHIP">💼 Sponsorship</button>
-              <button type="button" class="btn-pill" data-kw-filter="TENANT">🏢 Pembayaran Tenant</button>
-              <button type="button" class="btn-pill" data-kw-filter="JELANTAH">🛢️ Minyak Jelantah</button>
+              <button type="button" class="btn-pill active" data-kw-filter="ALL">Semua Riwayat</button>
+              <button type="button" class="btn-pill" data-kw-filter="SPONSORSHIP">Sponsorship</button>
+              <button type="button" class="btn-pill" data-kw-filter="TENANT">Pembayaran Tenant</button>
+              <button type="button" class="btn-pill" data-kw-filter="JELANTAH">Minyak Jelantah</button>
             </div>
             <div class="history-download-actions" style="display: flex; gap: 10px;">
               <button type="button" id="btn-export-kwitansi-excel" class="btn btn-success btn-small btn-icon-text"
@@ -2250,7 +2278,7 @@ function doPost(e) {
             style="margin-bottom: 25px;">
             <div class="table-card-header">
               <div>
-                <h3>🏢 Riwayat Kwitansi Pembayaran Tenant</h3>
+                <h3>Riwayat Kwitansi Pembayaran Tenant</h3>
                 <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar kwitansi pembayaran sewa tenant
                   booth yang telah diterbitkan</p>
               </div>
@@ -2287,7 +2315,7 @@ function doPost(e) {
           <div class="table-card style-history-card kw-card-section" id="kw-card-jelantah">
             <div class="table-card-header">
               <div>
-                <h3>🛢️ Riwayat Tanda Terima Minyak Jelantah</h3>
+                <h3>Riwayat Tanda Terima Minyak Jelantah</h3>
                 <p style="font-size: 13px; color: #666666; margin-top: 2px;">Daftar tanda terima pengumpulan minyak
                   jelantah (berdasarkan berat KG)</p>
               </div>
@@ -2335,7 +2363,7 @@ function doPost(e) {
   <div id="modal-edit-jelantah" class="modal-overlay">
     <div class="modal-card" style="max-width: 580px; width: 92%;">
       <div class="modal-header">
-        <h3>✏️ Edit Pengambilan Minyak Jelantah</h3>
+        <h3>Edit Pengambilan Minyak Jelantah</h3>
         <button id="btn-close-jelantah-edit" class="btn-close">&times;</button>
       </div>
       <div class="modal-body" style="padding: 20px;">
@@ -2433,7 +2461,7 @@ function doPost(e) {
   <div id="modal-detail-jelantah" class="modal-overlay">
     <div class="modal-card" style="max-width: 580px; width: 92%;">
       <div class="modal-header">
-        <h3 id="jelantah-modal-title">👁️ Detail Pengambilan Minyak Jelantah</h3>
+        <h3 id="jelantah-modal-title">Detail Pengambilan Minyak Jelantah</h3>
         <button id="btn-close-jelantah-detail" class="btn-close">&times;</button>
       </div>
       <div class="modal-body" id="jelantah-detail-body" style="padding: 20px;">
@@ -2701,7 +2729,7 @@ function doPost(e) {
   <div id="toast-container" class="toast-container"></div>
 
   <!-- App JavaScript -->
-  <script src="app.js?v=1.9"></script>
+  <script src="app.js?v=2.0"></script>
 
 </body>
 

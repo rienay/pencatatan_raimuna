@@ -1896,8 +1896,8 @@ function renderDashboard() {
         : '<span class="badge-type out">Pengeluaran</span>';
 
       const syncBadge = tx.sync
-        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>'
-        : '<span class="badge-sync unsynced" title="Belum disinkronkan">⏳</span>';
+        ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+        : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
 
       tr.innerHTML = `
         <td>${formatIndonesianDate(tx.tanggal)}</td>
@@ -1909,8 +1909,14 @@ function renderDashboard() {
         <td class="text-right font-bold ${tx.tipe === 'IN' ? 'text-success' : 'text-danger'}">${formatRupiah(tx.nominal)}</td>
         <td class="no-print text-center">${syncBadge}</td>
         <td class="no-print text-center" style="white-space: nowrap;">
-          <button class="btn-icon btn-edit-action" title="Edit Transaksi" style="margin-right: 4px;">✏️</button>
-          <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
+          <div class="action-buttons-group">
+            <button class="btn-table-action btn-action-edit btn-edit-action" title="Edit Transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="btn-table-action btn-action-view btn-view-action" title="Lihat Detail Transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </td>
       `;
 
@@ -2142,8 +2148,8 @@ function renderLaporan() {
         : '<span class="badge-type out">Pengeluaran</span>';
 
       const syncBadge = tx.sync
-        ? '<span class="badge-sync synced" title="Tersinkronisasi">☁️</span>'
-        : '<span class="badge-sync unsynced" title="Belum disinkronkan">⏳</span>';
+        ? '<span class="badge-sync synced" title="Tersinkronisasi ke Google Sheets"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>'
+        : '<span class="badge-sync unsynced" title="Belum disinkronkan"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>';
 
       // Obtain running balance at this transaction
       const balAtTx = runningBalancesMap[tx.id] || 0;
@@ -2161,8 +2167,14 @@ function renderLaporan() {
         <td class="text-right font-bold">${formatRupiah(balAtTx)}</td>
         <td class="no-print text-center">${syncBadge}</td>
         <td class="no-print text-center" style="white-space: nowrap;">
-          <button class="btn-icon btn-edit-action" title="Edit Transaksi" style="margin-right: 4px;">✏️</button>
-          <button class="btn-icon btn-view-action" title="Lihat Detail">🔍</button>
+          <div class="action-buttons-group">
+            <button class="btn-table-action btn-action-edit btn-edit-action" title="Edit Transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="btn-table-action btn-action-view btn-view-action" title="Lihat Detail Transaksi">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </td>
       `;
 
@@ -2430,7 +2442,7 @@ function renderKategoriPage() {
     if (cat.isDefault) {
       actionHtml = '<span class="badge-default">Default</span>';
     } else {
-      actionHtml = `<button class="btn-icon text-danger btn-delete-cat" data-id="${cat.id}">🗑️</button>`;
+      actionHtml = `<button class="btn-table-action btn-action-delete btn-delete-cat" data-id="${cat.id}" title="Hapus"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`;
     }
 
     li.innerHTML = `
@@ -2449,7 +2461,7 @@ function renderKategoriPage() {
     if (src.isDefault) {
       actionHtml = '<span class="badge-default">Default</span>';
     } else {
-      actionHtml = `<button class="btn-icon text-danger btn-delete-src" data-id="${src.id}">🗑️</button>`;
+      actionHtml = `<button class="btn-table-action btn-action-delete btn-delete-src" data-id="${src.id}" title="Hapus"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`;
     }
 
     li.innerHTML = `
@@ -4025,8 +4037,12 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
 
     const hasAtt = item.attachment && (Array.isArray(item.attachment) ? item.attachment.length > 0 : true);
     const attachBtn = hasAtt
-      ? `<button type="button" class="btn btn-small btn-success btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Lihat / Ganti Nota atau Bukti Terlampir">✓ Terlampir</button>`
-      : `<button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="openKwitansiUploadModal('${item.id}')" title="Upload Nota / Dokumentasi">📎 Upload</button>`;
+      ? `<button type="button" class="btn-table-action btn-action-print" onclick="openKwitansiUploadModal('${item.id}')" title="Lihat / Ganti Nota atau Bukti Terlampir">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </button>`
+      : `<button type="button" class="btn-table-action btn-action-view" onclick="openKwitansiUploadModal('${item.id}')" title="Upload Nota / Dokumentasi">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+        </button>`;
 
     html += `
       <tr>
@@ -4037,13 +4053,13 @@ function renderSingleKwitansiHistoryTable(typeKey, items, tbodyId, countBadgeId,
         <td>${item.guna || '-'}</td>
         <td>${item.penerima || '-'}</td>
         <td class="text-center">
-          <div class="history-actions">
-            <button type="button" class="btn btn-small btn-secondary btn-icon-small" onclick="loadKwitansiFromHistory('${item.id}')" title="Cetak Ulang / Muat Data">
-              🖨️ Muat & Cetak
+          <div class="action-buttons-group">
+            <button type="button" class="btn-table-action btn-action-edit" onclick="loadKwitansiFromHistory('${item.id}')" title="Cetak Ulang / Muat Data">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             </button>
             ${attachBtn}
-            <button type="button" class="btn btn-small btn-danger btn-icon-small" onclick="deleteSponsorshipHistory('${item.id}')" title="Hapus Riwayat">
-              🗑️
+            <button type="button" class="btn-table-action btn-action-delete" onclick="deleteSponsorshipHistory('${item.id}')" title="Hapus Riwayat">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </button>
           </div>
         </td>
@@ -4563,8 +4579,8 @@ function renderUtangPage() {
       : '<span class="badge-type out">Utang (Keluar)</span>';
 
     const statusBadge = isPaid
-      ? '<span class="badge-status success">LUNAS ✅</span>'
-      : '<span class="badge-status warning">BELUM LUNAS ⏳</span>';
+      ? '<span class="badge-status success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>LUNAS</span>'
+      : '<span class="badge-status warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>BELUM LUNAS</span>';
 
     tr.innerHTML = `
       <td class="text-center">
@@ -4581,7 +4597,11 @@ function renderUtangPage() {
       <td>${u.keterangan}</td>
       <td>${statusBadge}</td>
       <td class="text-center">
-        <button class="btn-icon btn-delete-utang" data-id="${u.id}" title="Hapus Catatan Utang">🗑️</button>
+        <div class="action-buttons-group">
+          <button class="btn-table-action btn-action-delete btn-delete-utang" data-id="${u.id}" title="Hapus Catatan Utang">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
+        </div>
       </td>
     `;
 
@@ -5228,7 +5248,7 @@ function renderJelantahSection() {
           const isUrl = typeof att === 'string' && att.startsWith('http');
           const href = isUrl ? att : (att.base64 || '#');
           const name = isUrl ? `Berkas ${i + 1}` : (att.name || `Berkas ${i + 1}`);
-          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-block; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()">📎 ${name}</a>`;
+          return `<a href="${href}" target="_blank" class="badge-tag info" style="display:inline-flex; align-items:center; gap:4px; margin:2px; padding:3px 8px; text-decoration:none;" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>${name}</a>`;
         }).join('');
       }
     }
@@ -5241,9 +5261,17 @@ function renderJelantahSection() {
       <td>${attHtml}</td>
       <td>${r.guna || r.keterangan || '-'}</td>
       <td class="text-center" style="white-space: nowrap;">
-        <button class="btn-icon btn-edit-jelantah" data-id="${r.id}" title="Edit Recap Jelantah" style="margin-right: 6px;">✏️</button>
-        <button class="btn-icon btn-view-jelantah" data-id="${r.id}" title="Lihat Detail Pengambilan Jelantah" style="margin-right: 6px;">👁️</button>
-        <button class="btn-icon btn-delete-jelantah" data-id="${r.id}" title="Hapus Recap Jelantah">🗑️</button>
+        <div class="action-buttons-group">
+          <button class="btn-table-action btn-action-edit btn-edit-jelantah" data-id="${r.id}" title="Edit Recap Jelantah">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="btn-table-action btn-action-view btn-view-jelantah" data-id="${r.id}" title="Lihat Detail Pengambilan Jelantah">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+          <button class="btn-table-action btn-action-delete btn-delete-jelantah" data-id="${r.id}" title="Hapus Recap Jelantah">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
+        </div>
       </td>
     `;
 
