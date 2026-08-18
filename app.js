@@ -742,7 +742,7 @@ async function loadStateFromDB() {
   const autoSyncSetting = await getFromStore(STORE_SETTINGS, 'autoSync');
 
   // ALWAYS force the latest sheet URL from code to avoid cached obsolete URLs
-  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbx3qo3XCHQjO9fDkX8jR81ogZqKDARA7E05Ey1s6iRkPBKoL-qzbNm3yFGkqAGQa5nE/exec';
+  const hardcodedUrl = 'https://script.google.com/macros/s/AKfycbxgXVSBwxmTECLyJDViwV_Yhg9XkLMx2HV4y-9NpqPtCQUvE1LE7dcezzCgQCSLQdxWNA/exec';
   state.settings.sheetUrl = hardcodedUrl;
   await saveToStore(STORE_SETTINGS, { key: 'sheetUrl', value: hardcodedUrl });
 
@@ -1672,14 +1672,33 @@ async function autoPullFromSheets() {
   }
 }
 
-// Automatically sync any pending unsynced transactions in background
+// Helper to check if item has un-uploaded Base64 files
+function hasBase64Attachment(item) {
+  if (!item || !item.attachment) return false;
+  const list = parseAndFlattenAttachments(item.attachment);
+  return list.some(att => (typeof att === 'object' && att && att.base64) || (typeof att === 'string' && att.startsWith('data:')));
+}
+
+// Automatically sync any pending unsynced transactions or un-uploaded base64 attachments in background
 async function autoSyncPendingTransactions() {
   if (!state.settings.sheetUrl || !state.settings.autoSync) return;
-  const unsynced = state.transactions.filter(t => !t.sync);
-  if (unsynced.length === 0) return;
+  const pendingTxns = state.transactions.filter(t => !t.sync || hasBase64Attachment(t));
+  
+  for (const txn of pendingTxns) {
+    try {
+      await syncTransactionToSheets(txn);
+    } catch (e) {
+      console.warn('Sync pending txn failed:', txn.id, e);
+    }
+  }
 
-  for (const txn of unsynced) {
-    await syncTransactionToSheets(txn);
+  // Also auto-sync any kwitansi with base64
+  for (const kw of (state.sponsorshipHistory || [])) {
+    if (hasBase64Attachment(kw)) {
+      try {
+        await syncKwitansiToSheets(kw);
+      } catch (e) {}
+    }
   }
 }
 
